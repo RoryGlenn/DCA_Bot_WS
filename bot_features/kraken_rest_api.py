@@ -9,7 +9,8 @@ import requests
 
 # from util.globals                        import G
 from pprint                              import pprint
-from kraken_enums import *
+# from kraken_enums import *
+from bot_features.kraken_enums import *
 
 
 class KrakenRestAPI(object):
@@ -214,7 +215,6 @@ class KrakenRestAPI(object):
 
     def get_web_sockets_token(self) -> dict:
         return self.__query_private(method=Method.GET_WEBSOCKETS_TOKEN, data={})
-
 
 ######################################################################
 ### MARKET DATA
