@@ -13,7 +13,7 @@ class OwnTradesSocketHandler(SocketHandlerBase):
             message = message[0]
             for dictionary in message:
                 for txid, _dict in dictionary.items():
-                    print("ownTrades:", txid, _dict)
+                    print("ownTrades: ", txid, _dict)
         else:
             print(f"ownTrades: {message}")                    
 

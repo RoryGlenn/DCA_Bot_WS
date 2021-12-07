@@ -9,8 +9,7 @@ DECIMAL_MAX = 8
 
 URL_ASSET_PAIRS   = 'https://api.kraken.com/0/public/AssetPairs'
 
-KRAKEN_COINS_JSON = "src/kraken_files/json_files/kraken_coins.json"
-CONFIG_JSON       = 'src/kraken_files/json_files/config.json'
+CONFIG_JSON       = 'src/json/config.json'
 
 
 class WS_API:
