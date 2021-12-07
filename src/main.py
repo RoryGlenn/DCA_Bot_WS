@@ -29,13 +29,22 @@ if __name__ == "__main__":
     sh_own_trades = OwnTradesSocketHandler(ws_token)
     sh_balances = BalancesSocketHandler(ws_token)
 
-    # create a daemon thread to always assign config values.
-    # Thread(target=ConfigParser.assign_enum_values, daemon=True).start()
+    Thread(target=ConfigParser.assign_enum_values, daemon=True).start()
     Thread(target=sh_open_orders.ws_thread).start()
     # Thread(target=sh_own_trades.ws_thread).start()
     # Thread(target=sh_balances.ws_thread).start()
-
+    
+    
+    i      = 0
+    result = None
+    
     while True:
-        time.sleep(20)
-        result = kapi.limit_order(Trade.BUY, 1, "XBTUSD", 1.0)
+        time.sleep(30)
+        if i % 2 == 0:
+            # {'error': [], 'result': {'txid': ['OI5WXM-Q6ALV-VMUHOZ'], 'descr': {'order': 'buy 1.00000000 XBTUSD @ limit 1.0'}}}
+            result = kapi.limit_order(Trade.BUY, 1, "XBTUSD", 1.0)
+            print(result)
+        else:
+            kapi.cancel_order(result['result']['txid'][0])
+        i+=1
         # print(f"[{datetime.datetime.now()}] Main thread {result}")

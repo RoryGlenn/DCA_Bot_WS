@@ -12,6 +12,13 @@ URL_ASSET_PAIRS   = 'https://api.kraken.com/0/public/AssetPairs'
 CONFIG_JSON       = 'src/json/config.json'
 
 
+class Status:
+    STATUS   = "status"
+    OPEN     = "open"
+    PENDING  = "pending"
+    CANCELED = "canceled"
+
+
 class WS_API:
     API_DOMAIN_PUBLIC  = "wss://ws.kraken.com/"
     API_DOMAIN_PRIVATE = "wss://ws-auth.kraken.com/"

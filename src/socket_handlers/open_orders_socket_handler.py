@@ -1,31 +1,27 @@
 import json
 
-from pprint import pprint
+from pprint                              import pprint
 from websocket._app                      import WebSocketApp
 from socket_handlers.socket_handler_base import SocketHandlerBase
-
-class Status:
-    STATUS = "status"
-    OPEN = "open"
-    PENDING = "pending"
+from bot_features.kraken_enums           import *
     
 
 class OpenOrdersSocketHandler(SocketHandlerBase):
     def __init__(self, api_token: str) -> None:
         self.api_token: str = api_token
-        self.order_que: list = []
+        self.open_orders: dict = {}
         return
 
     def ws_message(self, ws: WebSocketApp, message: str) -> None:
         message = json.loads(message)
         
         if isinstance(message, list):
-            for _, dictionary in message[0][0].items():
-                if dictionary[Status.STATUS] == Status.PENDING:
-                    """we have a new order!"""
-                    self.order_que.append(dictionary)
-                    for order in self.order_que:
-                        pprint(order)
+            for open_orders in message[0]:
+                for txid, order_info in open_orders.items():
+                    if order_info[Status.STATUS] == Status.PENDING or order_info[Status.STATUS] == Status.OPEN:
+                        self.open_orders[txid] = order_info
+                    if order_info[Status.STATUS] == Status.CANCELED:
+                        self.open_orders.pop(txid)
         else:
             pprint(message)
         print()
