@@ -1,8 +1,8 @@
 from enum import auto
 
 
-KRAKEN_API_KEY    = "F8EO+DaWBwFVAPd8HwolBBz8EIQgQYRx35l1KeCVl8u+044nUUFZgsNh"
-KRAKEN_SECRET_KEY = "gqnoKy0HFy/CxhChWrulMy4XEbmeOaSrZ7hn1D4VyorkwtaM2QVHpL1vwflf3Uj+NGYpl3EGbvd4y+nxTG7Ntg=="
+KRAKEN_API_KEY    = ""
+KRAKEN_SECRET_KEY = ""
 
 # DCA
 DECIMAL_MAX = 8
@@ -11,6 +11,10 @@ URL_ASSET_PAIRS   = 'https://api.kraken.com/0/public/AssetPairs'
 
 CONFIG_JSON       = 'src/json/config.json'
 
+
+class API_Keys:
+    KEY = ""
+    SECRET = ""
 
 class Status:
     STATUS   = "status"
@@ -36,6 +40,14 @@ class Buy_:
     USD_TO_SPEND = auto()
     SET          = set()
 
+class TVData:
+    SCREENER       = "crypto"
+    EXCHANGE       = "kraken"
+    RECOMMENDATION = "RECOMMENDATION"
+    BUY            = "BUY"
+    STRONG_BUY     = "STRONG_BUY"
+
+
 class DCA_:
     TARGET_PROFIT_PERCENT        = auto()
     TRAILING_DEVIATION           = auto()
@@ -44,6 +56,20 @@ class DCA_:
     SAFETY_ORDER_VOLUME_SCALE    = auto()
     SAFETY_ORDER_STEP_SCALE      = auto()
     SAFETY_ORDER_PRICE_DEVIATION = auto()
+    
+class TimeIntervals:
+    INTERVAL_1_MINUTE   = "1m"
+    INTERVAL_5_MINUTES  = "5m"
+    INTERVAL_15_MINUTES = "15m"
+    INTERVAL_30_MINUTES = "30m"
+    INTERVAL_1_HOUR     = "1h"
+    INTERVAL_2_HOURS    = "2h"
+    INTERVAL_4_HOURS    = "4h"
+    INTERVAL_1_DAY      = "1d"
+    INTERVAL_1_WEEK     = "1W"
+    INTERVAL_1_MONTH    = "1M"
+    ALL_LIST            = ["1m","5m","15m","30m","1h","2h","4h","1d","1W","1M"]
+    USER_INTERVALS      = set()
 
 class ExportReport:
     DEFAULT_NAME   = "my_trades"
@@ -51,7 +77,6 @@ class ExportReport:
     REPORT         = "trades"
     DELETE         = "delete"
     CANCEL         = "cancel"
-
 
 class Dicts:
     ORDER_MIN = "ordermin"
@@ -176,7 +201,7 @@ class Data:
     TYPE = "type"
     ASSET = "asset"
     START = "start"
-    PAIR = "pair"
+    SYMBOL_PAIR = "pair"
     TIMEOUT = "timeout"
     ORDER_TYPE = "ordertype"
     TYPE = "type"
@@ -293,6 +318,10 @@ class ConfigKeys:
     DCA_SAFETY_ORDER_VOLUME_SCALE = "dca_safety_order_volume_scale"
     DCA_SAFETY_ORDER_STEP_SCALE = "dca_safety_order_step_scale"
     DCA_SAFETY_ORDER_PRICE_DEVIATION = "dca_safety_order_price_deviation"
+    
+    TIME_INTERVALS = "time_intervals"
+    
+  
 
 class KError:
     INSUFFICIENT_FUNDS = 'EOrder:Insufficient funds'

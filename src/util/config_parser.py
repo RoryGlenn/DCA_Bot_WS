@@ -10,7 +10,7 @@ from bot_features.kraken_enums import *
 
 
 class ConfigParser():
-    def assign_enum_values() -> None:
+    def config_values_loop() -> None:
         """Assign values to the enums"""
         reg_list = ['ETC',  'ETH',  'LTC',  'MLN',  'REP',  'XBT',  'XDG',  'XLM',  'XMR',  'XRP',  'ZEC' ]
         
@@ -19,6 +19,9 @@ class ConfigParser():
                 with open(CONFIG_JSON) as file:
                     try:
                         config = json.load(file)[ConfigKeys.CONFIG]
+                    
+                        API_Keys.KEY    = config[ConfigKeys.KRAKEN_API_KEY]
+                        API_Keys.SECRET = config[ConfigKeys.KRAKEN_SECRET_KEY]
                     
                         for symbol in config[ConfigKeys.BUY_SET]:
                             if symbol in reg_list:
@@ -35,7 +38,10 @@ class ConfigParser():
                         DCA_.SAFETY_ORDERS_ACTIVE_MAX       = int  (config[ConfigKeys.DCA_SAFETY_ORDERS_ACTIVE_MAX])
                         DCA_.SAFETY_ORDER_STEP_SCALE        = float(config[ConfigKeys.DCA_SAFETY_ORDER_STEP_SCALE])
                         DCA_.SAFETY_ORDER_PRICE_DEVIATION   = float(config[ConfigKeys.DCA_SAFETY_ORDER_PRICE_DEVIATION])
-                        print("DCA_.TARGET_PROFIT_PERCENT", DCA_.TARGET_PROFIT_PERCENT)
+                        
+                        for interval in config[ConfigKeys.TIME_INTERVALS]:
+                            if interval in TimeIntervals.ALL_LIST:
+                                TimeIntervals.USER_INTERVALS.add(interval)   
                     except Exception as e:
                         G.log.print_and_log(e=e, error_type=type(e).__name__, filename=__file__, tb_lineno=e.__traceback__.tb_lineno)
                         sys.exit()
@@ -43,7 +49,7 @@ class ConfigParser():
                 G.log.print_and_log("Could not find config.json file")
                 sys.exit()
             
-            time.sleep(3)
+            time.sleep(5)
         return
                 
     def get_config():

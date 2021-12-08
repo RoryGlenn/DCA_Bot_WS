@@ -5,7 +5,7 @@ This bot uses DCA in order lower the average buy price for a purchased coin."""
 # from my_sql.sql                          import SQL
 
 from bot_features.kraken_enums import *
-from my_sql import SQL
+from bot_features.my_sql import SQL
 
 class DCA(DCA_):
     def __init__(self, symbol_pair: str, symbol: str, order_min: float, bid_price: float):

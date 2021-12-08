@@ -1,13 +1,14 @@
 import json
 
-from websocket._app      import WebSocketApp
+from pprint import pprint
+from websocket._app import WebSocketApp
 from socket_handlers.socket_handler_base import SocketHandlerBase
+
 
 class OwnTradesSocketHandler(SocketHandlerBase): 
     def __init__(self, api_token) -> None:
         self.api_token = api_token
         self.trades = dict()
-        self.trade_txids = set()
 
     def ws_message(self, ws: WebSocketApp, message: str) -> None:
         message = json.loads(message)
@@ -16,7 +17,6 @@ class OwnTradesSocketHandler(SocketHandlerBase):
             for dictionary in message:
                 for txid, trade_info in dictionary.items():
                     self.trades[txid] = trade_info
-                    self.trade_txids.add(txid)
         else:
             print(f"ownTrades: {message}")                    
 

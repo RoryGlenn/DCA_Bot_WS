@@ -7,17 +7,16 @@ import time
 import urllib.parse
 import requests
 
-# from util.globals                        import G
-from pprint                              import pprint
-# from kraken_enums import *
+from util.globals import G
+from pprint import pprint
 from bot_features.kraken_enums import *
 
 
-class KrakenRestAPI(object):
-    def __init__(self, key: str, secret: str) -> None:
+class KrakenRestAPI():
+    def __init__(self, api_key: str, api_secret: str) -> None:
         """ Create an object with authentication information. """
-        self.key           = key
-        self.secret        = secret
+        self.key           = api_key
+        self.secret        = api_secret
         self.uri           = 'https://api.kraken.com'
         self.apiversion    = '0'
         self.session       = requests.Session()
@@ -119,7 +118,7 @@ class KrakenRestAPI(object):
         return self.__query_private(method=Method.LEDGERS, data={Data.ASSET: asset, Data.START: start})
 
     def get_trade_volume(self, pair: str, fee_info: str = True) -> dict:
-        return self.__query_private(method=Method.TRADE_VOLUME, data={Data.FEE_INFO: fee_info, Data.PAIR: pair})
+        return self.__query_private(method=Method.TRADE_VOLUME, data={Data.FEE_INFO: fee_info, Data.SYMBOL_PAIR: pair})
 
     def request_export_report(self, file_name: str = ExportReport.DEFAULT_NAME, format: str = ExportReport.DEFAULT_FORMAT, report: str = ExportReport.REPORT) -> dict:
         return self.__query_private(method=Method.ADD_EXPORT, data={Data.DESCRIPTION: file_name, Data.FORMAT: format, Data.REPORT: report})
@@ -139,16 +138,16 @@ class KrakenRestAPI(object):
 ######################################################################
 
     def add_order(self, ordertype: str, type: str, volume: str, pair: str, price: str) -> dict:
-        return self.__query_private(method=Method.ADD_ORDER, data={Data.ORDER_TYPE: ordertype, Data.TYPE: type, Data.VOLUME: volume, Data.PAIR: pair, Data.PRICE: price})
+        return self.__query_private(method=Method.ADD_ORDER, data={Data.ORDER_TYPE: ordertype, Data.TYPE: type, Data.VOLUME: volume, Data.SYMBOL_PAIR: pair, Data.PRICE: price})
 
     def market_order(self, type: str, volume: str, pair: str) -> dict:
-        return self.__query_private(method=Method.ADD_ORDER, data={Data.ORDER_TYPE: Data.MARKET, Data.TYPE: type, Data.VOLUME: volume, Data.PAIR: pair, Data.PRICE: Data.MARKET_PRICE})
+        return self.__query_private(method=Method.ADD_ORDER, data={Data.ORDER_TYPE: Data.MARKET, Data.TYPE: type, Data.VOLUME: volume, Data.SYMBOL_PAIR: pair, Data.PRICE: Data.MARKET_PRICE})
 
     def limit_order(self, type: str, volume: str, pair: str, price: str) -> dict:
-        return self.__query_private(method=Method.ADD_ORDER, data={Data.ORDER_TYPE: Data.LIMIT, Data.TYPE: type, Data.VOLUME: volume, Data.PAIR: pair, Data.PRICE: price})
+        return self.__query_private(method=Method.ADD_ORDER, data={Data.ORDER_TYPE: Data.LIMIT, Data.TYPE: type, Data.VOLUME: volume, Data.SYMBOL_PAIR: pair, Data.PRICE: price})
 
     def limit_order_conditional_close(self, type: str, volume: str, pair: str, price: str, cc_price: str, cc_volume: str) -> dict:
-        return self.__query_private(method=Method.ADD_ORDER, data={Data.ORDER_TYPE: Data.LIMIT, Data.TYPE: type, Data.VOLUME: volume, Data.PAIR: pair, Data.PRICE: price,
+        return self.__query_private(method=Method.ADD_ORDER, data={Data.ORDER_TYPE: Data.LIMIT, Data.TYPE: type, Data.VOLUME: volume, Data.SYMBOL_PAIR: pair, Data.PRICE: price,
                                                                    Data.CC_PAIR: pair, Data.CC_TYPE: type, Data.CC_ORDER_TYPE: Data.LIMIT, Data.CC_PRICE: cc_price, Data.CC_VOLUME: cc_volume})
 
     def cancel_order(self, txid: str) -> dict:
@@ -229,20 +228,20 @@ class KrakenRestAPI(object):
     def get_asset_info(self) -> dict:
         return self.__query_public(method=Method.ASSETS, data={})
 
-    def get_tradable_asset_pairs(self, pairs: str) -> dict:
-        return self.__query_public(method=Method.ASSET_PAIRS, data={Data.PAIR: pairs})
+    def get_tradable_asset_pairs(self, symbol_pairs: str) -> dict:
+        return self.__query_public(method=Method.ASSET_PAIRS, data={Data.SYMBOL_PAIR: symbol_pairs})
 
     def get_ticker_information(self, pair: str) -> dict:
-        return self.__query_public(method=Method.MARKET_DATA, data={Data.PAIR: pair})
+        return self.__query_public(method=Method.MARKET_DATA, data={Data.SYMBOL_PAIR: pair})
 
     def get_ohlc_data(self, pair: str) -> dict:
-        return self.__query_public(method=Method.OHLC, data={Data.PAIR: pair})
+        return self.__query_public(method=Method.OHLC, data={Data.SYMBOL_PAIR: pair})
 
     def get_order_book(self, pair: str) -> dict:
-        return self.__query_public(method=Method.ORDER_BOOK, data={Data.PAIR: pair})
+        return self.__query_public(method=Method.ORDER_BOOK, data={Data.SYMBOL_PAIR: pair})
 
     def get_recent_trades(self, pair: str) -> dict:
-        return self.__query_public(method=Method.RECENT_TRADES, data={Data.PAIR: pair})
+        return self.__query_public(method=Method.RECENT_TRADES, data={Data.SYMBOL_PAIR: pair})
     
 
 ###################################################################################################

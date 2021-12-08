@@ -3,7 +3,7 @@ import os
 
 from mysql.connector.cursor               import MySQLCursorBuffered
 from mysql.connector.connection           import MySQLConnection, MySQLCursor
-from kraken_enums                         import *
+from bot_features.kraken_enums            import *
 
 
 class SQL():
