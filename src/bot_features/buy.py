@@ -360,42 +360,42 @@ class Buy():
         return self._is_buy(alt_name+StableCoins.USD)
 
     #----------------------------------------------------------------------------------------------------
-    def __sell_all_assets(self) -> None:
-        self.kraken_assets_dict = self.get_asset_info()[Dicts.RESULT]
-        self.asset_pairs_dict   = self.get_all_tradable_asset_pairs()[Dicts.RESULT]
-        account                 = self.get_account_balance()
-        reg_list                = ['ETC', 'ETH', 'LTC', 'MLN', 'REP', 'XBT', 'XDG', 'XLM', 'XMR', 'XRP', 'ZEC']
+    # def __sell_all_assets(self) -> None:
+    #     self.kraken_assets_dict = self.get_asset_info()[Dicts.RESULT]
+    #     self.asset_pairs_dict   = self.get_all_tradable_asset_pairs()[Dicts.RESULT]
+    #     account                 = self.get_account_balance()
+    #     reg_list                = ['ETC', 'ETH', 'LTC', 'MLN', 'REP', 'XBT', 'XDG', 'XLM', 'XMR', 'XRP', 'ZEC']
 
-        if self.has_result(account):
-            account = account[Dicts.RESULT]
-            for symbol, qty in account.items():
-                qty = float(qty)
-                if qty > 0 and symbol not in StableCoins.STABLE_COINS_LIST:
-                    if symbol[-2:] == ".S":
-                        continue
-                    if symbol in reg_list:
-                        symbol = "X" + symbol
+    #     if self.has_result(account):
+    #         account = account[Dicts.RESULT]
+    #         for symbol, qty in account.items():
+    #             qty = float(qty)
+    #             if qty > 0 and symbol not in StableCoins.STABLE_COINS_LIST:
+    #                 if symbol[-2:] == ".S":
+    #                     continue
+    #                 if symbol in reg_list:
+    #                     symbol = "X" + symbol
                         
-                    symbol_pair  = self.get_tradable_asset_pair(symbol)
-                    qty_max_prec = self.get_max_volume_precision(symbol_pair)
-                    qty          = self.round_decimals_down(qty, qty_max_prec)
-                    result       = self.market_order(Trade.SELL, qty, symbol_pair)
+    #                 symbol_pair  = self.get_tradable_asset_pair(symbol)
+    #                 qty_max_prec = self.get_max_volume_precision(symbol_pair)
+    #                 qty          = self.round_decimals_down(qty, qty_max_prec)
+    #                 result       = self.market_order(Trade.SELL, qty, symbol_pair)
                     
-                    print("symbol",      symbol)
-                    print("symbol_pair", symbol_pair)
-                    print(symbol_pair,   result)
-                    print()
-        return
+    #                 print("symbol",      symbol)
+    #                 print("symbol_pair", symbol_pair)
+    #                 print(symbol_pair,   result)
+    #                 print()
+    #     return
 
-    def __nuke_and_restart(self, sell: bool = False) -> None:
-        sql = SQL()
-        sql.drop_all_tables()
-        sql.create_tables()
-        self.cancel_all_orders()
+    # def __nuke_and_restart(self, sell: bool = False) -> None:
+    #     sql = SQL()
+    #     sql.drop_all_tables()
+    #     sql.create_tables()
+    #     self.cancel_all_orders()
         
-        if sell:
-            self.__sell_all_assets()
-        return
+    #     if sell:
+    #         self.__sell_all_assets()
+    #     return
     #----------------------------------------------------------------------------------------------------
 
     def get_elapsed_time(self, start_time: float) -> str:
@@ -410,27 +410,27 @@ class Buy():
 ### BUY_LOOP
 ##################################################################################################################################
 
-    def buy_loop(self) -> None:
-        """The main function for trading coins."""
-        self.__init_loop_variables()
+    # def buy_loop(self) -> None:
+    #     """The main function for trading coins."""
+    #     self.__init_loop_variables()
         
-        while True:
-            start_time = time.time()
+    #     while True:
+    #         start_time = time.time()
             
-            for symbol in Buy_.SET:
-                symbol_pair = self.get_tradable_asset_pair(symbol)
-                self.wait(message=f"Checking {symbol}", timeout=Nap.NORMAL)
+    #         for symbol in Buy_.SET:
+    #             symbol_pair = self.get_tradable_asset_pair(symbol)
+    #             self.wait(message=f"Checking {symbol}", timeout=Nap.NORMAL)
                 
-                self.__update_completed_trades(symbol_pair)
-                self.__update_open_buy_orders(symbol_pair)
+    #             self.__update_completed_trades(symbol_pair)
+    #             self.__update_open_buy_orders(symbol_pair)
                 
-                if self.__is_buy(symbol):
-                    self.__place_limit_orders(symbol, symbol_pair)
+    #             if self.__is_buy(symbol):
+    #                 self.__place_limit_orders(symbol, symbol_pair)
             
-            G.log.print_and_log(message=Color.FG_BRIGHT_BLACK + f"Checked all coins in {self.get_elapsed_time(start_time)}" + Color.ENDC)
-            print()
+    #         G.log.print_and_log(message=Color.FG_BRIGHT_BLACK + f"Checked all coins in {self.get_elapsed_time(start_time)}" + Color.ENDC)
+    #         print()
             
-            self.wait(message=Color.FG_BRIGHT_BLACK + f"Waiting till {self.__get_buy_time()} to buy" + Color.ENDC, timeout=Buy_.TIME_MINUTES*60)
-            G.log.print_and_log(message=Color.BG_GREEN + "Account Value          " + Color.ENDC + f" ${self.__get_account_value()}")
-            G.log.print_and_log(message=Color.BG_GREEN + "Total Profit           " + Color.ENDC + f" ${self.round_decimals_down(self.total_profit, DECIMAL_MAX)}")
-        return
+    #         self.wait(message=Color.FG_BRIGHT_BLACK + f"Waiting till {self.__get_buy_time()} to buy" + Color.ENDC, timeout=Buy_.TIME_MINUTES*60)
+    #         G.log.print_and_log(message=Color.BG_GREEN + "Account Value          " + Color.ENDC + f" ${self.__get_account_value()}")
+    #         G.log.print_and_log(message=Color.BG_GREEN + "Total Profit           " + Color.ENDC + f" ${self.round_decimals_down(self.total_profit, DECIMAL_MAX)}")
+    #     return

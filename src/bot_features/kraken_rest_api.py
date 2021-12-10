@@ -45,6 +45,7 @@ class KrakenRestAPI():
             data = {}
         if headers is None:
             headers = {}
+            
         url           = self.uri + urlpath
         self.response = self.session.post(url, data=data, headers=headers, timeout=timeout)
         if self.response.status_code not in (200, 201, 202):

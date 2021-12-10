@@ -33,7 +33,7 @@ class KrakenBotBase(KrakenRestAPI):
         
         """
         if message != "":
-            G.log.print_and_log(message)
+            G.log.print_and_log(message, G.lock)
 
         # timeout in number of seconds
         if not G.event.wait(timeout):
