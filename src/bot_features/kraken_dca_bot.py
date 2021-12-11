@@ -1,24 +1,24 @@
-import os
-import time
 import datetime
 import sys
+import time
+import pymongo
 
-from threading import Thread
 from pprint import pprint
+from threading import Thread
 
-from bot_features.buy import Buy
-from bot_features.sell import Sell
-from bot_features.kraken_bot_base import KrakenBotBase
-from bot_features.kraken_enums import *
-from bot_features.tradingview import TradingView
-
+from socket_handlers.balances_socket_handler import BalancesSocketHandler
 from socket_handlers.open_orders_socket_handler import OpenOrdersSocketHandler
 from socket_handlers.own_trades_socket_handler import OwnTradesSocketHandler
-from socket_handlers.balances_socket_handler import BalancesSocketHandler
-from util.colors import Color
 
+from util.colors import Color
 from util.config_parser import Config
 from util.globals import G
+
+from bot_features.buy import Buy
+from bot_features.kraken_bot_base import KrakenBotBase
+from bot_features.kraken_enums import *
+from bot_features.sell import Sell
+from bot_features.tradingview import TradingView
 
 
 def get_elapsed_time(start_time: float) -> str:
@@ -44,8 +44,11 @@ class KrakenDCABot(Config, KrakenBotBase, TradingView, Buy):
         try:
             ws_token = self.get_web_sockets_token()["result"]["token"]
         except Exception as e:
-            print(e)
+            G.log.print_and_log(e=e, error_type=type(e).__name__, filename=__file__, tb_lineno=e.__traceback__.tb_lineno)
             sys.exit(0)
+
+        # db = pymongo.MongoClient()["DCA_Bot"]
+        # db["Orders"].collection.insert_one({"order1": "buy stuff"})
 
         sh_open_orders = OpenOrdersSocketHandler(ws_token)
         sh_own_trades  = OwnTradesSocketHandler(ws_token)
@@ -71,7 +74,10 @@ class KrakenDCABot(Config, KrakenBotBase, TradingView, Buy):
                     
                     if self.is_buy(symbol_pair, self.TRADINGVIEW_TIME_INTERVALS):
                         buy_list.append(symbol_pair)
-                   
+
+                for symbol_pair in buy_list:
+                    print(symbol_pair)
+                    
                 G.log.print_and_log(f"Main thread: buy list {buy_list}", G.lock)
             
             G.log.print_and_log(Color.FG_BRIGHT_BLACK + f"Main thread: checked all coins in {get_elapsed_time(start_time)}" + Color.ENDC, G.lock)

@@ -3,10 +3,5 @@ build
 logs
 __pycache__
 
-
-*.vscode
 *.pyc
-*.code-workspace
-*.json
 *.spec
-*lnk

@@ -20,7 +20,7 @@ from util.colors                            import Color
 from bot_features.dca                       import DCA
 from bot_features.sell                      import Sell
 from bot_features.tradingview               import TradingView
-from bot_features.my_sql                             import SQL
+from bot_features.my_sql                    import SQL
 
 
 class Buy():
@@ -207,7 +207,6 @@ class Buy():
                 # If the symbol is in the database then we have bought it before
                 self.dca = DCA(symbol_pair, symbol, 0, 0)
             else:
-                return # THIS IS ONLY TO PREVENT THE CREATION OF ANY NEW TRADE!!! REMOVE WHEN DESIRED!!!
                 base_order_qty = self.get_order_min(symbol_pair)
                 
                 # If symbol_pair exists in database then the base order has already been placed!
