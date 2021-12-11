@@ -28,7 +28,6 @@ def get_elapsed_time(start_time: float) -> str:
     seconds      = elapsed_time % 60
     return f"{minutes} minutes {seconds} seconds"
 
-
 def get_buy_time() -> str:
     """Returns the next time to buy as specified in the config file."""
     return ( datetime.timedelta(minutes=Buy_.TIME_MINUTES) + datetime.datetime.now() ).strftime("%H:%M:%S")
@@ -55,6 +54,7 @@ class KrakenDCABot(Config, KrakenBotBase, TradingView, Buy):
         Thread(target=sh_open_orders.ws_thread).start()
         Thread(target=sh_own_trades.ws_thread).start()
         Thread(target=sh_balances.ws_thread).start()
+        
         start_time = 0
         
         while True:
@@ -75,5 +75,5 @@ class KrakenDCABot(Config, KrakenBotBase, TradingView, Buy):
                 G.log.print_and_log(f"Main thread: buy list {buy_list}", G.lock)
             
             G.log.print_and_log(Color.FG_BRIGHT_BLACK + f"Main thread: checked all coins in {get_elapsed_time(start_time)}" + Color.ENDC, G.lock)
-            self.wait(message=Color.FG_BRIGHT_BLACK + f"Main thread: waiting till {get_buy_time()} to buy" + Color.ENDC, timeout=60)
+            self.wait(message=Color.FG_BRIGHT_BLACK   + f"Main thread: waiting till {get_buy_time()} to buy" + Color.ENDC, timeout=60)
         return
