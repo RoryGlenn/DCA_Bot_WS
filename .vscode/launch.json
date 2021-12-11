@@ -1,0 +1,29 @@
+{
+    // https://code.visualstudio.com/docs/python/settings-reference#_general-settings
+
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: Current File",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/main.py",
+      "console": "integratedTerminal",
+      
+      //
+      "python.pythonPath": "/venv/Scripts/python.exe",
+      
+      // Path to the pipenv executable to use for activation.
+      "pipenv": "venv/Scripts/pip.exe",                  
+      
+      // virtual env path
+      "python.venvPath": "venv/Scripts/activate",
+
+    // Indicates whether to automatically activate the environment
+    // you select using the Python: Select Interpreter command
+    //  when a new terminal is created
+      "terminal.activateEnvironment": true,
+      "justMyCode": true
+    }
+  ]
+}
