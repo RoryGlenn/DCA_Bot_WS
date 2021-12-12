@@ -1,7 +1,7 @@
 import datetime
 import sys
 import time
-import pymongo
+# import pymongo
 
 from pprint import pprint
 from threading import Thread

@@ -24,7 +24,7 @@ def get_keys() -> str:
     sys.exit(0)
 
 if __name__ == "__main__":
-    # os.system("cls")
+    os.system("cls")
     os.system("color")
     
     G.log.directory_create()

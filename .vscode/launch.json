@@ -11,18 +11,17 @@
       "console": "integratedTerminal",
       
       //
-      "python.pythonPath": "/venv/Scripts/python.exe",
+      "python.pythonPath": "C:/Python310/python.exe",
       
-      // Path to the pipenv executable to use for activation.
-      "pipenv": "venv/Scripts/pip.exe",                  
       
       // virtual env path
-      "python.venvPath": "venv/Scripts/activate",
+      "python.venvPath": "venv",
 
     // Indicates whether to automatically activate the environment
     // you select using the Python: Select Interpreter command
     //  when a new terminal is created
-      "terminal.activateEnvironment": true,
+      // "terminal.activateEnvironment": false,
+
       "justMyCode": true
     }
   ]
