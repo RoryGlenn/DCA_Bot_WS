@@ -1,16 +1,17 @@
 from enum import auto
 
-
-KRAKEN_API_KEY    = ""
-KRAKEN_SECRET_KEY = ""
-
 # DCA
 DECIMAL_MAX = 8
-
 URL_ASSET_PAIRS   = 'https://api.kraken.com/0/public/AssetPairs'
-
 CONFIG_JSON       = 'src/json/config.json'
 
+
+
+class DB:
+    DATABASE_NAME = "DCA_Bot_WS"
+    COLLECTION_OO = "open_orders"
+    COLLECTION_OT = "own_trades"
+    COLLECTION_B = "balances"
 
 class API_Keys:
     KEY = ""

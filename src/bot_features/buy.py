@@ -18,9 +18,9 @@ from bot_features.kraken_bot_base import KrakenBotBase
 from util.globals                           import G
 from util.colors                            import Color
 from bot_features.dca                       import DCA
-from bot_features.sell                      import Sell
+# from bot_features.sell                      import Sell
 from bot_features.tradingview               import TradingView
-from bot_features.my_sql                    import SQL
+#from bot_features.my_sql                    import SQL
 
 
 class Buy():
@@ -56,7 +56,7 @@ class Buy():
     def __has_order_filled(self, symbol_pair: str) -> bool:
         """Check if the order has filled."""
         try:
-            sql                       = SQL()
+            #sql                       = SQL()
             filled_trades_order_txids = dict()
             
             result_set = sql.con_query(f"SELECT symbol_pair FROM safety_orders WHERE symbol_pair='{symbol_pair}'")

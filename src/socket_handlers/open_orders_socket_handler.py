@@ -1,4 +1,5 @@
 import json
+import pymongo
 
 from pprint                              import pprint
 from websocket._app                      import WebSocketApp
@@ -11,6 +12,8 @@ class OpenOrdersSocketHandler(SocketHandlerBase):
     def __init__(self, api_token: str) -> None:
         self.api_token:   str = api_token
         self.open_orders: dict = { }
+        self.db = pymongo.MongoClient()[DB.DATABASE_NAME]
+        self.collection = self.db[DB.COLLECTION_OO]
         return
 
     def ws_message(self, ws: WebSocketApp, message: str) -> None:
@@ -21,9 +24,15 @@ class OpenOrdersSocketHandler(SocketHandlerBase):
                 for txid, order_info in open_orders.items():
                     if order_info[Status.STATUS] == Status.PENDING or order_info[Status.STATUS] == Status.OPEN:
                         self.open_orders[txid] = order_info
+                        
+                        # if its not in the database, add it
+                        if self.collection.count_documents({txid: order_info}) == 0:
+                            self.collection.insert_one({txid: order_info})
+
                         G.log.pprint_and_log(f"openOrders: open order", order_info, G.lock)
                     if order_info[Status.STATUS] == Status.CANCELED:
                         self.open_orders.pop(txid)
+                        self.collection.delete_one({txid: order_info})
                         G.log.pprint_and_log(f"openOrders: canceled order", message, G.lock)
         else:           
             G.log.pprint_and_log("openOrders:", message, G.lock)

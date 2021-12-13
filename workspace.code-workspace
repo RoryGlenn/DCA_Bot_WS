@@ -1,7 +1,22 @@
 {
-    "folders": [
-        {
-            "path": "."
-        }
-    ]
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"python.pythonPath": "venv/Scripts/python.exe"
+	},
+	"launch": {
+		"version": "0.2.0",
+		"configurations": [
+			{
+				"name": "Python: Main.py",
+				"type": "python",
+				"request": "launch",
+				"program": "src/main.py",
+				"console": "integratedTerminal"
+			}
+		]
+	}
 }

@@ -5,7 +5,7 @@ from tradingview_ta import TA_Handler
 
 from bot_features.kraken_enums import *
 from util.globals              import G
-from bot_features.my_sql       import SQL
+# from bot_features.my_sql       import SQL
 
 
 class TradingView:

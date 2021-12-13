@@ -1,9 +1,9 @@
 import datetime
 import sys
 import time
-# import pymongo
 
 from pprint import pprint
+from pprint import PrettyPrinter
 from threading import Thread
 
 from socket_handlers.balances_socket_handler import BalancesSocketHandler
@@ -17,8 +17,8 @@ from util.globals import G
 from bot_features.buy import Buy
 from bot_features.kraken_bot_base import KrakenBotBase
 from bot_features.kraken_enums import *
-from bot_features.sell import Sell
 from bot_features.tradingview import TradingView
+from bot_features.dca import DCA
 
 
 def get_elapsed_time(start_time: float) -> str:
@@ -37,9 +37,23 @@ class KrakenDCABot(Config, KrakenBotBase, TradingView, Buy):
     def __init__(self, api_key, api_secret) -> None:
         super().__init__()
         super(KrakenBotBase, self).__init__(api_key, api_secret)
-        self.start_time: float = 0.0
         return
     
+    def get_buy_dict(self) -> dict:
+        """Returns dictionary with (symbol: symbol_pair) relationship"""
+        buy_dict = dict()
+        
+        for symbol in self.BUY_COINS:
+            alt_name    = self.get_alt_name(symbol) 
+            symbol_pair = alt_name + StableCoins.USD
+            
+            G.log.print_and_log(f"Main thread: checking {symbol_pair}", G.lock)
+            
+            if self.is_buy(symbol_pair, self.TRADINGVIEW_TIME_INTERVALS):
+                buy_dict[symbol] = symbol_pair
+        return buy_dict
+
+
     def start_trade_loop(self) -> None:
         try:
             ws_token = self.get_web_sockets_token()["result"]["token"]
@@ -47,39 +61,28 @@ class KrakenDCABot(Config, KrakenBotBase, TradingView, Buy):
             G.log.print_and_log(e=e, error_type=type(e).__name__, filename=__file__, tb_lineno=e.__traceback__.tb_lineno)
             sys.exit(0)
 
-        # db = pymongo.MongoClient()["DCA_Bot"]
-        # db["Orders"].collection.insert_one({"order1": "buy stuff"})
-
         sh_open_orders = OpenOrdersSocketHandler(ws_token)
         sh_own_trades  = OwnTradesSocketHandler(ws_token)
         sh_balances    = BalancesSocketHandler(ws_token)
         
-        Thread(target=sh_open_orders.ws_thread).start()
-        Thread(target=sh_own_trades.ws_thread).start()
+        # Thread(target=sh_open_orders.ws_thread).start()
+        # Thread(target=sh_own_trades.ws_thread).start()
         Thread(target=sh_balances.ws_thread).start()
-        
-        start_time = 0
         
         while True:
             start_time = time.time()
+            buy_dict = []
             
             if self.has_finished_first_iteration:
-                buy_list = []
-                
-                for symbol in self.BUY_COINS:
-                    alt_name    = self.get_alt_name(symbol) 
-                    symbol_pair = alt_name + StableCoins.USD
-                    
-                    G.log.print_and_log(f"Main thread: checking {symbol}", G.lock)
-                    
-                    if self.is_buy(symbol_pair, self.TRADINGVIEW_TIME_INTERVALS):
-                        buy_list.append(symbol_pair)
+                buy_dict = self.get_buy_dict()
+                G.log.print_and_log(f"Main thread: buy list {PrettyPrinter().pformat(buy_dict)}", G.lock)
 
-                for symbol_pair in buy_list:
-                    print(symbol_pair)
-                    
-                G.log.print_and_log(f"Main thread: buy list {buy_list}", G.lock)
-            
+            for symbol, symbol_pair in buy_dict.items():
+                # query the db to see if we already have a trade open
+
+                # if not, place a base order
+                print(symbol, symbol_pair)
+
             G.log.print_and_log(Color.FG_BRIGHT_BLACK + f"Main thread: checked all coins in {get_elapsed_time(start_time)}" + Color.ENDC, G.lock)
             self.wait(message=Color.FG_BRIGHT_BLACK   + f"Main thread: waiting till {get_buy_time()} to buy" + Color.ENDC, timeout=60)
         return

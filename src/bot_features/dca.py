@@ -1,14 +1,12 @@
 """dca.py - DCA is a dollar cost averaging technique. 
 This bot uses DCA in order lower the average buy price for a purchased coin."""
 
-# from bot_features.low_level.kraken_enums import *
-# from my_sql.sql                          import SQL
 
 from bot_features.kraken_enums import *
-from bot_features.my_sql import SQL
+
 
 class DCA(DCA_):
-    def __init__(self, symbol_pair: str, symbol: str, order_min: float, bid_price: float):
+    def __init__(self, symbol: str, symbol_pair: str, order_min: float, bid_price: float):
         self.percentage_deviation_levels:       list         = [ ]
         self.price_levels:                      list         = [ ]
         self.quantities:                        list         = [ ]
@@ -24,9 +22,9 @@ class DCA(DCA_):
         self.bid_price:                         float        = bid_price
         self.order_min:                         float        = order_min
         self.safety_orders:                     dict         = { }
-        self.__start()
+        # self.start()
 
-    def __start(self) -> None:
+    def start(self) -> None:
         """Essentially the main function for DCA class.
 
         1. If the .xlsx file associated with the symbol passed in exists, the bot has previously
@@ -216,35 +214,35 @@ class DCA(DCA_):
         """Set the Dataframe with the values calculated in previous functions."""
         order_numbers = [i for i in range(1, DCA_.SAFETY_ORDERS_MAX+1)]
 
-        sql = SQL()
+        # sql = SQL()
         
-        for i in range(DCA_.SAFETY_ORDERS_MAX):
-            sql.con_update(f"""INSERT INTO safety_orders {sql.so_columns} VALUES (
-               '{self.symbol_pair}', 
-               '{self.symbol}', 
-                {order_numbers[i]}, 
-                {self.percentage_deviation_levels[i]},
-                {self.quantities[i]},
-                {self.total_quantities[i]},
-                {self.price_levels[i]},
-                {self.average_price_levels[i]}, 
-                {self.required_price_levels[i]}, 
-                {self.required_change_percentage_levels[i]},
-                {self.profit_levels[i]},
-                {self.cost_levels[i]},
-                {self.total_cost_levels[i]},
-                false,
-                so_no)""")
+        # for i in range(DCA_.SAFETY_ORDERS_MAX):
+        #     sql.con_update(f"""INSERT INTO safety_orders {sql.so_columns} VALUES (
+        #        '{self.symbol_pair}', 
+        #        '{self.symbol}', 
+        #         {order_numbers[i]}, 
+        #         {self.percentage_deviation_levels[i]},
+        #         {self.quantities[i]},
+        #         {self.total_quantities[i]},
+        #         {self.price_levels[i]},
+        #         {self.average_price_levels[i]}, 
+        #         {self.required_price_levels[i]}, 
+        #         {self.required_change_percentage_levels[i]},
+        #         {self.profit_levels[i]},
+        #         {self.cost_levels[i]},
+        #         {self.total_cost_levels[i]},
+        #         false,
+        #         so_no)""")
         return
     
     def __set_buy_orders(self) -> None:
         """Read rows in the .xlsx file into memory."""
-        sql = SQL()
+        # sql = SQL()
 
-        quantities = sql.con_get_quantities(self.symbol_pair)
-        prices     = sql.con_get_prices(self.symbol_pair)
-        iterations = len(prices) if len(prices) < DCA_.SAFETY_ORDERS_ACTIVE_MAX else DCA_.SAFETY_ORDERS_ACTIVE_MAX
+        # quantities = sql.con_get_quantities(self.symbol_pair)
+        # prices     = sql.con_get_prices(self.symbol_pair)
+        # iterations = len(prices) if len(prices) < DCA_.SAFETY_ORDERS_ACTIVE_MAX else DCA_.SAFETY_ORDERS_ACTIVE_MAX
 
-        for i in range(iterations):
-            self.safety_orders[prices[i]] = quantities[i]
+        # for i in range(iterations):
+        #     self.safety_orders[prices[i]] = quantities[i]
         return
