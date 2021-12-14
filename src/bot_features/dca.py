@@ -6,7 +6,7 @@ from bot_features.kraken_enums import *
 
 
 class DCA(DCA_):
-    def __init__(self, symbol: str, symbol_pair: str, order_min: float, bid_price: float):
+    def __init__(self, symbol: str, symbol_pair: str, order_min: float, entry_price: float):
         self.percentage_deviation_levels:       list         = [ ]
         self.price_levels:                      list         = [ ]
         self.quantities:                        list         = [ ]
@@ -19,7 +19,7 @@ class DCA(DCA_):
         self.total_cost_levels:                 list         = [ ]
         self.symbol:                            str          = symbol
         self.symbol_pair:                       str          = symbol_pair
-        self.bid_price:                         float        = bid_price
+        self.entry_price:                       float        = entry_price
         self.order_min:                         float        = order_min
         self.safety_orders:                     dict         = { }
         # self.start()
@@ -114,7 +114,7 @@ class DCA(DCA_):
         # safety orders
         for i in range(DCA_.SAFETY_ORDERS_MAX):
             level = self.percentage_deviation_levels[i] / 100
-            price = self.bid_price - (self.bid_price * level)
+            price = self.entry_price - (self.entry_price * level)
             self.price_levels.append(round(price, DECIMAL_MAX))
         return
 
@@ -143,7 +143,7 @@ class DCA(DCA_):
     
     def __set_weighted_average_price_levels(self) -> None:
         """Sets the weighted average price level for each safety order number."""
-        base_order_qty = self.bid_price * self.order_min
+        base_order_qty = self.entry_price * self.order_min
         
         for i in range(DCA_.SAFETY_ORDERS_MAX):
             numerator = 0
@@ -202,7 +202,7 @@ class DCA(DCA_):
         """Sets the total cost (USD) for each safety order row.
         This includes the prev order costs. """
 
-        total_cost = self.bid_price * self.order_min
+        total_cost = self.entry_price * self.order_min
         
         for i in range(DCA_.SAFETY_ORDERS_MAX):
             total_cost += self.price_levels[i] * self.quantities[i]

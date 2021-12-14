@@ -14,25 +14,28 @@ class OwnTradesSocketHandler(SocketHandlerBase):
         self.trades = dict()
         self.db = pymongo.MongoClient()[DB.DATABASE_NAME]
         self.collection = self.db[DB.COLLECTION_OT]
+        self.count: int = 0
         return
 
     def ws_message(self, ws: WebSocketApp, message: str) -> None:
         message = json.loads(message)
         
-        if isinstance(message, list):
-            message = message[0]
-            for dictionary in message:
-                for txid, trade_info in dictionary.items():
-                    self.trades[txid] = trade_info
+        if self.count > 3: # only get new trades
+            if isinstance(message, list):
+                message = message[0]
+                for dictionary in message:
+                    for txid, trade_info in dictionary.items():
+                        self.trades[txid] = trade_info
 
-                    # if its not in the database, add it
-                    if self.collection.count_documents({txid: trade_info}) == 0:
-                        self.collection.insert_one({txid: trade_info})
+                        # if its not in the database, add it
+                        if self.collection.count_documents({txid: trade_info}) == 0:
+                            self.collection.insert_one({txid: trade_info})
 
-                    G.log.pprint_and_log(f"ownTrades: trade", {txid: trade_info}, G.lock)
-        else:
-            if "heartbeat" not in message.values():
-                G.log.pprint_and_log(f"ownTrades: ", message, G.lock)
+                        G.log.pprint_and_log(f"ownTrades: trade", {txid: trade_info}, G.lock)
+            else:
+                if "heartbeat" not in message.values():
+                    G.log.pprint_and_log(f"ownTrades: ", message, G.lock)
+        self.count += 1
         return
         
     def ws_open(self, ws: WebSocketApp) -> None:

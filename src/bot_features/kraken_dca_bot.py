@@ -11,7 +11,7 @@ from socket_handlers.open_orders_socket_handler import OpenOrdersSocketHandler
 from socket_handlers.own_trades_socket_handler import OwnTradesSocketHandler
 
 from util.colors import Color
-from util.config_parser import Config
+from util.config import Config
 from util.globals import G
 
 from bot_features.buy import Buy
@@ -65,9 +65,9 @@ class KrakenDCABot(Config, KrakenBotBase, TradingView, Buy):
         sh_own_trades  = OwnTradesSocketHandler(ws_token)
         sh_balances    = BalancesSocketHandler(ws_token)
         
-        # Thread(target=sh_open_orders.ws_thread).start()
-        # Thread(target=sh_own_trades.ws_thread).start()
-        # Thread(target=sh_balances.ws_thread).start()
+        Thread(target=sh_open_orders.ws_thread).start()
+        Thread(target=sh_own_trades.ws_thread).start()
+        Thread(target=sh_balances.ws_thread).start()
         
         while True:
             start_time = time.time()
@@ -78,7 +78,13 @@ class KrakenDCABot(Config, KrakenBotBase, TradingView, Buy):
             for symbol, symbol_pair in buy_dict.items():
                 if symbol_pair not in sh_open_orders.open_symbol_pairs:
                     # BUY
-                    print(symbol, symbol_pair)
+                    print(symbol_pair)
+                    base_order_min = self.BASE_ORDER_SIZE
+                    safety_order_size = self.SAFETY_ORDER_SIZE
+
+                    # if base_order_min == 0, get the min for that coin instead
+                    # if safety_order_size == 0, get the min for that coin instead
+                    # dca = DCA(symbol, symbol_pair, base_order_min, base_order_entry_price)
 
             G.log.print_and_log(Color.FG_BRIGHT_BLACK + f"Main thread: checked all coins in {get_elapsed_time(start_time)}" + Color.ENDC, G.lock)
             self.wait(message=Color.FG_BRIGHT_BLACK   + f"Main thread: waiting till {get_buy_time()} to buy" + Color.ENDC, timeout=60)

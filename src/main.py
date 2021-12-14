@@ -7,10 +7,9 @@ import json
 import os
 import sys
 
-from threading import Thread
 from bot_features.kraken_dca_bot import KrakenDCABot
-from bot_features.kraken_enums import *
-from util.globals import G
+from bot_features.kraken_enums   import *
+from util.globals                import G
 
 
 def get_keys() -> str:

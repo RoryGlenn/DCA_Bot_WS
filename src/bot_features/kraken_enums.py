@@ -319,7 +319,9 @@ class ConfigKeys:
     DCA_SAFETY_ORDER_VOLUME_SCALE = "dca_safety_order_volume_scale"
     DCA_SAFETY_ORDER_STEP_SCALE = "dca_safety_order_step_scale"
     DCA_SAFETY_ORDER_PRICE_DEVIATION = "dca_safety_order_price_deviation"
-    
+
+    DCA_ALL_OR_NOTHING = "dca_all_or_nothing"
+
     TIME_INTERVALS = "time_intervals"
     
   

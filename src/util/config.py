@@ -25,6 +25,8 @@ class Config():
         self.SAFETY_ORDERS_ACTIVE_MAX:     int   = 0
         self.SAFETY_ORDER_STEP_SCALE:      float = 0.0
         self.SAFETY_ORDER_PRICE_DEVIATION: float = 0.0
+        self.BASE_ORDER_SIZE:              float = 0.0
+        self.SAFETY_ORDER_SIZE:            float = 0.0
 
         # coins to buy.
         self.BUY_COINS:                    list   = []
@@ -60,7 +62,10 @@ class Config():
                     self.SAFETY_ORDERS_ACTIVE_MAX       = int  (config[ConfigKeys.DCA_SAFETY_ORDERS_ACTIVE_MAX])
                     self.SAFETY_ORDER_STEP_SCALE        = float(config[ConfigKeys.DCA_SAFETY_ORDER_STEP_SCALE])
                     self.SAFETY_ORDER_PRICE_DEVIATION   = float(config[ConfigKeys.DCA_SAFETY_ORDER_PRICE_DEVIATION])
-                    
+                    self.SAFETY_ORDER_SIZE              = float(config[ConfigKeys.DCA_SAFETY_ORDER_SIZE])
+                    self.BASE_ORDER_SIZE                = float(config[ConfigKeys.DCA_BASE_ORDER_SIZE])
+                    self.ALL_OR_NOTHING                 = bool(config[ConfigKeys.DCA_ALL_OR_NOTHING])
+
                     for interval in config[ConfigKeys.TIME_INTERVALS]:
                         if interval in TimeIntervals.ALL_LIST:
                             self.TRADINGVIEW_TIME_INTERVALS.add(interval)
