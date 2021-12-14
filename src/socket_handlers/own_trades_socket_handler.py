@@ -29,9 +29,10 @@ class OwnTradesSocketHandler(SocketHandlerBase):
                     if self.collection.count_documents({txid: trade_info}) == 0:
                         self.collection.insert_one({txid: trade_info})
 
-                    G.log.pprint_and_log(f"ownTrades: trade", message, G.lock)
+                    G.log.pprint_and_log(f"ownTrades: trade", {txid: trade_info}, G.lock)
         else:
-            G.log.pprint_and_log(f"ownTrades: ", message, G.lock)
+            if "heartbeat" not in message.values():
+                G.log.pprint_and_log(f"ownTrades: ", message, G.lock)
         return
         
     def ws_open(self, ws: WebSocketApp) -> None:

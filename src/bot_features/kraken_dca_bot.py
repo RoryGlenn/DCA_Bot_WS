@@ -67,21 +67,18 @@ class KrakenDCABot(Config, KrakenBotBase, TradingView, Buy):
         
         # Thread(target=sh_open_orders.ws_thread).start()
         # Thread(target=sh_own_trades.ws_thread).start()
-        Thread(target=sh_balances.ws_thread).start()
+        # Thread(target=sh_balances.ws_thread).start()
         
         while True:
             start_time = time.time()
-            buy_dict = []
-            
-            if self.has_finished_first_iteration:
-                buy_dict = self.get_buy_dict()
-                G.log.print_and_log(f"Main thread: buy list {PrettyPrinter().pformat(buy_dict)}", G.lock)
+            buy_dict = self.get_buy_dict()
+            buy_list = [symbol_pair for (symbol, symbol_pair) in buy_dict.items()]
+            G.log.print_and_log(f"Main thread: buy list {PrettyPrinter().pformat(buy_list)}", G.lock)
 
             for symbol, symbol_pair in buy_dict.items():
-                # query the db to see if we already have a trade open
-
-                # if not, place a base order
-                print(symbol, symbol_pair)
+                if symbol_pair not in sh_open_orders.open_symbol_pairs:
+                    # BUY
+                    print(symbol, symbol_pair)
 
             G.log.print_and_log(Color.FG_BRIGHT_BLACK + f"Main thread: checked all coins in {get_elapsed_time(start_time)}" + Color.ENDC, G.lock)
             self.wait(message=Color.FG_BRIGHT_BLACK   + f"Main thread: waiting till {get_buy_time()} to buy" + Color.ENDC, timeout=60)

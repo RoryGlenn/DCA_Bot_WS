@@ -32,5 +32,5 @@ if __name__ == "__main__":
     
     api_key, api_secret = get_keys()
     kraken_dca_bot = KrakenDCABot(api_key, api_secret)
-    Thread(target=kraken_dca_bot.set_values_loop, daemon=True).start()
+    kraken_dca_bot.set_values()
     kraken_dca_bot.start_trade_loop()

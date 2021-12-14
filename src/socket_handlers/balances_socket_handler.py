@@ -23,10 +23,6 @@ class BalancesSocketHandler(SocketHandlerBase):
                 for symbol, quantity in message["balances"].items():
                     if quantity > 0:
                         G.log.print_and_log(f"balances:  {symbol} {quantity}", G.lock)
-            else:
-                G.log.pprint_and_log(f"balances:  ", message, G.lock)
-        else:
-            G.log.pprint_and_log(f"balances:  ", message, G.lock)
         return
             
     def ws_open(self, ws: WebSocketApp) -> None:
