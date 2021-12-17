@@ -53,7 +53,6 @@ class KrakenDCABot(Config, KrakenBotBase, TradingView, Buy):
                 buy_dict[symbol] = symbol_pair
         return buy_dict
 
-
     def start_trade_loop(self) -> None:
         try:
             ws_token = self.get_web_sockets_token()["result"]["token"]

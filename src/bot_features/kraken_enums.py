@@ -1,10 +1,9 @@
 from enum import auto
 
 # DCA
-DECIMAL_MAX = 8
-URL_ASSET_PAIRS   = 'https://api.kraken.com/0/public/AssetPairs'
-CONFIG_JSON       = 'src/json/config.json'
-
+DECIMAL_MAX     = 8
+URL_ASSET_PAIRS = 'https://api.kraken.com/0/public/AssetPairs'
+CONFIG_JSON     = 'src/json/config.json'
 
 
 class DB:
@@ -23,7 +22,6 @@ class Status:
     PENDING  = "pending"
     CANCELED = "canceled"
 
-
 class WS_API:
     API_DOMAIN_PUBLIC  = "wss://ws.kraken.com/"
     API_DOMAIN_PRIVATE = "wss://ws-auth.kraken.com/"
@@ -32,7 +30,6 @@ class WS_API:
     API_PUBLIC         = {"trade", "book", "ticker", "spread", "ohlc"}
     API_PRIVATE        = {"openOrders", "ownTrades", "balances"}
     API_TRADING        = {"addOrder", "cancelOrder", "cancelAll", "cancelAllOrdersAfter"}
-
 
 class Buy_:
     BUY          = auto()
@@ -47,7 +44,6 @@ class TVData:
     RECOMMENDATION = "RECOMMENDATION"
     BUY            = "BUY"
     STRONG_BUY     = "STRONG_BUY"
-
 
 class DCA_:
     TARGET_PROFIT_PERCENT        = auto()
@@ -101,8 +97,6 @@ class Dicts:
     NUM_TRADES = "t"
     LOW = "l"
     HIGH = "h"
-    # OPEN = "o"
-
 
 class StableCoins:
     STABLE_COINS_LIST = ['ZUSD', 'USDT', 'BUSD', 'PAX', 'USDC', 'USD', 'TUSD', 'DAI', 'UST', 'HUSD', 'USDN',
@@ -110,15 +104,6 @@ class StableCoins:
     ZUSD              = "ZUSD"
     USD               = "USD"
     USDT              = "USDT"
-
-
-class Coins:
-    BTC = "XXBT"
-    ETH = "XETH"
-    LTC = "XLTC"
-    XLM = "XLM"
-    DOGE = "XXDG"
-
 
 class Trade:
     ZUSD = "ZUSD"
@@ -237,7 +222,6 @@ class Data:
 class Nap:
     NORMAL = 1
     LONG = 2
-
 
 class FileMode:
 

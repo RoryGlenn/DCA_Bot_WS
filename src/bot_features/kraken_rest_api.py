@@ -7,8 +7,8 @@ import time
 import urllib.parse
 import requests
 
-from util.globals import G
-from pprint import pprint
+from util.globals              import G
+from pprint                    import pprint
 from bot_features.kraken_enums import *
 
 

@@ -1,5 +1,3 @@
-import websocket
-
 from websocket._app import WebSocketApp
 
 
@@ -17,7 +15,7 @@ class SocketHandlerBase:
         return
 
     def ws_thread(self, *args) -> None:
-        ws = websocket.WebSocketApp(
+        ws = WebSocketApp(
             url="wss://ws-auth.kraken.com/",
             on_open=self.ws_open,
             on_message=self.ws_message,
