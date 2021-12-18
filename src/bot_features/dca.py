@@ -1,12 +1,13 @@
 """dca.py - DCA is a dollar cost averaging technique. 
 This bot uses DCA in order lower the average buy price for a purchased coin."""
 
+import pymongo
 
 from bot_features.kraken_enums import *
 
 
 class DCA(DCA_):
-    def __init__(self, symbol: str, symbol_pair: str, order_min: float, entry_price: float):
+    def __init__(self, symbol: str, symbol_pair: str, base_order_size: float, safety_order_size: float, entry_price: float):
         self.percentage_deviation_levels:       list         = [ ]
         self.price_levels:                      list         = [ ]
         self.quantities:                        list         = [ ]
@@ -20,8 +21,13 @@ class DCA(DCA_):
         self.symbol:                            str          = symbol
         self.symbol_pair:                       str          = symbol_pair
         self.entry_price:                       float        = entry_price
-        self.order_min:                         float        = order_min
+        self.base_order_size:                   float        = base_order_size
+        self.order_min:                         float        = safety_order_size
         self.safety_orders:                     dict         = { }
+
+        self.db            = pymongo.MongoClient()[DB.DATABASE_NAME]
+        self.collection_os = self.db[DB.COLLECTION_OS]
+
         # self.start()
 
     def start(self) -> None:
@@ -61,13 +67,34 @@ class DCA(DCA_):
 
     def __has_safety_order_table(self) -> bool:
         """Returns True if safety orders exists."""
-        sql = SQL()
-        result_set = sql.con_query(f"SELECT * FROM safety_orders WHERE symbol_pair='{self.symbol_pair}'")
+        # sql = SQL()
+        # result_set = sql.con_query(f"SELECT * FROM safety_orders WHERE symbol_pair='{self.symbol_pair}'")
 
-        if result_set.rowcount <= 0:
+        """
+        XBTUSD:
+                {
+                    symbol:                           symbol, 
+                    symbol_pair:                      symbol_pair, 
+                    order_number:                     order_number[i], 
+                    percentage_deviation_level:       percentage_deviation_levels[i],
+                    quantity:                         quantities[i],
+                    total_quantity:                   total_quantities[i],
+                    price_level:                      price_levels[i],
+                    average_price_level:              average_price_levels[i], 
+                    required_price_level:             required_price_levels[i], 
+                    required_change_percentage_level: required_change_percentage_levels[i],
+                    profit_level:                     profit_levels[i],
+                    cost_level:                       cost_levels[i],
+                    total_cost_levels:                total_cost_levels[i],
+                    order_placed:                     False
+                }
+    
+        """
+
+        if self.collection_os.count_documents({"symbol_pair": self.symbol_pair}) == 0:
             return False
+        return True
 
-        return not len(result_set.fetchall()) <= 0
 
     def __set_deviation_percentage_levels(self) -> None:
         """

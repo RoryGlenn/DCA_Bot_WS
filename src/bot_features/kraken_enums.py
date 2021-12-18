@@ -11,6 +11,8 @@ class DB:
     COLLECTION_OO = "open_orders"
     COLLECTION_OT = "own_trades"
     COLLECTION_B = "balances"
+    COLLECTION_AO = "addOrder"
+    COLLECTION_OS = "open_symbols"
 
 class API_Keys:
     KEY = ""

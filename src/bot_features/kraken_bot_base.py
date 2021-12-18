@@ -20,7 +20,7 @@ class KrakenBotBase(KrakenRestAPI):
         
         """
         super().__init__(api_key, api_secret)
-        self.asset_pairs_dict: dict = {}
+        # self.asset_pairs_dict: dict = {}
         return
        
     def get_current_time(self) -> str:
@@ -122,7 +122,7 @@ class KrakenBotBase(KrakenRestAPI):
     def has_result(self, dictionary: dict) -> bool:
         """Returns True if "result" is returned in dict.
         If "result" not in dict, an error occurred."""
-        return bool(Dicts.RESULT in dictionary.keys())
+        return bool(Dicts.RESULT in dictionary.keys()) if isinstance(dictionary, dict) else False
 
     def get_quantity_owned(self, symbol: str) -> float:
         account_balance = self.get_account_balance()
