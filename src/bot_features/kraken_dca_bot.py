@@ -87,7 +87,6 @@ class KrakenDCABot(Config, KrakenBotBase, TradingView, Buy):
                 if self.collection_os.count_documents({"symbol_pair": symbol_pair}) == 0:
 
                     ### PLACE BUY ORDER! ###
-                    # symbol_pair = "SCUSD"
                     order_min         = self.get_order_min(symbol_pair)
                     base_order_size   = self.BASE_ORDER_SIZE
                     safety_order_size = self.SAFETY_ORDER_SIZE
