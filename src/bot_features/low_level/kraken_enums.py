@@ -47,7 +47,7 @@ class TVData:
     BUY            = "BUY"
     STRONG_BUY     = "STRONG_BUY"
 
-class DCA_:
+class self:
     TARGET_PROFIT_PERCENT        = auto()
     TRAILING_DEVIATION           = auto()
     SAFETY_ORDERS_MAX            = auto()

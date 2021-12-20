@@ -6,7 +6,7 @@ from pprint import PrettyPrinter
 
 from pprint import pprint
 from threading import Lock
-from bot_features.kraken_enums import FileMode
+from bot_features.low_level.kraken_enums import FileMode
 from util.colors   import Color
 # from util.globals import G
 

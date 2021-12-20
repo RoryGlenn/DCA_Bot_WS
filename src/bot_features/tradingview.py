@@ -3,7 +3,7 @@
 from pprint         import pprint
 from tradingview_ta import TA_Handler
 
-from bot_features.kraken_enums import *
+from bot_features.low_level.kraken_enums import *
 from util.globals              import G
 # from bot_features.my_sql       import SQL
 

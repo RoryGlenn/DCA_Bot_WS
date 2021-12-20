@@ -8,7 +8,7 @@ import os
 import sys
 
 from bot_features.kraken_dca_bot import KrakenDCABot
-from bot_features.kraken_enums   import *
+from bot_features.low_level.kraken_enums   import *
 from util.globals                import G
 
 
@@ -30,6 +30,4 @@ if __name__ == "__main__":
     G.log.file_create()
     
     api_key, api_secret = get_keys()
-    kraken_dca_bot = KrakenDCABot(api_key, api_secret)
-    kraken_dca_bot.set_values()
-    kraken_dca_bot.start_trade_loop()
+    KrakenDCABot(api_key, api_secret).start_trade_loop()

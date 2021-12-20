@@ -3,8 +3,8 @@ import pymongo
 
 from pprint                              import pprint
 from websocket._app                      import WebSocketApp
-from socket_handlers.socket_handler_base import SocketHandlerBase
-from bot_features.kraken_enums           import *
+from bot_features.socket_handlers.socket_handler_base import SocketHandlerBase
+from bot_features.low_level.kraken_enums           import *
 from util.globals                        import G
 
 

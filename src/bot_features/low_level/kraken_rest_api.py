@@ -9,7 +9,7 @@ import requests
 
 from util.globals              import G
 from pprint                    import pprint
-from bot_features.kraken_enums import *
+from bot_features.low_level.kraken_enums import *
 
 
 class KrakenRestAPI():

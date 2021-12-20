@@ -1,14 +1,14 @@
 import pymongo
-from bot_features.kraken_enums import *
+from bot_features.low_level.kraken_enums import *
 
 class MongoDatabase():
     def __init__(self) -> None:
-        self.db            = pymongo.MongoClient()[DB.DATABASE_NAME]
+        self.db             = pymongo.MongoClient()[DB.DATABASE_NAME]
         self.c_open_symbols = self.db[DB.COLLECTION_OS]
-        self.c_add_order   = self.db[DB.COLLECTION_AO]
-        self.c_balances    = self.db[DB.COLLECTION_B]
-        self.c_own_trades  = self.db[DB.COLLECTION_OT]
-        self.c_open_orders = self.db[DB.COLLECTION_OO]
+        self.c_add_order    = self.db[DB.COLLECTION_AO]
+        self.c_balances     = self.db[DB.COLLECTION_B]
+        self.c_own_trades   = self.db[DB.COLLECTION_OT]
+        self.c_open_orders  = self.db[DB.COLLECTION_OO]
         return
 
 
@@ -70,11 +70,10 @@ class MongoDatabase():
                             order_placed:                     False
                         }
                     
-                }            
-
+                }
     
         """
-
+        
 
         return
 

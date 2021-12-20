@@ -7,7 +7,7 @@ import time
 
 from pprint import pprint
 from util.globals import G
-from bot_features.kraken_enums import *
+from bot_features.low_level.kraken_enums import *
 
 
 class Config():
@@ -34,8 +34,7 @@ class Config():
         # time intervals for trading view.
         self.TRADINGVIEW_TIME_INTERVALS:   set   = set()
         
-        # if symbol is in this list, prepend 'X' to the symbol.
-        # (this applies to the kraken exchange only)
+        self.set_values()
         return
     
     def set_values(self) -> None:

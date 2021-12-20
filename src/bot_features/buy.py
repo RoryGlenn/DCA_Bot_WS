@@ -13,8 +13,8 @@ import datetime
 import time
 
 from pprint                                 import pprint
-from bot_features.kraken_enums    import *
-from bot_features.kraken_bot_base import KrakenBotBase
+from bot_features.low_level.kraken_enums    import *
+from bot_features.low_level.kraken_bot_base import KrakenBotBase
 from util.globals                           import G
 from util.colors                            import Color
 from bot_features.dca                       import DCA
@@ -217,11 +217,11 @@ class Buy():
                     
                     G.log.print_and_log(Color.BG_BLUE + f"Base order filled      {Color.ENDC} {base_order_result[Dicts.RESULT][Dicts.DESCR][Dicts.ORDER]} {base_order_price}")
                     
-                    base_order_req_price = base_order_price + (base_order_price * DCA_.TARGET_PROFIT_PERCENT/100)
-                    base_order_profit    = base_order_price * base_order_qty * (DCA_.TARGET_PROFIT_PERCENT/100)
+                    base_order_req_price = base_order_price + (base_order_price * self.TARGET_PROFIT_PERCENT/100)
+                    base_order_profit    = base_order_price * base_order_qty * (self.TARGET_PROFIT_PERCENT/100)
                     base_order_cost      = base_order_price * base_order_qty
                     base_order_txid      = base_order_result[Dicts.RESULT][Data.TXID][0]
-                    base_order_row       = BaseOrderRow(symbol_pair, symbol, 0, DCA_.TARGET_PROFIT_PERCENT, base_order_qty, base_order_qty, base_order_price, base_order_price, base_order_req_price, DCA_.TARGET_PROFIT_PERCENT, base_order_profit, base_order_cost, base_order_cost, False, False, base_order_txid, 0)
+                    base_order_row       = BaseOrderRow(symbol_pair, symbol, 0, self.TARGET_PROFIT_PERCENT, base_order_qty, base_order_qty, base_order_price, base_order_price, base_order_req_price, self.TARGET_PROFIT_PERCENT, base_order_profit, base_order_cost, base_order_cost, False, False, base_order_txid, 0)
                     
                     self.dca       = DCA(symbol_pair, symbol, base_order_qty, base_order_price)
                     self.sell.dca  = self.dca
@@ -238,7 +238,7 @@ class Buy():
             num_open_orders = sql.con_get_open_buy_orders(symbol_pair)
             
             # if the max active orders are already put in, and are still active, there is nothing left to do.
-            if num_open_orders < DCA_.SAFETY_ORDERS_ACTIVE_MAX:
+            if num_open_orders < self.SAFETY_ORDERS_ACTIVE_MAX:
                 self.__place_safety_orders(symbol_pair)
         except Exception as e:
             G.log.print_and_log(e=e, error_type=type(e).__name__, filename=__file__, tb_lineno=e.__traceback__.tb_lineno)
