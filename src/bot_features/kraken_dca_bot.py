@@ -16,17 +16,22 @@ from bot_features.socket_handlers.own_trades_socket_handler import OwnTradesSock
 from bot_features.socket_handlers.add_order_socket_handler import AddOrderSocketHandler
 
 from bot_features.low_level.kraken_bot_base import KrakenBotBase
+from bot_features.low_level.kraken_rest_api import KrakenRestAPI
 from bot_features.low_level.kraken_enums import *
+
 from bot_features.tradingview import TradingView
 
 from bot_features.buy import Buy
-from bot_features.dca import DCA
 
+from bot_features.dca import DCA
 
 from util.colors import Color
 from util.config import Config
 from util.globals import G
 
+
+x_list: list = ['XETC', 'XETH', 'XLTC', 'XMLN', 'XREP', 'XXBT', 'XXDG', 'XXLM', 'XXMR', 'XXRP', 'XZEC']
+reg_list: list = ['ETC', 'ETH', 'LTC', 'MLN', 'REP', 'XBT', 'XDG', 'XLM', 'XMR', 'XRP', 'ZEC']
 
 
 def get_elapsed_time(start_time: float) -> str:
@@ -41,9 +46,12 @@ def get_buy_time() -> str:
     return ( datetime.timedelta(minutes=Buy_.TIME_MINUTES) + datetime.datetime.now() ).strftime("%H:%M:%S")
 
 
+
 class KrakenDCABot(KrakenBotBase):
     def __init__(self, api_key, api_secret) -> None:
-        super(KrakenBotBase, self).__init__(api_key, api_secret)
+        self.api_key = api_key
+        self.api_secret = api_secret
+        super(KrakenBotBase, self).__init__(self.api_key, self.api_secret)
 
         self.config: Config        = Config()
         self.tv:     TradingView   = TradingView()
@@ -63,11 +71,14 @@ class KrakenDCABot(KrakenBotBase):
         buy_dict = dict()
         
         for symbol in self.config.BUY_COINS:
-            alt_name    = self.get_alt_name(symbol) 
+            alt_name    = self.get_alt_name(symbol)
             symbol_pair = alt_name + StableCoins.USD
-            G.log.print_and_log(f"Main thread: checking {symbol_pair}", G.lock)
+            G.log.print_and_log(f"Main thread: checking {symbol_pair}", G.print_lock)
             if self.tv.is_buy(symbol_pair, self.config.TRADINGVIEW_TIME_INTERVALS):
-                buy_dict[symbol] = symbol + "/" + StableCoins.USD
+                if symbol in x_list:
+                    buy_dict[symbol] = symbol + "/" + StableCoins.ZUSD
+                else:
+                    buy_dict[symbol] = symbol + "/" + StableCoins.USD
         return buy_dict
 
     def init_socket_handlers(self, ws_token: str) -> None:
@@ -95,25 +106,24 @@ class KrakenDCABot(KrakenBotBase):
         self.start_socket_handler_threads()
 
         while True:
-            start_time = time.time()
-            buy_dict   = self.get_buy_dict()
+            start_time: float = time.time()
+            buy_dict:   dict  = self.get_buy_dict()
 
-            G.log.print_and_log(Color.FG_BRIGHT_BLACK + f"Main thread: checked all coins in {get_elapsed_time(start_time)}" + Color.ENDC, G.lock)
+            G.log.print_and_log(Color.FG_BRIGHT_BLACK + f"Main thread: checked all coins in {get_elapsed_time(start_time)}" + Color.ENDC, G.print_lock)
             
             buy_list = [symbol_pair for (symbol, symbol_pair) in buy_dict.items()]
             
-            G.log.print_and_log(f"Main thread: buy list {PrettyPrinter().pformat(buy_list)}", G.lock)
+            G.log.print_and_log(f"Main thread: buy list {PrettyPrinter().pformat(buy_list)}", G.print_lock)
             
-            ws_add_order = create_connection("wss://ws-auth.kraken.com/") 
-            print(ws_add_order.recv()) # {"connectionID":11231412236839682046,"event":"systemStatus","status":"online","version":"1.8.8"}
-
             for symbol, symbol_pair in buy_dict.items():
-                # if self.collection_os.count_documents({"symbol_pair": symbol_pair}) == 0:
                 if self.mdb.c_open_symbols.count_documents({"symbol_pair": symbol_pair}) == 0:
-
+                    
                     ### PLACE BUY ORDER! ###
+                    
                     pair              = symbol_pair.split("/")
-                    order_min         = self.get_order_min(pair[0]+pair[1])
+                    order_min         = self.get_order_min(pair[0] + pair[1]) # XREPZUSD
+                    market_price      = self.get_bid_price(symbol_pair)
+
                     base_order_size   = self.config.BASE_ORDER_SIZE
                     safety_order_size = self.config.SAFETY_ORDER_SIZE
 
@@ -123,35 +133,22 @@ class KrakenDCABot(KrakenBotBase):
                     if self.config.SAFETY_ORDER_SIZE < order_min:
                         safety_order_size = order_min
 
-                    # sh_add_order.ws_send(symbol_pair="XBT/USD", type=Trade.BUY, order_type="market", quantity=10000000000000000)
-
-                    # An initial connection should be made to the authenticated WebSocket URL wss://ws-auth.kraken.com/ ,
-                    # which can then be kept open indefinitely while orders are placed and cancelled.
-                    # A single WebSocket connection is designed to support multiple requests,
-                    # so it is not necessary (or recommended) to connect/disconnect for each call to the trading endpoints.
-
-                    # Success
-                    # {"descr":"buy 0.00200000 XBTUSD @ limit 9857.0 with 5:1 leverage","event":"addOrderStatus","status":"ok","txid":"OPOUJF-BWKCL-FG5DQL"}
-                    
-                    # Error
-                    # {"errorMessage":"EOrder:Order minimum not met","event":"addOrderStatus","status":"error"}
-
-                    market_price = self.get_bid_price(symbol_pair)
-
-                    dca = DCA(symbol, symbol_pair, self.config.BASE_ORDER_SIZE, self.config.SAFETY_ORDER_SIZE, market_price)
+                    dca = DCA(symbol, symbol_pair, base_order_size, safety_order_size, market_price)
                     dca.start()
-                    pprint(dca.total_cost_levels)
 
-                    try:
-                        api_data = '{"event":"%(feed)s", "token":"%(token)s", "pair":"%(pair)s", "type":"%(type)s", "ordertype":"%(ordertype)s", "volume":"%(volume)s"}' \
-                            % {"feed": "addOrder", "token": ws_token, "pair": symbol_pair, "type": "buy", "ordertype": "market", "volume": base_order_size}
+                    if self.config.ALL_OR_NOTHING:
+                        total_cost = dca.total_cost_levels[-1]
 
-                        print(api_data)
-                        ws_add_order.send(api_data)
-                        print(ws_add_order.recv())
-                    except Exception as e:
-                        print(e)
+                        if total_cost > G.available_usd:
+                            continue
 
-            ws_add_order.close()
+                    api_data = '{"event":"%(feed)s", "token":"%(token)s", "pair":"%(pair)s", "type":"%(type)s", "ordertype":"%(ordertype)s", "volume":"%(volume)s"}' \
+                        % {"feed": "addOrder", "token": ws_token, "pair": symbol_pair, "type": "buy", "ordertype": "market", "volume": base_order_size}
+
+                    G.add_orders_lock.acquire()
+                    G.add_orders_queue.append(api_data)
+                    G.add_orders_lock.release()
+                    time.sleep(10000)
+            
             self.wait(message=Color.FG_BRIGHT_BLACK   + f"Main thread: waiting till {get_buy_time()} to buy" + Color.ENDC, timeout=60)
         return

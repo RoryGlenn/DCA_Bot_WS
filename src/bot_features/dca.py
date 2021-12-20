@@ -7,7 +7,7 @@ from bot_features.low_level.kraken_enums import *
 from util.config import Config
 
 
-class DCA(Config):
+class DCA():
     def __init__(self, symbol: str, symbol_pair: str, base_order_size: float, safety_order_size: float, entry_price: float):
         super().__init__()
 
@@ -25,11 +25,12 @@ class DCA(Config):
         self.symbol_pair:                       str           = symbol_pair
         self.entry_price:                       float         = entry_price
         self.base_order_size:                   float         = base_order_size
-        self.order_min:                         float         = safety_order_size
+        self.safety_order_size:                 float         = safety_order_size
         self.safety_orders:                     dict          = { }
-        self.mdb:                               MongoDatabase = MongoDatabase()
 
-        # self.start()
+        self.mdb:                               MongoDatabase = MongoDatabase()
+        self.config:                            Config        = Config()
+        return
 
     def start(self) -> None:
         """Essentially the main function for DCA class.
@@ -50,7 +51,7 @@ class DCA(Config):
         This may include the quantity that we have no bought yet but is in an open order.
         """
 
-        print(self.SAFETY_ORDERS_MAX)
+        
 
         if not self.__has_safety_order_table():
             self.__set_deviation_percentage_levels()
@@ -120,16 +121,16 @@ class DCA(Config):
         """     
         
         # for first safety order
-        self.percentage_deviation_levels.append(round(self.SAFETY_ORDER_PRICE_DEVIATION, DECIMAL_MAX))
+        self.percentage_deviation_levels.append(round(self.config.SAFETY_ORDER_PRICE_DEVIATION, DECIMAL_MAX))
 
         # for second safety order
-        step_percent = self.SAFETY_ORDER_PRICE_DEVIATION * self.SAFETY_ORDER_STEP_SCALE
-        safety_order = self.SAFETY_ORDER_PRICE_DEVIATION + step_percent
+        step_percent = self.config.SAFETY_ORDER_PRICE_DEVIATION * self.config.SAFETY_ORDER_STEP_SCALE
+        safety_order = self.config.SAFETY_ORDER_PRICE_DEVIATION + step_percent
         self.percentage_deviation_levels.append(round(safety_order, DECIMAL_MAX))
         
         # for 3rd to DCA_.SAFETY_ORDERS_MAX
-        for _ in range(2, self.SAFETY_ORDERS_MAX):
-            step_percent = step_percent * self.SAFETY_ORDER_STEP_SCALE
+        for _ in range(2, self.config.SAFETY_ORDERS_MAX):
+            step_percent = step_percent * self.config.SAFETY_ORDER_STEP_SCALE
             safety_order = safety_order + step_percent
             safety_order = round(safety_order, DECIMAL_MAX)
             self.percentage_deviation_levels.append(safety_order)
@@ -142,7 +143,7 @@ class DCA(Config):
         Order n: ..."""
 
         # safety orders
-        for i in range(self.SAFETY_ORDERS_MAX):
+        for i in range(self.config.SAFETY_ORDERS_MAX):
             level = self.percentage_deviation_levels[i] / 100
             price = self.entry_price - (self.entry_price * level)
             self.price_levels.append(round(price, DECIMAL_MAX))
@@ -150,21 +151,22 @@ class DCA(Config):
 
     def __set_quantity_levels(self) -> None:
         """Sets the quantity to buy for each safety order number."""
-        prev = self.order_min
+        # prev = self.safety_order_size
+        prev = self.safety_order_size
         
         # first safety order
-        self.quantities.append(self.order_min)
+        self.quantities.append(self.safety_order_size)
 
         # remaining safety orders
-        for _ in range(1, self.SAFETY_ORDERS_MAX):
-            self.quantities.append(self.SAFETY_ORDER_VOLUME_SCALE * prev)
-            prev = self.SAFETY_ORDER_VOLUME_SCALE * prev
+        for _ in range(1, self.config.SAFETY_ORDERS_MAX):
+            self.quantities.append(self.config.SAFETY_ORDER_VOLUME_SCALE * prev)
+            prev = self.config.SAFETY_ORDER_VOLUME_SCALE * prev
         return
     
     def __set_total_quantity_levels(self) -> None:
         """Sets the total quantity bought at each level."""
-        prev = self.order_min
-        for i in range(self.SAFETY_ORDERS_MAX):
+        prev = self.safety_order_size
+        for i in range(self.config.SAFETY_ORDERS_MAX):
             sum = prev + self.quantities[i]
             self.total_quantities.append(sum)
             prev = self.total_quantities[i]
@@ -173,9 +175,9 @@ class DCA(Config):
     
     def __set_weighted_average_price_levels(self) -> None:
         """Sets the weighted average price level for each safety order number."""
-        base_order_qty = self.entry_price * self.order_min
+        base_order_qty = self.entry_price * self.safety_order_size
         
-        for i in range(self.SAFETY_ORDERS_MAX):
+        for i in range(self.config.SAFETY_ORDERS_MAX):
             numerator = 0
             for j in range(i+1):
                 numerator += self.price_levels[j] * self.quantities[j]
@@ -188,10 +190,10 @@ class DCA(Config):
     
     def __set_required_price_levels(self) -> None:
         """Sets the required price for each safety order number."""
-        target_profit_decimal = self.TARGET_PROFIT_PERCENT / 100
+        target_profit_decimal = self.config.TARGET_PROFIT_PERCENT / 100
 
         # safety orders
-        for i in range(self.SAFETY_ORDERS_MAX):
+        for i in range(self.config.SAFETY_ORDERS_MAX):
             required_price = self.average_price_levels[i] + (self.average_price_levels[i] * target_profit_decimal)
             required_price = round(required_price, DECIMAL_MAX)
             self.required_price_levels.append(required_price)
@@ -200,7 +202,7 @@ class DCA(Config):
     def __set_required_change_percentage_levels(self) -> None:
         """Sets the required change percent for each safety order number."""
         
-        for i in range(self.SAFETY_ORDERS_MAX):
+        for i in range(self.config.SAFETY_ORDERS_MAX):
             required_change_percentage = ((self.required_price_levels[i] / self.price_levels[i]) - 1) * 100
             required_change_percentage = round(required_change_percentage, DECIMAL_MAX)
             self.required_change_percentage_levels.append(required_change_percentage)
@@ -210,11 +212,11 @@ class DCA(Config):
         """The more safety orders that are filled, the larger the profit will be.
         Each profit level is based on the previous profit level except for the base order."""
         
-        prev = self.order_min
+        prev = self.safety_order_size
         
-        for i in range(self.SAFETY_ORDERS_MAX):
+        for i in range(self.config.SAFETY_ORDERS_MAX):
             usd_value  = self.price_levels[i] * (self.quantities[i] + prev)
-            usd_profit = (self.TARGET_PROFIT_PERCENT/100) * usd_value
+            usd_profit = (self.config.TARGET_PROFIT_PERCENT/100) * usd_value
             self.profit_levels.append(usd_profit)
             prev += self.quantities[i]
         return
@@ -222,7 +224,7 @@ class DCA(Config):
     def __set_cost_levels(self) -> None:
         """Sets the cost (USD) spent for each safety order row."""
 
-        for i in range(self.SAFETY_ORDERS_MAX):
+        for i in range(self.config.SAFETY_ORDERS_MAX):
             cost = self.price_levels[i] * self.quantities[i]
             cost = round(cost, DECIMAL_MAX)
             self.cost_levels.append(cost)
@@ -232,9 +234,9 @@ class DCA(Config):
         """Sets the total cost (USD) for each safety order row.
         This includes the prev order costs. """
 
-        total_cost = self.entry_price * self.order_min
+        total_cost = self.entry_price * self.safety_order_size
         
-        for i in range(self.SAFETY_ORDERS_MAX):
+        for i in range(self.config.SAFETY_ORDERS_MAX):
             total_cost += self.price_levels[i] * self.quantities[i]
             total_cost = round(total_cost, DECIMAL_MAX)
             self.total_cost_levels.append(total_cost)
@@ -242,7 +244,7 @@ class DCA(Config):
 
     def __set_safety_order_table(self) -> None:
         """Set the Dataframe with the values calculated in previous functions."""
-        order_numbers = [i for i in range(1, self.SAFETY_ORDERS_MAX+1)]
+        order_numbers = [i for i in range(1, self.config.SAFETY_ORDERS_MAX+1)]
 
         # sql = SQL()
         

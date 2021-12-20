@@ -67,7 +67,7 @@
 
     "dca_base_order_size": 0,
     "dca_safety_order_size": 0,
-    "dca_all_or_nothing": true,
+    "dca_all_or_nothing": false,
 
     "time_intervals": [
       "1m",

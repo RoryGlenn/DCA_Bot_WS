@@ -56,10 +56,10 @@ class OwnTradesSocketHandler(Config, SocketHandlerBase):
                             dca = DCA(symbol, symbol_pair, self.BASE_ORDER_SIZE, self.SAFETY_ORDER_SIZE, trade_info['price'])
                             dca.start()
 
-                        G.log.pprint_and_log(f"ownTrades: trade", {txid: trade_info}, G.lock)
+                        G.log.pprint_and_log(f"ownTrades: trade", {txid: trade_info}, G.print_lock)
             else:
                 if "heartbeat" not in message.values():
-                    G.log.pprint_and_log(f"ownTrades: ", message, G.lock)
+                    G.log.pprint_and_log(f"ownTrades: ", message, G.print_lock)
         self.count += 1
         return
         

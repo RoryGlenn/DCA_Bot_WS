@@ -5,9 +5,15 @@ from threading import Event, Lock
 
 
 class Globals:
-    event: Event = Event()
-    lock: Lock   = Lock()
-    log:   Log   = Log()
+    event:            Event   = Event()
+    
+    print_lock:       Lock    = Lock()
+    usd_lock:         Lock    = Lock()
+    add_orders_lock:  Lock    = Lock()
+
+    log:              Log     = Log()
+    available_usd:    float   = 0.0
+    add_orders_queue: list    = []
     
 
 # Global variable "G" is shared between files and classes
