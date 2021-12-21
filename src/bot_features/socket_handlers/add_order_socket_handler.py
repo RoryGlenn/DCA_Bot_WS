@@ -39,16 +39,16 @@ class AddOrderSocketHandler(SocketHandlerBase):
         return
             
     def ws_open(self, ws: WebSocketApp) -> None:
-        print("Opened connection for add order")
-
         while True:
-            
             G.add_orders_lock.acquire()
             
             while len(G.add_orders_queue) > 0:
                 api_data = G.add_orders_queue[0]
-                pprint(api_data)
-                self.ws.send(api_data)
+                
+                for elem in api_data:
+                    print(elem)
+
+                # self.ws.send(api_data)
                 G.add_orders_queue.pop(0)
 
             G.add_orders_lock.release()

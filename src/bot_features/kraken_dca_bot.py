@@ -95,6 +95,56 @@ class KrakenDCABot(KrakenBotBase):
         Thread(target=self.socket_handler_add_order.ws_thread).start()
         return
 
+    def buy(self, buy_dict: dict, ws_token: str) -> None:
+        """Place buy order for each symbol_pair in buy_dict"""
+        for symbol, symbol_pair in buy_dict.items():
+            if self.mdb.c_open_symbols.count_documents({"symbol_pair": symbol_pair}) == 0:
+                pair              = symbol_pair.split("/")
+                order_min         = self.get_order_min(pair[0] + pair[1])
+                market_price      = self.get_bid_price(symbol_pair)
+
+                base_order_size   = self.config.BASE_ORDER_SIZE
+                safety_order_size = self.config.SAFETY_ORDER_SIZE
+
+                if self.config.BASE_ORDER_SIZE < order_min:
+                    base_order_size = order_min
+
+                if self.config.SAFETY_ORDER_SIZE < order_min:
+                    safety_order_size = order_min
+
+                dca = DCA(symbol, symbol_pair, base_order_size, safety_order_size, market_price)
+                dca.start()
+
+                if self.config.ALL_OR_NOTHING:
+                    total_cost = dca.total_cost_levels[-1]
+                    if total_cost > G.available_usd:
+                        continue
+
+                dca.store_in_db()
+                order_list = list()
+
+                # base order
+                order_list.append('{"event":"%(feed)s", "token":"%(token)s", "pair":"%(pair)s", "type":"%(type)s", "ordertype":"%(ordertype)s", "volume":"%(volume)s"}' \
+                    % {"feed": "addOrder", "token": ws_token, "pair": symbol_pair, "type": "buy", "ordertype": "market", "volume": base_order_size})
+                
+                # safety orders
+                for i in range(self.config.SAFETY_ORDERS_MAX):
+                    order_list.append('{"event":"%(feed)s", "token":"%(token)s", "pair":"%(pair)s", "type":"%(type)s", "ordertype":"%(ordertype)s", "price":"%(price)s, "volume":"%(volume)s"}' \
+                        % {"feed": "addOrder", "token": ws_token, "pair": symbol_pair, "type": "buy", "ordertype": "limit", "price": dca.price_levels[i], "volume": dca.quantities[i]})
+
+                # TO CHECK FOR
+                # 1. the user doesn't have the funds available (create the safety order table and place as many orders as possible. Check back when we can place the remaining safety orders)
+                # 2. the user does have the funds (place the base order and safety orders all at once)
+                # 3. when do we store, in the database? when the order went through or before? (If the base order went through, create a safety order table and try to place the remaining safety orders.)
+
+                # do we try to put in the base order and all safety orders at the same time? (depends on the active max)
+
+                G.add_orders_lock.acquire()
+                G.add_orders_queue.append(order_list)
+                G.add_orders_lock.release()
+                time.sleep(10000)
+                return
+
     def start_trade_loop(self) -> None:
         try:
             ws_token = self.get_web_sockets_token()["result"]["token"]
@@ -113,42 +163,9 @@ class KrakenDCABot(KrakenBotBase):
             
             buy_list = [symbol_pair for (symbol, symbol_pair) in buy_dict.items()]
             
-            G.log.print_and_log(f"Main thread: buy list {PrettyPrinter().pformat(buy_list)}", G.print_lock)
-            
-            for symbol, symbol_pair in buy_dict.items():
-                if self.mdb.c_open_symbols.count_documents({"symbol_pair": symbol_pair}) == 0:
-                    
-                    ### PLACE BUY ORDER! ###
-                    
-                    pair              = symbol_pair.split("/")
-                    order_min         = self.get_order_min(pair[0] + pair[1]) # XREPZUSD
-                    market_price      = self.get_bid_price(symbol_pair)
+            G.log.print_and_log(f"Main thread: buy list {PrettyPrinter(indent=1).pformat(buy_list)}", G.print_lock)
 
-                    base_order_size   = self.config.BASE_ORDER_SIZE
-                    safety_order_size = self.config.SAFETY_ORDER_SIZE
-
-                    if self.config.BASE_ORDER_SIZE < order_min:
-                        base_order_size = order_min
-
-                    if self.config.SAFETY_ORDER_SIZE < order_min:
-                        safety_order_size = order_min
-
-                    dca = DCA(symbol, symbol_pair, base_order_size, safety_order_size, market_price)
-                    dca.start()
-
-                    if self.config.ALL_OR_NOTHING:
-                        total_cost = dca.total_cost_levels[-1]
-
-                        if total_cost > G.available_usd:
-                            continue
-
-                    api_data = '{"event":"%(feed)s", "token":"%(token)s", "pair":"%(pair)s", "type":"%(type)s", "ordertype":"%(ordertype)s", "volume":"%(volume)s"}' \
-                        % {"feed": "addOrder", "token": ws_token, "pair": symbol_pair, "type": "buy", "ordertype": "market", "volume": base_order_size}
-
-                    G.add_orders_lock.acquire()
-                    G.add_orders_queue.append(api_data)
-                    G.add_orders_lock.release()
-                    time.sleep(10000)
+            self.buy(buy_dict, ws_token)
             
             self.wait(message=Color.FG_BRIGHT_BLACK   + f"Main thread: waiting till {get_buy_time()} to buy" + Color.ENDC, timeout=60)
         return

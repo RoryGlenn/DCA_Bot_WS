@@ -13,6 +13,7 @@ class DB:
     COLLECTION_B = "balances"
     COLLECTION_AO = "addOrder"
     COLLECTION_OS = "open_symbols"
+    COLLECTION_SO = "safety_orders"
 
 class API_Keys:
     KEY = ""

@@ -9,6 +9,7 @@ class MongoDatabase():
         self.c_balances     = self.db[DB.COLLECTION_B]
         self.c_own_trades   = self.db[DB.COLLECTION_OT]
         self.c_open_orders  = self.db[DB.COLLECTION_OO]
+        self.c_safety_orders = self.db[DB.COLLECTION_SO]
         return
 
 
@@ -17,58 +18,70 @@ class MongoDatabase():
         """
 
         XBTUSD: {
-                    1:
-                        {
-                            symbol:                           symbol, 
-                            symbol_pair:                      symbol_pair, 
-                            order_number:                     order_number[i], 
-                            percentage_deviation_level:       percentage_deviation_levels[i],
-                            quantity:                         quantities[i],
-                            total_quantity:                   total_quantities[i],
-                            price_level:                      price_levels[i],
-                            average_price_level:              average_price_levels[i], 
-                            required_price_level:             required_price_levels[i], 
-                            required_change_percentage_level: required_change_percentage_levels[i],
-                            profit_level:                     profit_levels[i],
-                            cost_level:                       cost_levels[i],
-                            total_cost_levels:                total_cost_levels[i],
-                            order_placed:                     False 
-                        }
-                    2:
-                        {
-                            symbol:                           symbol, 
-                            symbol_pair:                      symbol_pair, 
-                            order_number:                     order_number[i], 
-                            percentage_deviation_level:       percentage_deviation_levels[i],
-                            quantity:                         quantities[i],
-                            total_quantity:                   total_quantities[i],
-                            price_level:                      price_levels[i],
-                            average_price_level:              average_price_levels[i], 
-                            required_price_level:             required_price_levels[i], 
-                            required_change_percentage_level: required_change_percentage_levels[i],
-                            profit_level:                     profit_levels[i],
-                            cost_level:                       cost_levels[i],
-                            total_cost_levels:                total_cost_levels[i],
-                            order_placed:                     False
-                        }
+                    symbol: XBT
+                    symbol_pair: XBTUSD
                     
-                    3:
-                        {
-                            symbol:                           symbol, 
-                            symbol_pair:                      symbol_pair, 
-                            order_number:                     order_number[i], 
-                            percentage_deviation_level:       percentage_deviation_levels[i],
-                            quantity:                         quantities[i],
-                            total_quantity:                   total_quantities[i],
-                            price_level:                      price_levels[i],
-                            average_price_level:              average_price_levels[i], 
-                            required_price_level:             required_price_levels[i], 
-                            required_change_percentage_level: required_change_percentage_levels[i],
-                            profit_level:                     profit_levels[i],
-                            cost_level:                       cost_levels[i],
-                            total_cost_levels:                total_cost_levels[i],
-                            order_placed:                     False
-                        }
+                    base_order: {
+                                percentage_deviation_level:       0,
+                                quantity:                         base_order_size,
+                                total_quantity:                   base_order_size,
+                                price_level:                      entry_price,
+                                average_price_level:              entry_price,
+                                required_price_level:             entry_price + (entry_price*target_profit_percent),
+                                required_change_percentage_level: target_profit_percent,
+                                profit_level:                     profit,
+                                cost_level:                       cost,
+                                total_cost_levels:                cost,
+                                order_placed:                     False
+                    },
+
+                    safety_orders: {
+
+                        1:
+                            {
+                                percentage_deviation_level:       percentage_deviation_levels[i],
+                                quantity:                         quantities[i],
+                                total_quantity:                   total_quantities[i],
+                                price_level:                      price_levels[i],
+                                average_price_level:              average_price_levels[i], 
+                                required_price_level:             required_price_levels[i], 
+                                required_change_percentage_level: required_change_percentage_levels[i],
+                                profit_level:                     profit_levels[i],
+                                cost_level:                       cost_levels[i],
+                                total_cost_levels:                total_cost_levels[i],
+                                order_placed:                     False
+                            }
+                        2:
+                            {
+                                percentage_deviation_level:       percentage_deviation_levels[i],
+                                quantity:                         quantities[i],
+                                total_quantity:                   total_quantities[i],
+                                price_level:                      price_levels[i],
+                                average_price_level:              average_price_levels[i], 
+                                required_price_level:             required_price_levels[i], 
+                                required_change_percentage_level: required_change_percentage_levels[i],
+                                profit_level:                     profit_levels[i],
+                                cost_level:                       cost_levels[i],
+                                total_cost_levels:                total_cost_levels[i],
+                                order_placed:                     False
+                            }
+                        
+                        3:
+                            {
+                                percentage_deviation_level:       percentage_deviation_levels[i],
+                                quantity:                         quantities[i],
+                                total_quantity:                   total_quantities[i],
+                                price_level:                      price_levels[i],
+                                average_price_level:              average_price_levels[i], 
+                                required_price_level:             required_price_levels[i], 
+                                required_change_percentage_level: required_change_percentage_levels[i],
+                                profit_level:                     profit_levels[i],
+                                cost_level:                       cost_levels[i],
+                                total_cost_levels:                total_cost_levels[i],
+                                order_placed:                     False
+                            }
+
+                    }
                     
                 }
     

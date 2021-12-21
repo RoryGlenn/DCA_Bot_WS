@@ -11,7 +11,7 @@ class DCA():
     def __init__(self, symbol: str, symbol_pair: str, base_order_size: float, safety_order_size: float, entry_price: float):
         super().__init__()
 
-        self.percentage_deviation_levels:       list          = [ ]
+        self.deviation_percentage_levels:       list          = [ ]
         self.price_levels:                      list          = [ ]
         self.quantities:                        list          = [ ]
         self.total_quantities:                  list          = [ ]
@@ -63,10 +63,10 @@ class DCA():
             self.__set_required_change_percentage_levels()
             self.__set_profit_levels()
             self.__set_cost_levels()
-            self.__set_total_cost_levels()            
-            self.__set_safety_order_table()
+            self.__set_total_cost_levels()
+            # self.__set_safety_order_table()
         
-        self.__set_buy_orders()
+        # self.__set_buy_orders()
         return
 
     def __has_safety_order_table(self) -> bool:
@@ -121,19 +121,19 @@ class DCA():
         """     
         
         # for first safety order
-        self.percentage_deviation_levels.append(round(self.config.SAFETY_ORDER_PRICE_DEVIATION, DECIMAL_MAX))
+        self.deviation_percentage_levels.append(round(self.config.SAFETY_ORDER_PRICE_DEVIATION, DECIMAL_MAX))
 
         # for second safety order
         step_percent = self.config.SAFETY_ORDER_PRICE_DEVIATION * self.config.SAFETY_ORDER_STEP_SCALE
         safety_order = self.config.SAFETY_ORDER_PRICE_DEVIATION + step_percent
-        self.percentage_deviation_levels.append(round(safety_order, DECIMAL_MAX))
+        self.deviation_percentage_levels.append(round(safety_order, DECIMAL_MAX))
         
         # for 3rd to DCA_.SAFETY_ORDERS_MAX
         for _ in range(2, self.config.SAFETY_ORDERS_MAX):
             step_percent = step_percent * self.config.SAFETY_ORDER_STEP_SCALE
             safety_order = safety_order + step_percent
             safety_order = round(safety_order, DECIMAL_MAX)
-            self.percentage_deviation_levels.append(safety_order)
+            self.deviation_percentage_levels.append(safety_order)
         return
 
     def __set_price_levels(self) -> None:
@@ -144,7 +144,7 @@ class DCA():
 
         # safety orders
         for i in range(self.config.SAFETY_ORDERS_MAX):
-            level = self.percentage_deviation_levels[i] / 100
+            level = self.deviation_percentage_levels[i] / 100
             price = self.entry_price - (self.entry_price * level)
             self.price_levels.append(round(price, DECIMAL_MAX))
         return
@@ -159,7 +159,8 @@ class DCA():
 
         # remaining safety orders
         for _ in range(1, self.config.SAFETY_ORDERS_MAX):
-            self.quantities.append(self.config.SAFETY_ORDER_VOLUME_SCALE * prev)
+            quantity = round(self.config.SAFETY_ORDER_VOLUME_SCALE * prev, DECIMAL_MAX)
+            self.quantities.append(quantity)
             prev = self.config.SAFETY_ORDER_VOLUME_SCALE * prev
         return
     
@@ -168,6 +169,7 @@ class DCA():
         prev = self.safety_order_size
         for i in range(self.config.SAFETY_ORDERS_MAX):
             sum = prev + self.quantities[i]
+            sum = round(sum, DECIMAL_MAX)
             self.total_quantities.append(sum)
             prev = self.total_quantities[i]
         return
@@ -217,6 +219,7 @@ class DCA():
         for i in range(self.config.SAFETY_ORDERS_MAX):
             usd_value  = self.price_levels[i] * (self.quantities[i] + prev)
             usd_profit = (self.config.TARGET_PROFIT_PERCENT/100) * usd_value
+            usd_profit = round(usd_profit, DECIMAL_MAX)
             self.profit_levels.append(usd_profit)
             prev += self.quantities[i]
         return
@@ -244,8 +247,6 @@ class DCA():
 
     def __set_safety_order_table(self) -> None:
         """Set the Dataframe with the values calculated in previous functions."""
-        order_numbers = [i for i in range(1, self.config.SAFETY_ORDERS_MAX+1)]
-
         # sql = SQL()
         
         # for i in range(DCA_.SAFETY_ORDERS_MAX):
@@ -277,4 +278,54 @@ class DCA():
 
         # for i in range(iterations):
         #     self.safety_orders[prices[i]] = quantities[i]
+        return
+
+
+    def store_in_db(self):
+        data = dict()
+
+        data[self.symbol_pair] = {'symbol': self.symbol, 'symbol_pair': self.symbol_pair, 'base_order': {}, 'safety_orders': {}}
+        safety_order_list = list()
+
+        value = self.entry_price * self.base_order_size
+        profit = value * (self.config.TARGET_PROFIT_PERCENT/100)
+        profit = round(profit, 8)
+
+        base_order = {
+            'deviation_percentage':       "0",
+            'quantity':                   self.base_order_size,
+            'total_quantity':             self.base_order_size,
+            'price':                      self.entry_price,
+            'average_price':              self.entry_price,
+            'required_price':             self.entry_price + (self.entry_price * (self.config.TARGET_PROFIT_PERCENT/100)),
+            'required_change_percentage': self.config.TARGET_PROFIT_PERCENT,
+            'profit':                     profit,
+            'cost':                       self.entry_price * self.base_order_size,
+            'total_cost':                 self.entry_price * self.base_order_size,
+            'has_order_placed':           False
+        }
+
+        for i in range(self.config.SAFETY_ORDERS_MAX):
+            safety_order_list.append(
+            {str(i+1): 
+                {
+                    'deviation_percentage':       self.deviation_percentage_levels[i],
+                    'quantity':                   self.quantities[i],
+                    'total_quantity':             self.total_quantities[i],
+                    'price':                      self.price_levels[i],
+                    'average_price':              self.average_price_levels[i],
+                    'required_price':             self.required_price_levels[i],
+                    'required_change_percentage': self.required_change_percentage_levels[i],
+                    'profit':                     self.profit_levels[i],
+                    'cost':                       self.cost_levels[i],
+                    'total_cost':                 self.total_cost_levels[i],
+                    'has_order_placed':           False
+                }
+            })
+        
+        data[self.symbol_pair]['base_order']    = base_order
+        data[self.symbol_pair]['safety_orders'] = safety_order_list
+
+        if self.mdb.c_safety_orders.count_documents({"symbol_pair": self.symbol_pair}) == 0:
+            self.mdb.c_safety_orders.insert_one({self.symbol_pair: data})
         return

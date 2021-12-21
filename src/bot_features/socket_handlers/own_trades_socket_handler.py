@@ -10,10 +10,12 @@ from bot_features.dca import DCA
 from util.config import Config
 
 
-class OwnTradesSocketHandler(Config, SocketHandlerBase):
+class OwnTradesSocketHandler(SocketHandlerBase):
     def __init__(self, api_token) -> None:
         self.api_token     = api_token
+
         self.trades        = dict()
+        self.config: Config = Config()
         self.db            = pymongo.MongoClient()[DB.DATABASE_NAME]
         self.collection_ot = self.db[DB.COLLECTION_OT]
         self.collection_os = self.db[DB.COLLECTION_OS]
@@ -53,7 +55,7 @@ class OwnTradesSocketHandler(Config, SocketHandlerBase):
                         # if it is a buy, and not in the database, insert into open symbols table and create safety order table
                         if self.collection_os.count_documents({"symbol_pair": symbol_pair}) == 0:
                             self.collection_os.insert_one({"symbol_pair": symbol_pair})
-                            dca = DCA(symbol, symbol_pair, self.BASE_ORDER_SIZE, self.SAFETY_ORDER_SIZE, trade_info['price'])
+                            dca = DCA(symbol, symbol_pair, self.config.BASE_ORDER_SIZE, self.config.SAFETY_ORDER_SIZE, trade_info['price'])
                             dca.start()
 
                         G.log.pprint_and_log(f"ownTrades: trade", {txid: trade_info}, G.print_lock)
