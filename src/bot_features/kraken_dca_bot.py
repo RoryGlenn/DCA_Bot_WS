@@ -2,7 +2,6 @@ import datetime
 import sys
 import time
 
-from websocket import create_connection
 
 from pprint import pprint
 from pprint import PrettyPrinter
@@ -16,12 +15,9 @@ from bot_features.socket_handlers.own_trades_socket_handler import OwnTradesSock
 from bot_features.socket_handlers.add_order_socket_handler import AddOrderSocketHandler
 
 from bot_features.low_level.kraken_bot_base import KrakenBotBase
-from bot_features.low_level.kraken_rest_api import KrakenRestAPI
 from bot_features.low_level.kraken_enums import *
 
 from bot_features.tradingview import TradingView
-
-from bot_features.buy import Buy
 
 from bot_features.dca import DCA
 
@@ -95,7 +91,7 @@ class KrakenDCABot(KrakenBotBase):
         Thread(target=self.socket_handler_add_order.ws_thread).start()
         return
 
-    def buy(self, buy_dict: dict, ws_token: str) -> None:
+    def place_base_order(self, buy_dict: dict, ws_token: str) -> None:
         """Place buy order for each symbol_pair in buy_dict"""
         for symbol, symbol_pair in buy_dict.items():
             if self.mdb.c_open_symbols.count_documents({"symbol_pair": symbol_pair}) == 0:
@@ -125,7 +121,7 @@ class KrakenDCABot(KrakenBotBase):
                 order_list.append('{"event":"%(feed)s", "token":"%(token)s", "pair":"%(pair)s", "type":"%(type)s", "ordertype":"%(ordertype)s", "price":"%(price)s", "volume":"%(volume)s"}' 
                     % {"feed": "addOrder", "token": ws_token, "pair": "XBT/USD", "type": "buy", "ordertype": "limit", "price": 1, "volume": 1})
 
-                # dca.store_in_db()
+                dca.store_in_db()
 
                 # base order
                 # order_list.append('{"event":"%(feed)s", "token":"%(token)s", "pair":"%(pair)s", "type":"%(type)s", "ordertype":"%(ordertype)s", "volume":"%(volume)s"}' \
@@ -136,18 +132,10 @@ class KrakenDCABot(KrakenBotBase):
                 #     order_list.append('{"event":"%(feed)s", "token":"%(token)s", "pair":"%(pair)s", "type":"%(type)s", "ordertype":"%(ordertype)s", "price":"%(price)s", "volume":"%(volume)s"}' \
                 #         % {"feed": "addOrder", "token": ws_token, "pair": symbol_pair, "type": "buy", "ordertype": "limit", "price": dca.price_levels[i], "volume": dca.quantities[i]})
 
-                # TO CHECK FOR
-                # 1. the user doesn't have the funds available (create the safety order table and place as many orders as possible. Check back when we can place the remaining safety orders)
-                # 2. the user does have the funds (place the base order and safety orders all at once)
-                # 3. when do we store, in the database? when the order went through or before? (If the base order went through, create a safety order table and try to place the remaining safety orders.)
-
-                # do we try to put in the base order and all safety orders at the same time? (depends on the active max)
-
+ 
                 G.add_orders_lock.acquire()
                 G.add_orders_queue.append(order_list)
                 G.add_orders_lock.release()
-            else:
-                """symbol_pair is in database."""
             return
 
     def start_trade_loop(self) -> None:
@@ -170,7 +158,8 @@ class KrakenDCABot(KrakenBotBase):
             
             G.log.print_and_log(f"Main thread: buy list {PrettyPrinter(indent=1).pformat(buy_list)}", G.print_lock)
 
-            self.buy(buy_dict, ws_token)
+            self.place_base_order(buy_dict, ws_token)
+            # self.place_safety_orders(buy_dict, ws_token)
             
             self.wait(message=Color.FG_BRIGHT_BLACK   + f"Main thread: waiting till {get_buy_time()} to buy" + Color.ENDC, timeout=60)
         return

@@ -284,7 +284,7 @@ class DCA():
     def store_in_db(self):
         data = dict()
 
-        data[self.symbol_pair] = {'symbol': self.symbol, 'symbol_pair': self.symbol_pair, 'base_order': {}, 'safety_orders': {}}
+        data = {'symbol': self.symbol, 'symbol_pair': self.symbol_pair, 'base_order': {}, 'safety_orders': {}}
         safety_order_list = list()
 
         value = self.entry_price * self.base_order_size
@@ -323,8 +323,8 @@ class DCA():
                 }
             })
         
-        data[self.symbol_pair]['base_order']    = base_order
-        data[self.symbol_pair]['safety_orders'] = safety_order_list
+        data['base_order']    = base_order
+        data['safety_orders'] = safety_order_list
 
         if self.mdb.c_safety_orders.count_documents({"symbol_pair": self.symbol_pair}) == 0:
             self.mdb.c_safety_orders.insert_one({self.symbol_pair: data})

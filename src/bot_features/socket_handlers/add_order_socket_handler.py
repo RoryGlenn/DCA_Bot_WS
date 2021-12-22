@@ -60,23 +60,4 @@ class AddOrderSocketHandler(SocketHandlerBase):
 
         self.ws.run_forever()
         return
-
-
-    # def ws_send(self, **kargs):
-	#     # Example: ./krakenws.py addOrder pair=XBT/EUR type=sell ordertype=limit price=7500 volume=0.125
-    #     # '{"event":"addOrder", "token":"W4ytptkui/C8+zBmVQJsspQcnwMSoYil1e7/8WW1aYk", "pair":"XBT/EUR", "type":"sell", "ordertype":"limit", "price":"7500", "volume":"0.125"}'
-
-    #     # symbol_pair: str, type: str, order_type: str, price: float, quantity: float
-
-    #     api_data = ""
-
-    #     if kargs["order_type"] == "limit":
-    #         api_data = '{"event":"%(feed)s", "token":"%(token)s", "pair":"%(symbol_pair)s", "type":"%(type)s", "ordertype":"%(ordertype)s", "price":"%(price)s", "volume":"%(volume)s"}' \
-    #             % {"feed":"addOrder", "token": self.api_token, "pair":kargs["symbol_pair"], "type":kargs["type"], "ordertype":kargs["order_type"], "price":kargs["price"], "volume":kargs["quantity"]} 
-                
-    #     if kargs["order_type"] == "market":
-    #         api_data = '{"event":"%(feed)s", "token":"%(token)s", "pair":"%(pair)s", "type":"%(type)s", "ordertype":"%(ordertype)s",  "volume":"%(volume)s"}' \
-    #             % {"feed":"addOrder", "token": self.api_token, "pair":kargs["symbol_pair"], "type":kargs["type"], "ordertype":kargs["order_type"], "volume":kargs["quantity"]} 
-    #     self.ws.send(api_data)
-    #     return
-
+        
