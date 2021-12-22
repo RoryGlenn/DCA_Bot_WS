@@ -1,24 +1,22 @@
 import json
 import time
 
-from pymongo.mongo_client                import MongoClient
-from pymongo.collection                  import Collection
+from pprint                                           import pprint
+from websocket._app                                   import WebSocketApp
+from pymongo.mongo_client                             import MongoClient
+from pymongo.collection                               import Collection
 
-from websocket                           import WebSocket, create_connection
-from pprint                              import pprint
-
-from websocket._app                      import WebSocketApp
-from bot_features.low_level.kraken_enums import *
+from bot_features.low_level.kraken_enums              import *
 from bot_features.socket_handlers.socket_handler_base import SocketHandlerBase
-from util.globals                        import G
+from util.globals                                     import G
 
 
 class AddOrderSocketHandler(SocketHandlerBase):
     def __init__(self, api_token: str) -> None:
-        self.api_token:  str         = api_token
-        self.ws:         WebSocket   = None
-        self.db:         MongoClient = MongoClient()[DB.DATABASE_NAME]
-        self.collection: Collection  = self.db[DB.COLLECTION_AO]
+        self.api_token:  str          = api_token
+        self.ws:         WebSocketApp = None
+        self.db:         MongoClient  = MongoClient()[DB.DATABASE_NAME]
+        self.collection: Collection   = self.db[DB.COLLECTION_AO]
         return
 
     def ws_message(self, ws: WebSocketApp, message: str) -> None:
@@ -43,14 +41,12 @@ class AddOrderSocketHandler(SocketHandlerBase):
             G.add_orders_lock.acquire()
             
             while len(G.add_orders_queue) > 0:
-                api_data = G.add_orders_queue[0]
+                orders = G.add_orders_queue[0]
                 
-                for elem in api_data:
-                    print(elem)
+                for order in orders:
+                    self.ws.send(order)
 
-                # self.ws.send(api_data)
                 G.add_orders_queue.pop(0)
-
             G.add_orders_lock.release()
             time.sleep(1)
         return

@@ -99,6 +99,8 @@ class KrakenDCABot(KrakenBotBase):
         """Place buy order for each symbol_pair in buy_dict"""
         for symbol, symbol_pair in buy_dict.items():
             if self.mdb.c_open_symbols.count_documents({"symbol_pair": symbol_pair}) == 0:
+                """symbol_pair is not in database."""
+                order_list        = []
                 pair              = symbol_pair.split("/")
                 order_min         = self.get_order_min(pair[0] + pair[1])
                 market_price      = self.get_bid_price(symbol_pair)
@@ -120,17 +122,19 @@ class KrakenDCABot(KrakenBotBase):
                     if total_cost > G.available_usd:
                         continue
 
-                dca.store_in_db()
-                order_list = list()
+                order_list.append('{"event":"%(feed)s", "token":"%(token)s", "pair":"%(pair)s", "type":"%(type)s", "ordertype":"%(ordertype)s", "price":"%(price)s", "volume":"%(volume)s"}' 
+                    % {"feed": "addOrder", "token": ws_token, "pair": "XBT/USD", "type": "buy", "ordertype": "limit", "price": 1, "volume": 1})
+
+                # dca.store_in_db()
 
                 # base order
-                order_list.append('{"event":"%(feed)s", "token":"%(token)s", "pair":"%(pair)s", "type":"%(type)s", "ordertype":"%(ordertype)s", "volume":"%(volume)s"}' \
-                    % {"feed": "addOrder", "token": ws_token, "pair": symbol_pair, "type": "buy", "ordertype": "market", "volume": base_order_size})
+                # order_list.append('{"event":"%(feed)s", "token":"%(token)s", "pair":"%(pair)s", "type":"%(type)s", "ordertype":"%(ordertype)s", "volume":"%(volume)s"}' \
+                #     % {"feed": "addOrder", "token": ws_token, "pair": symbol_pair, "type": "buy", "ordertype": "market", "volume": base_order_size})
                 
-                # safety orders
-                for i in range(self.config.SAFETY_ORDERS_MAX):
-                    order_list.append('{"event":"%(feed)s", "token":"%(token)s", "pair":"%(pair)s", "type":"%(type)s", "ordertype":"%(ordertype)s", "price":"%(price)s, "volume":"%(volume)s"}' \
-                        % {"feed": "addOrder", "token": ws_token, "pair": symbol_pair, "type": "buy", "ordertype": "limit", "price": dca.price_levels[i], "volume": dca.quantities[i]})
+                # # safety orders
+                # for i in range(self.config.SAFETY_ORDERS_MAX):
+                #     order_list.append('{"event":"%(feed)s", "token":"%(token)s", "pair":"%(pair)s", "type":"%(type)s", "ordertype":"%(ordertype)s", "price":"%(price)s", "volume":"%(volume)s"}' \
+                #         % {"feed": "addOrder", "token": ws_token, "pair": symbol_pair, "type": "buy", "ordertype": "limit", "price": dca.price_levels[i], "volume": dca.quantities[i]})
 
                 # TO CHECK FOR
                 # 1. the user doesn't have the funds available (create the safety order table and place as many orders as possible. Check back when we can place the remaining safety orders)
@@ -142,8 +146,9 @@ class KrakenDCABot(KrakenBotBase):
                 G.add_orders_lock.acquire()
                 G.add_orders_queue.append(order_list)
                 G.add_orders_lock.release()
-                time.sleep(10000)
-                return
+            else:
+                """symbol_pair is in database."""
+            return
 
     def start_trade_loop(self) -> None:
         try:
@@ -156,8 +161,8 @@ class KrakenDCABot(KrakenBotBase):
         self.start_socket_handler_threads()
 
         while True:
-            start_time: float = time.time()
-            buy_dict:   dict  = self.get_buy_dict()
+            start_time = time.time()
+            buy_dict   = self.get_buy_dict()
 
             G.log.print_and_log(Color.FG_BRIGHT_BLACK + f"Main thread: checked all coins in {get_elapsed_time(start_time)}" + Color.ENDC, G.print_lock)
             
