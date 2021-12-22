@@ -11,7 +11,7 @@ from bot_features.socket_handlers.socket_handler_base import SocketHandlerBase
 from util.globals                                     import G
 
 
-class AddOrderSocketHandler(SocketHandlerBase):
+class SafetyOrderSocketHandler(SocketHandlerBase):
     def __init__(self, api_token: str) -> None:
         self.api_token:  str          = api_token
         self.ws:         WebSocketApp = None
@@ -38,22 +38,22 @@ class AddOrderSocketHandler(SocketHandlerBase):
             
     def ws_open(self, ws: WebSocketApp) -> None:
         while True:
-            G.add_orders_lock.acquire()
+            G.safety_orders_lock.acquire()
             
-            while len(G.add_orders_queue) > 0:
-                orders = G.add_orders_queue[0]
+            while len(G.safety_order_queue) > 0:
+                orders = G.safety_order_queue[0]
                 
                 for order in orders:
                     self.ws.send(order)
 
-                G.add_orders_queue.pop(0)
-            G.add_orders_lock.release()
+                G.safety_order_queue.pop(0)
+            G.safety_orders_lock.release()
             time.sleep(1)
         return
 
     def ws_thread(self, *args) -> None:
         self.ws = WebSocketApp(
-            url="wss://ws-auth.kraken.com/",
+            url=WEBSOCKET_PRIVATE_URL,
             on_open=self.ws_open,
             on_message=self.ws_message,
             on_error=self.ws_error)

@@ -91,11 +91,7 @@ class MongoDatabase():
                 }
     
         """
-        
-
         return
-
-
 
     def get_safety_order_table(self) -> dict():
         return self.c_safety_orders.find()

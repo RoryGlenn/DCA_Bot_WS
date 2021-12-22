@@ -326,6 +326,6 @@ class DCA():
         data['base_order']    = base_order
         data['safety_orders'] = safety_order_list
 
-        if self.mdb.c_safety_orders.count_documents({"symbol_pair": self.symbol_pair}) == 0:
-            self.mdb.c_safety_orders.insert_one({self.symbol_pair: data})
+        # if self.mdb.c_safety_orders.count_documents({"symbol_pair": self.symbol_pair}) == 0:
+        self.mdb.c_safety_orders.insert_one({self.symbol_pair: data})
         return

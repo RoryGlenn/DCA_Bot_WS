@@ -41,7 +41,7 @@ class OpenOrdersSocketHandler(SocketHandlerBase):
                             # pair = order_info["descr"]["pair"].split("/")
                             # symbol_pair = pair[0] + pair[1]
 
-                            pprint(self.c_safety_orders.list_indexes())
+                            # pprint(self.c_safety_orders.list_indexes())
 
                             symbol_pair = order_info["descr"]["pair"]
 
