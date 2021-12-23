@@ -282,14 +282,11 @@ class DCA():
 
 
     def store_in_db(self):
-        data = dict()
-
-        data = {'symbol': self.symbol, 'symbol_pair': self.symbol_pair, 'base_order': {}, 'safety_orders': {}}
         safety_order_list = list()
-
-        value = self.entry_price * self.base_order_size
-        profit = value * (self.config.TARGET_PROFIT_PERCENT/100)
-        profit = round(profit, 8)
+        data              = {'symbol': self.symbol, 'symbol_pair': self.symbol_pair, 'base_order': {}, 'safety_orders': {}}
+        value             = self.entry_price * self.base_order_size
+        profit            = value * (self.config.TARGET_PROFIT_PERCENT/100)
+        profit            = round(profit, 8)
 
         # base order
         base_order = {
@@ -303,7 +300,7 @@ class DCA():
             'profit':                     profit,
             'cost':                       self.entry_price * self.base_order_size,
             'total_cost':                 self.entry_price * self.base_order_size,
-            'has_placed_order':           False
+            'has_placed_order':           True
         }
 
         # safety orders
@@ -321,13 +318,14 @@ class DCA():
                     'profit':                     self.profit_levels[i],
                     'cost':                       self.cost_levels[i],
                     'total_cost':                 self.total_cost_levels[i],
-                    'has_placed_order':           False
+                    'has_placed_order':           False,
+                    'has_filled':                 False
                 }
             })
         
         data['base_order']    = base_order
         data['safety_orders'] = safety_order_list
 
-        # if self.mdb.c_safety_orders.count_documents({"symbol_pair": self.symbol_pair}) == 0:
-        self.mdb.c_safety_orders.insert_one({self.symbol_pair: data})
+        if self.mdb.c_safety_orders.count_documents({'_id': self.symbol_pair}) == 0:
+            self.mdb.c_safety_orders.insert_one({'_id': self.symbol_pair, self.symbol_pair: data})
         return

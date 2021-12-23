@@ -22,8 +22,8 @@ from bot_features.tradingview import TradingView
 
 from bot_features.dca import DCA
 
-from util.colors import Color
-from util.config import Config
+from util.colors  import Color
+from util.config  import Config
 from util.globals import G
 
 
@@ -83,8 +83,9 @@ class KrakenDCABot(KrakenBotBase):
         self.socket_handler_open_orders  = OpenOrdersSocketHandler(ws_token)
         self.socket_handler_own_trades   = OwnTradesSocketHandler(ws_token)
         self.socket_handler_balances     = BalancesSocketHandler(ws_token)
-        self.socket_handler_safety_order = SafetyOrderSocketHandler(ws_token)
+
         self.socket_handler_base_order   = BaseOrderSocketHandler(ws_token)
+        self.socket_handler_safety_order = SafetyOrderSocketHandler(ws_token)
         return
 
     def start_socket_handler_threads(self) -> None:
@@ -94,12 +95,14 @@ class KrakenDCABot(KrakenBotBase):
         Thread(target=self.socket_handler_base_order.ws_thread).start()
         Thread(target=self.socket_handler_safety_order.ws_thread).start()
         return
+    
+    def get_number_of_open_buy_orders(self):
+        return
 
     # def place_base_order(self, buy_dict: dict, ws_token: str) -> None:
     def place_base_order(self, symbol: str, symbol_pair: str, ws_token: str) -> None:
         """Place buy order for symbol_pair"""
     
-        order_list        = []
         pair              = symbol_pair.split("/")
         order_min         = self.get_order_min(pair[0] + pair[1])
         market_price      = self.get_bid_price(symbol_pair)
@@ -107,12 +110,13 @@ class KrakenDCABot(KrakenBotBase):
         base_order_size   = self.config.BASE_ORDER_SIZE
         safety_order_size = self.config.SAFETY_ORDER_SIZE
 
-        # if self.config.BASE_ORDER_SIZE < order_min:
-        #     base_order_size = order_min
-
-        # if self.config.SAFETY_ORDER_SIZE < order_min:
-        #     safety_order_size = order_min
-
+        if self.config.BASE_ORDER_SIZE < order_min:
+            # raise Exception(f"Base order size must be at least {order_min}")
+            base_order_size = order_min
+        if self.config.SAFETY_ORDER_SIZE < order_min:
+            # raise Exception(f"Safety order size must be at least {order_min}")
+            safety_order_size = order_min
+        
         dca = DCA(symbol, symbol_pair, base_order_size, safety_order_size, market_price)
         dca.start()
 
@@ -125,44 +129,63 @@ class KrakenDCABot(KrakenBotBase):
             % {"feed": "addOrder", "token": ws_token, "pair": "XBT/USD", "type": "buy", "ordertype": "limit", "price": 1, "volume": 1}
 
         self.socket_handler_base_order.ws.send(base_order)
-
-        # {'descr': 'buy 1.00000000 XBTUSD @ limit 1.0',
-        # 'event': 'addOrderStatus',
-        # 'status': 'ok',
-        # 'txid': 'O2POBC-CHTOX-A6I5RN'}
         
         # wait until the variable has been assigned a value
         while len(self.socket_handler_base_order.order_result) == 0:
             time.sleep(0.05)
 
         if self.socket_handler_base_order.order_result['status'] == 'ok':
-            descr       = self.socket_handler_base_order.order_result['descr'].split(" ")
-            quantity    = descr[1]
-            symbol_pair = descr[2]
+            descr       = self.socket_handler_base_order.order_result['descr'].split(' ')
+            quantity    = float(descr[1])
             order_type  = descr[4]
-            entry_price = descr[5]
+            entry_price = float(descr[5])
             txid        = self.socket_handler_base_order.order_result['txid']
             
             self.dca = DCA(symbol, symbol_pair, base_order_size, safety_order_size, entry_price)
             self.dca.start()
             self.dca.store_in_db()
-
-        # time.sleep(100000)
+        else:
+            print(f"Error: order did not go through! {self.socket_handler_base_order.order_result}")
         return
-
 
     def place_safety_orders(self, symbol: str, symbol_pair: str, ws_token: str) -> None:
         # get the number of open safety orders on symbol_pair
-
-        # safety orders
         for i in range(self.config.SAFETY_ORDERS_MAX):
-            order = '{"event":"%(feed)s", "token":"%(token)s", "pair":"%(pair)s", "type":"%(type)s", "ordertype":"%(ordertype)s", "price":"%(price)s", "volume":"%(volume)s"}' \
-                % {"feed": "addOrder", "token": ws_token, "pair": symbol_pair, "type": "buy", "ordertype": "limit", "price": dca.price_levels[i], "volume": dca.quantities[i]}
+            self.socket_handler_safety_order.ws.send('{"event":"%(feed)s", "token":"%(token)s", "pair":"%(pair)s", "type":"%(type)s", "ordertype":"%(ordertype)s", "price":"%(price)s", "volume":"%(volume)s"}'
+                % {"feed": "addOrder", "token": ws_token, "pair": "XBT/USD", "type": "buy", "ordertype": "limit", "price": i, "volume": i})
 
+            while len(self.socket_handler_safety_order.order_result) == 0:
+                time.sleep(0.05)
 
-        time.sleep(100000)
+            has_safety_order = False
+            
+            if self.socket_handler_safety_order.order_result['status'] == 'ok':
+                for document in self.mdb.c_safety_orders.find({'_id': symbol_pair}):
+                    for value in document.values():
+                        if isinstance(value, dict):
+                            
+                            # for safety_order_no, safety_order_data in value['safety_orders'][0].items():
+                            for safety_order in value['safety_orders']:
+                                for safety_order_no, safety_order_data in safety_order.items():
+                                    if not has_safety_order:
+                                        if safety_order_data['has_placed_order'] == False:
+                                            safety_order_data['has_placed_order'] = True
+                                            
+                                            new_values = {"$set": {symbol_pair: value}}
+                                            query      = {'_id': symbol_pair}
+                                            self.mdb.c_safety_orders.find_one_and_update(query, new_values)
+                                            has_safety_order = True
+                                            break
+
         return
 
+
+    def cancel_orders(self, symbol_pair: str) -> None:
+        open_orders = self.get_open_orders()['result']['open']
+        for txid, data in open_orders.items():
+            if data['descr']['pair'] == symbol_pair:
+                self.cancel_order(txid)        
+        return
 
     def start_trade_loop(self) -> None:
         try:
@@ -173,6 +196,13 @@ class KrakenDCABot(KrakenBotBase):
 
         self.init_socket_handlers(ws_token)
         self.start_socket_handler_threads()
+
+        ##################################
+        self.mdb.c_safety_orders.drop()
+        self.mdb.c_open_symbols.drop()
+        self.mdb.c_own_trades.drop()
+        self.cancel_orders("XBTUSD")
+        ##################################
 
         while True:
             start_time = time.time()

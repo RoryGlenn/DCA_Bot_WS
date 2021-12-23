@@ -13,46 +13,30 @@ from util.globals                                     import G
 
 class BaseOrderSocketHandler(SocketHandlerBase):
     def __init__(self, api_token: str) -> None:
-        self.api_token:  str          = api_token
-        self.ws:         WebSocketApp = None
-        self.db:         MongoClient  = MongoClient()[DB.DATABASE_NAME]
-        self.collection: Collection   = self.db[DB.COLLECTION_AO]
-        self.order_result: dict = {}
+        self.api_token:    str          = api_token
+        self.ws:           WebSocketApp = None
+        self.db:           MongoClient  = MongoClient()[DB.DATABASE_NAME]
+        self.collection:   Collection   = self.db[DB.COLLECTION_AO]
+        self.order_result: dict         = {}
         return
 
     def ws_message(self, ws: WebSocketApp, message: str) -> None:
+        message = json.loads(message)
+
         # Success
         # {"descr":"buy 0.00200000 XBTUSD @ limit 9857.0 with 5:1 leverage","event":"addOrderStatus","status":"ok","txid":"OPOUJF-BWKCL-FG5DQL"}
         
         # Error
         # {"errorMessage":"EOrder:Order minimum not met","event":"addOrderStatus","status":"error"}
 
-        message = json.loads(message)
-
         if isinstance(message, dict):
-            if message["event"] == "addOrderStatus": # and message['status'] == 'ok':
+            if message["event"] == "addOrderStatus":
                 self.order_result = message
-            # if message["event"] == "addOrderStatus" and message['status'] == 'error':
-                # self.order_result = message
         return
             
-    # def ws_open(self, ws: WebSocketApp) -> None:
-    #     while True:
-    #         G.base_orders_lock.acquire()
-            
-    #         while len(G.base_order_queue) > 0:
-    #             self.ws.send(G.base_order_queue[0])
-    #             G.base_order_queue.pop(0)
-
-    #         G.base_orders_lock.release()
-    #         time.sleep(1)
-    #     return
-
-
     def ws_open(self, ws: WebSocketApp) -> None:
-        api_data = (
-            '{"event":"subscribe", "subscription":{"name":"%(feed)s", "token":"%(token)s"}}'
-            % {"feed":"openOrders", "token": self.api_token})
+        api_data = '{"event":"subscribe", "subscription":{"name":"%(feed)s", "token":"%(token)s"}}' \
+            % {"feed":"openOrders", "token": self.api_token}
         
         ws.send(api_data)
         return

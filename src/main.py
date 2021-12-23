@@ -7,9 +7,9 @@ import json
 import os
 import sys
 
-from bot_features.kraken_dca_bot import KrakenDCABot
+from bot_features.kraken_dca_bot           import KrakenDCABot
 from bot_features.low_level.kraken_enums   import *
-from util.globals                import G
+from util.globals                          import G
 
 
 def get_keys() -> str:

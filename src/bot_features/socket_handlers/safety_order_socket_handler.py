@@ -13,42 +13,31 @@ from util.globals                                     import G
 
 class SafetyOrderSocketHandler(SocketHandlerBase):
     def __init__(self, api_token: str) -> None:
-        self.api_token:  str          = api_token
-        self.ws:         WebSocketApp = None
-        self.db:         MongoClient  = MongoClient()[DB.DATABASE_NAME]
-        self.collection: Collection   = self.db[DB.COLLECTION_AO]
+        self.api_token:    str          = api_token
+        self.ws:           WebSocketApp = None
+        self.db:           MongoClient  = MongoClient()[DB.DATABASE_NAME]
+        self.collection:   Collection   = self.db[DB.COLLECTION_AO]
+        self.order_result: dict         = {}
         return
 
     def ws_message(self, ws: WebSocketApp, message: str) -> None:
+        message = json.loads(message)
         # Success
         # {"descr":"buy 0.00200000 XBTUSD @ limit 9857.0 with 5:1 leverage","event":"addOrderStatus","status":"ok","txid":"OPOUJF-BWKCL-FG5DQL"}
         
         # Error
         # {"errorMessage":"EOrder:Order minimum not met","event":"addOrderStatus","status":"error"}
 
-        message = json.loads(message)
-        
         if isinstance(message, dict):
-            if message["event"] == "addOrderStatus" and message['status'] == 'ok':
-                for key, value in message.items():
-                    pprint(message)
-            if message["event"] == "addOrderStatus" and message['status'] == 'error':
-                pprint(message)
+            if message["event"] == "addOrderStatus":
+                self.order_result = message
         return
             
     def ws_open(self, ws: WebSocketApp) -> None:
-        while True:
-            G.safety_orders_lock.acquire()
-            
-            while len(G.safety_order_queue) > 0:
-                orders = G.safety_order_queue[0]
-                
-                for order in orders:
-                    self.ws.send(order)
-
-                G.safety_order_queue.pop(0)
-            G.safety_orders_lock.release()
-            time.sleep(1)
+        api_data = '{"event":"subscribe", "subscription":{"name":"%(feed)s", "token":"%(token)s"}}' \
+            % {"feed":"openOrders", "token": self.api_token}
+        
+        ws.send(api_data)
         return
 
     def ws_thread(self, *args) -> None:
@@ -60,4 +49,3 @@ class SafetyOrderSocketHandler(SocketHandlerBase):
 
         self.ws.run_forever()
         return
-        
