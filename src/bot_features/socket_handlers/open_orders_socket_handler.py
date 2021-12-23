@@ -52,15 +52,27 @@ class OpenOrdersSocketHandler(SocketHandlerBase):
                             """How do we tell the difference between a safety order and a base order???"""
                             ##############
 
+                            # pprint(order_info)
+                            # print()
+                            # pprint(message)
+                            # print()
+
+                            """
+                            Characteristics of a base order:
+                                symbol_pair won't be in db
+                                could be a market/limit order
+                                quantity == self.config.BASE_ORDER_SIZE
+                            """
+
                             # if its not in the open_order collection, add it
-                            if self.c_open_orders.count_documents({txid: order_info}) == 0:
-                                self.c_open_orders.insert_one({txid: order_info})
+                            # if self.c_open_orders.count_documents({txid: order_info}) == 0:
+                            #     self.c_open_orders.insert_one({txid: order_info})
 
-                            # if its not in the open_symbols collection, add it
-                            if self.c_open_symbols.count_documents({"open_symbols": symbol_pair}) == 0:
-                                self.c_open_symbols.insert_one({"open_symbols": symbol_pair})
+                            # # if its not in the open_symbols collection, add it
+                            # if self.c_open_symbols.count_documents({"open_symbols": symbol_pair}) == 0:
+                            #     self.c_open_symbols.insert_one({"open_symbols": symbol_pair})
 
-                            G.log.pprint_and_log(f"openOrders: open order", order_info, G.print_lock)
+                            # G.log.pprint_and_log(f"openOrders: open order", order_info, G.print_lock)
                         if order_info[Status.STATUS] == Status.CANCELED:
                             self.open_orders.pop(txid)
                             self.c_open_orders.delete_one({txid: order_info})
