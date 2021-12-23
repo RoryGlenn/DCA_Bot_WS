@@ -291,6 +291,7 @@ class DCA():
         profit = value * (self.config.TARGET_PROFIT_PERCENT/100)
         profit = round(profit, 8)
 
+        # base order
         base_order = {
             'deviation_percentage':       "0",
             'quantity':                   self.base_order_size,
@@ -302,9 +303,10 @@ class DCA():
             'profit':                     profit,
             'cost':                       self.entry_price * self.base_order_size,
             'total_cost':                 self.entry_price * self.base_order_size,
-            'has_order_placed':           False
+            'has_placed_order':           False
         }
 
+        # safety orders
         for i in range(self.config.SAFETY_ORDERS_MAX):
             safety_order_list.append(
             {str(i+1): 
@@ -319,7 +321,7 @@ class DCA():
                     'profit':                     self.profit_levels[i],
                     'cost':                       self.cost_levels[i],
                     'total_cost':                 self.total_cost_levels[i],
-                    'has_order_placed':           False
+                    'has_placed_order':           False
                 }
             })
         

@@ -52,6 +52,7 @@ class KrakenDCABot(KrakenBotBase):
         self.config: Config        = Config()
         self.tv:     TradingView   = TradingView()
         self.mdb:    MongoDatabase = MongoDatabase()
+        self.dca:    DCA           = None
 
         # why can't I initialize this variable in kraken_bot_base.py?
         self.asset_pairs_dict = self.get_all_tradable_asset_pairs()[Dicts.RESULT]
@@ -106,11 +107,11 @@ class KrakenDCABot(KrakenBotBase):
         base_order_size   = self.config.BASE_ORDER_SIZE
         safety_order_size = self.config.SAFETY_ORDER_SIZE
 
-        if self.config.BASE_ORDER_SIZE < order_min:
-            base_order_size = order_min
+        # if self.config.BASE_ORDER_SIZE < order_min:
+        #     base_order_size = order_min
 
-        if self.config.SAFETY_ORDER_SIZE < order_min:
-            safety_order_size = order_min
+        # if self.config.SAFETY_ORDER_SIZE < order_min:
+        #     safety_order_size = order_min
 
         dca = DCA(symbol, symbol_pair, base_order_size, safety_order_size, market_price)
         dca.start()
@@ -123,52 +124,43 @@ class KrakenDCABot(KrakenBotBase):
         base_order = '{"event":"%(feed)s", "token":"%(token)s", "pair":"%(pair)s", "type":"%(type)s", "ordertype":"%(ordertype)s", "price":"%(price)s", "volume":"%(volume)s"}' \
             % {"feed": "addOrder", "token": ws_token, "pair": "XBT/USD", "type": "buy", "ordertype": "limit", "price": 1, "volume": 1}
 
-        """
-        store in db before base order VS store in db after base order:
-
-        ######################################
-        Store in db before base order PRO's:
-            1. You will have access to all order info in any thread.
-            2. Little work for now
-            
-        Store in db before base order CON's:
-            1. Makes a messier db with information that hasn't been executed yet
-            2. If the base order doesn't go through successfully, you will have to remove the information associated with symbol_pair
-
-        ######################################
-        Store in db after base order PRO's:
-            1. DB is neat containing only the information that has been executed
-            
-        Store in db after base order CON's:
-            1. Don't know how to put the base order information in the db because we lose access to the DCA object we just created.
-
-        """
-
-
-        # base order
-        # order_list.append('{"event":"%(feed)s", "token":"%(token)s", "pair":"%(pair)s", "type":"%(type)s", "ordertype":"%(ordertype)s", "volume":"%(volume)s"}' \
-        #     % {"feed": "addOrder", "token": ws_token, "pair": symbol_pair, "type": "buy", "ordertype": "market", "volume": base_order_size})
-        
         self.socket_handler_base_order.ws.send(base_order)
 
-        if self.socket_handler_base_order.order_result['status'] == 'ok':
-            pprint(self.socket_handler_base_order.order_result)
-            dca = DCA(symbol, symbol_pair, base_order_size, safety_order_size, market_price)
-            dca.start()
-            dca.store_in_db()
+        # {'descr': 'buy 1.00000000 XBTUSD @ limit 1.0',
+        # 'event': 'addOrderStatus',
+        # 'status': 'ok',
+        # 'txid': 'O2POBC-CHTOX-A6I5RN'}
+        
+        # wait until the variable has been assigned a value
+        while len(self.socket_handler_base_order.order_result) == 0:
+            time.sleep(0.05)
 
-        time.sleep(100000)
+        if self.socket_handler_base_order.order_result['status'] == 'ok':
+            descr       = self.socket_handler_base_order.order_result['descr'].split(" ")
+            quantity    = descr[1]
+            symbol_pair = descr[2]
+            order_type  = descr[4]
+            entry_price = descr[5]
+            txid        = self.socket_handler_base_order.order_result['txid']
+            
+            self.dca = DCA(symbol, symbol_pair, base_order_size, safety_order_size, entry_price)
+            self.dca.start()
+            self.dca.store_in_db()
+
+        # time.sleep(100000)
         return
 
 
-    def place_safety_orders(symbol: str, symbol_pair: str, ws_token: str) -> None:
+    def place_safety_orders(self, symbol: str, symbol_pair: str, ws_token: str) -> None:
         # get the number of open safety orders on symbol_pair
 
-        # # safety orders
-        # for i in range(self.config.SAFETY_ORDERS_MAX):
-        #     order_list.append('{"event":"%(feed)s", "token":"%(token)s", "pair":"%(pair)s", "type":"%(type)s", "ordertype":"%(ordertype)s", "price":"%(price)s", "volume":"%(volume)s"}' \
-        #         % {"feed": "addOrder", "token": ws_token, "pair": symbol_pair, "type": "buy", "ordertype": "limit", "price": dca.price_levels[i], "volume": dca.quantities[i]})
+        # safety orders
+        for i in range(self.config.SAFETY_ORDERS_MAX):
+            order = '{"event":"%(feed)s", "token":"%(token)s", "pair":"%(pair)s", "type":"%(type)s", "ordertype":"%(ordertype)s", "price":"%(price)s", "volume":"%(volume)s"}' \
+                % {"feed": "addOrder", "token": ws_token, "pair": symbol_pair, "type": "buy", "ordertype": "limit", "price": dca.price_levels[i], "volume": dca.quantities[i]}
 
+
+        time.sleep(100000)
         return
 
 
