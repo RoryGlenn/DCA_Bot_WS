@@ -87,7 +87,6 @@ class Log():
             
             print(     result)
             self.write(result_no_color)
-                
         except:
             print(f"{result} {Color.BG_RED}ERROR:{Color.ENDC} || {e}, {error_type} {filename} {tb_lineno}" )
         

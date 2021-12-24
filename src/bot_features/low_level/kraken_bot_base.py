@@ -8,6 +8,7 @@ import sys
 
 from datetime import datetime
 
+from pprint import pprint
 from util.globals import G
 from bot_features.low_level.kraken_rest_api import KrakenRestAPI
 from bot_features.low_level.kraken_enums import *

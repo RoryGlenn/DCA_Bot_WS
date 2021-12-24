@@ -18,8 +18,8 @@ class MongoDatabase():
         return
 
 
-    def in_safety_orders(self, symbol_pair: str) -> None:
-        return not self.c_safety_orders.count_documents({"_id": symbol_pair}) == 0
+    def in_safety_orders(self, symbol_pair: str) -> bool:
+        return bool(self.c_safety_orders.count_documents({"_id": symbol_pair}) == 0)
 
     def get_safety_order_table(self) -> dict():
         return self.c_safety_orders.find()
