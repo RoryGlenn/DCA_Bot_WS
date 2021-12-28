@@ -17,7 +17,6 @@ class MongoDatabase():
         self.c_safety_orders: Collection  = self.mdb[DB.COLLECTION_SO]
         return
 
-
     def in_safety_orders(self, symbol_pair: str) -> bool:
         return bool(self.c_safety_orders.count_documents({"_id": symbol_pair}) == 0)
 

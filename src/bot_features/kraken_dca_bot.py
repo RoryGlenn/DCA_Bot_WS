@@ -187,11 +187,13 @@ class KrakenDCABot(KrakenBotBase):
         return
 
     def place_safety_orders(self, ws_token: str, base_order_result: dict, symbol: str, symbol_pair: str) -> None:
-        # get the number of open safety orders on symbol_pair
+        # if number_of_open_safety_order >= self.config.DCA_DATA[symbol][ConfigKeys.DCA_SAFETY_ORDERS_ACTIVE_MAX]:
+        #     return
+
         if base_order_result['status'] == 'ok':
             for i in range(self.config.DCA_DATA[symbol][ConfigKeys.DCA_SAFETY_ORDERS_MAX]):
                 self.socket_handler_safety_order.ws.send('{"event":"%(feed)s", "token":"%(token)s", "pair":"%(pair)s", "type":"%(type)s", "ordertype":"%(ordertype)s", "price":"%(price)s", "volume":"%(volume)s"}'
-                    % {"feed": "addOrder", "token": ws_token, "pair": "XBT/USD", "type": "buy", "ordertype": "limit", "price": i, "volume": i})
+                    % {"feed": "addOrder", "token": ws_token, "pair": symbol_pair, "type": "buy", "ordertype": "limit", "price": i, "volume": i})
 
                 while len(self.socket_handler_safety_order.order_result) == 0:
                     time.sleep(0.05)
@@ -238,19 +240,21 @@ class KrakenDCABot(KrakenBotBase):
         self.mdb.c_open_symbols.drop()
         self.mdb.c_own_trades.drop()
         self.cancel_orders("XBTUSD")
+        self.cancel_orders("SCUSD")
         ##################################
 
         while True:
-            # start_time = time.time()
-            # buy_dict   = self.get_buy_dict()
+            start_time = time.time()
+            buy_dict   = self.get_buy_dict()
 
-            # G.log.print_and_log(Color.FG_BRIGHT_BLACK + f"Main thread: checked all coins in {get_elapsed_time(start_time)}" + Color.ENDC, G.print_lock)
-            # G.log.print_and_log(f"Main thread: buy list {PrettyPrinter(indent=1).pformat([symbol_pair for (symbol, symbol_pair) in buy_dict.items()])}", G.print_lock)
+            G.log.print_and_log(Color.FG_BRIGHT_BLACK + f"Main thread: checked all coins in {get_elapsed_time(start_time)}" + Color.ENDC, G.print_lock)
+            G.log.print_and_log(f"Main thread: buy list {PrettyPrinter(indent=1).pformat([symbol_pair for (symbol, symbol_pair) in buy_dict.items()])}", G.print_lock)
 
             # place safety orders for previous trades before starting a new trade
-            for elem in self.mdb.c_safety_orders.find():
-                for symbol, symbol_pair in elem:
-                    self.place_safety_orders(symbol, symbol_pair, ws_token)
+            
+            # for elem in self.mdb.c_safety_orders.find():
+            #     for symbol, symbol_pair in elem.items():
+            #         self.place_safety_orders(ws_token, symbol, symbol_pair)
 
             buy_dict = {'SC': 'SC/USD'} # for testing only
 
