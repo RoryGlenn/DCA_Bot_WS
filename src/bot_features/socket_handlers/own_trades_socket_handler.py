@@ -1,3 +1,4 @@
+import time
 import json
 import pymongo
 
@@ -12,8 +13,6 @@ from util.globals                                     import G
 from util.config                                      import Config
 
 
-
-
 class OwnTradesSocketHandler(SocketHandlerBase):
     def __init__(self, api_token) -> None:
         self.api_token     = api_token
@@ -25,6 +24,12 @@ class OwnTradesSocketHandler(SocketHandlerBase):
         self.collection_os = self.db[DB.COLLECTION_OS]
         self.count         = 0
         return
+
+    def get_entry_price(self, order_txid: str) -> float:
+        while order_txid not in self.trades.keys():
+            time.sleep(0.05)
+            
+        return float(self.trades[order_txid]['price'])
 
     def ws_message(self, ws: WebSocketApp, message: str) -> None:
         message = json.loads(message)

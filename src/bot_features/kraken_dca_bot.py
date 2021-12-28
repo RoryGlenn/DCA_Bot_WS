@@ -117,10 +117,6 @@ class KrakenDCABot(KrakenBotBase):
             G.log.print_and_log(f"{symbol} Safety order size must be at least {order_min}", G.print_lock)
             return {'status': f'Safety order size must be at least {order_min}'}
 
-        # if market_price == 0:
-        #     print(symbol_pair, base_order_size, safety_order_size, market_price)
-        #     pass
-
         dca = DCA(symbol, symbol_pair, base_order_size, safety_order_size, market_price)
         dca.start()
 
@@ -129,61 +125,41 @@ class KrakenDCABot(KrakenBotBase):
             if total_cost > G.available_usd:
                 return {'status': 'DCA_ALL_OR_NOTHING'}
 
-        base_order = '{"event":"%(feed)s", "token":"%(token)s", "pair":"%(pair)s", "type":"%(type)s", "ordertype":"%(ordertype)s", "volume":"%(volume)s"}' \
-            % {"feed": "addOrder", "token": ws_token, "pair": symbol_pair, "type": "buy", "ordertype": "market", "volume": base_order_size}
+        # for now, all base order buys must be market
+        self.socket_handler_base_order.ws_buy_sync(ws_token, symbol_pair, "market", base_order_size)
 
-        self.socket_handler_base_order.ws.send(base_order)
-        
-        # wait until the variable has been assigned a value
-        while len(self.socket_handler_base_order.order_result) == 0:
-            time.sleep(0.05)
-
-        if self.socket_handler_base_order.order_result['status'] == 'ok':
-            G.log.print_and_log(f"{symbol_pair} Base order placed {self.socket_handler_base_order.order_result}", G.print_lock)
+        if self.socket_handler_base_order.is_buy_order_ok():
+            G.log.print_and_log(f"{symbol_pair} Base order placed {self.socket_handler_base_order.buy_order_result}", G.print_lock)
             
-            descr       = self.socket_handler_base_order.order_result['descr'].split(' ')
+            descr       = self.socket_handler_base_order.buy_order_result['descr'].split(' ')
             quantity    = float(descr[1])
             order_type  = descr[4]
-
-            # there is no entry price if order is a market order!
-            # entry_price = float(descr[5]) # {'descr': 'buy 280.00000000 SCUSD @ market', 'event': 'addOrderStatus', 'status': 'ok', 'txid': 'OY2E4E-EJCGS-FDBOWZ'}
-            while 'txid' not in self.socket_handler_base_order.order_result.keys():
-                time.sleep(0.05)
+            order_txid  = self.socket_handler_base_order.buy_order_result['txid']
             
-            order_txid  = self.socket_handler_base_order.order_result['txid']
-
-            while order_txid not in self.socket_handler_own_trades.trades:
-                time.sleep(0.05)
-                
-            entry_price = self.socket_handler_own_trades.trades[order_txid]['price']
+            entry_price = self.socket_handler_own_trades.get_entry_price(order_txid)
             self.dca    = DCA(symbol, symbol_pair, base_order_size, safety_order_size, float(entry_price))
             self.dca.start()
             self.dca.store_in_db()
         else:
-            print(f"Error: order did not go through! {self.socket_handler_base_order.order_result}")
-        return self.socket_handler_base_order.order_result
+            print(f"Error: order did not go through! {self.socket_handler_base_order.buy_order_result}")
+        return self.socket_handler_base_order.buy_order_result
 
-    def place_base_sell_order(self, ws_token: str, base_order_result: dict, pair: str) -> None:
-        if base_order_result['status'] == 'ok':
+    def place_base_sell_order(self, ws_token: str, pair: str) -> None:
+        if self.socket_handler_base_order.is_buy_order_ok():
             # Round self.dca.base_target_price
-            symbol_pair    = pair.split("/")
-            symbol_pair    = symbol_pair[0] + symbol_pair[1]
-            max_price_prec = self.get_max_price_precision(symbol_pair)
+            _symbol_pair    = pair.split("/")
+            _symbol_pair    = _symbol_pair[0] + _symbol_pair[1]
+            max_price_prec = self.get_max_price_precision(_symbol_pair)
             target_price   = self.round_decimals_down(self.dca.base_target_price, max_price_prec)
 
-            base_sell_order = '{"event":"%(feed)s", "token":"%(token)s", "pair":"%(pair)s", "type":"%(type)s", "ordertype":"%(ordertype)s", "price":"%(price)s", "volume":"%(volume)s"}' \
-                % {"feed": "addOrder", "token": ws_token, "pair": pair, "type": "sell", "ordertype": "limit", "price": target_price, "volume": self.dca.base_order_size}
-
-            self.socket_handler_base_order.ws.send(base_sell_order)
-
-            while len(self.socket_handler_base_order.order_result) == 0:
-                time.sleep(0.05)
+            # place the sell order
+            self.socket_handler_base_order.ws_sell_sync(ws_token, pair, self.dca.base_order_size, target_price)
 
             # check if sell order is valid
-            if self.socket_handler_base_order.order_result['status'] == 'ok':
-                G.log.print_and_log(f"{pair} Base order placed {self.socket_handler_base_order.order_result}", G.print_lock)
+            if self.socket_handler_base_order.is_buy_order_ok():
+                G.log.print_and_log(f"{pair} Sell order placed {self.socket_handler_base_order.buy_order_result}", G.print_lock)
             else:
-                G.log.print_and_log(f"{pair} Base order NOT placed {self.socket_handler_base_order.order_result}", G.print_lock)
+                G.log.print_and_log(f"{pair} Sell order NOT placed {self.socket_handler_base_order.buy_order_result}", G.print_lock)
         return
 
     def place_safety_orders(self, ws_token: str, base_order_result: dict, symbol: str, symbol_pair: str) -> None:
@@ -239,30 +215,29 @@ class KrakenDCABot(KrakenBotBase):
         self.mdb.c_safety_orders.drop()
         self.mdb.c_open_symbols.drop()
         self.mdb.c_own_trades.drop()
-        self.cancel_orders("XBTUSD")
-        self.cancel_orders("SCUSD")
+        # self.cancel_orders("XBTUSD")
+        # self.cancel_orders("SCUSD")
         ##################################
 
         while True:
-            start_time = time.time()
-            buy_dict   = self.get_buy_dict()
+            # start_time = time.time()
+            # buy_dict   = self.get_buy_dict()
 
-            G.log.print_and_log(Color.FG_BRIGHT_BLACK + f"Main thread: checked all coins in {get_elapsed_time(start_time)}" + Color.ENDC, G.print_lock)
-            G.log.print_and_log(f"Main thread: buy list {PrettyPrinter(indent=1).pformat([symbol_pair for (symbol, symbol_pair) in buy_dict.items()])}", G.print_lock)
+            # G.log.print_and_log(Color.FG_BRIGHT_BLACK + f"Main thread: checked all coins in {get_elapsed_time(start_time)}" + Color.ENDC, G.print_lock)
+            # G.log.print_and_log(f"Main thread: buy list {PrettyPrinter(indent=1).pformat([symbol_pair for (symbol, symbol_pair) in buy_dict.items()])}", G.print_lock)
 
             # place safety orders for previous trades before starting a new trade
-            
             # for elem in self.mdb.c_safety_orders.find():
             #     for symbol, symbol_pair in elem.items():
             #         self.place_safety_orders(ws_token, symbol, symbol_pair)
 
             buy_dict = {'SC': 'SC/USD'} # for testing only
 
-            for symbol, symbol_pair in buy_dict.items():
-                if self.mdb.in_safety_orders(symbol_pair):
-                    base_order_result = self.place_base_order(ws_token, symbol, symbol_pair)
-                    self.place_base_sell_order(ws_token, base_order_result, symbol_pair)
-                    self.place_safety_orders(ws_token, base_order_result, symbol, symbol_pair)
+            # for symbol, symbol_pair in buy_dict.items():
+            #     if self.mdb.in_safety_orders(symbol_pair):
+            #         base_order_result = self.place_base_order(ws_token, symbol, symbol_pair)
+            #         self.place_base_sell_order(ws_token, symbol_pair)
+            #         self.place_safety_orders(ws_token, base_order_result, symbol, symbol_pair)
             
             self.wait(message=Color.FG_BRIGHT_BLACK   + f"Main thread: waiting till {get_buy_time()} to buy" + Color.ENDC, timeout=60)
         return
