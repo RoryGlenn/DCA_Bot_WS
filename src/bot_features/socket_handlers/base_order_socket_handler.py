@@ -20,6 +20,11 @@ class BaseOrderSocketHandler(SocketHandlerBase):
         self.order_result: dict         = {}
         return
 
+    def ws_send(self):
+        while len(self.order_result) == 0:
+            time.sleep(0.05)
+
+
     def ws_message(self, ws: WebSocketApp, message: str) -> None:
         message = json.loads(message)
 

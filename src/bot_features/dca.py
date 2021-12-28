@@ -24,9 +24,9 @@ class DCA():
         self.symbol_pair:                       str           = symbol_pair
         self.entry_price:                       float         = entry_price
         self.base_order_size:                   float         = base_order_size
+        self.base_target_price:                 float         = 0.0
         self.safety_order_size:                 float         = safety_order_size
         self.safety_orders:                     dict          = { }
-
         self.mdb:                               MongoDatabase = MongoDatabase()
         self.config:                            Config        = Config()
         return
@@ -53,6 +53,7 @@ class DCA():
         
 
         if not self.__has_safety_order_table():
+            self.__set_base_target_price()
             self.__set_deviation_percentage_levels()
             self.__set_price_levels()
             self.__set_quantity_levels()
@@ -98,6 +99,9 @@ class DCA():
             return False
         return True
 
+    def __set_base_target_price(self) -> None:
+        self.base_target_price = self.entry_price + ( self.entry_price * (self.config.DCA_DATA[self.symbol][ConfigKeys.DCA_TARGET_PROFIT_PERCENT]/100) )
+        return
 
     def __set_deviation_percentage_levels(self) -> None:
         """

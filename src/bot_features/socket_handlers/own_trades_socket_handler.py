@@ -5,9 +5,7 @@ from pprint                                           import pprint
 from websocket._app                                   import WebSocketApp
 
 from bot_features.socket_handlers.socket_handler_base import SocketHandlerBase
-
 from bot_features.low_level.kraken_enums              import *
-
 from bot_features.dca                                 import DCA
 
 from util.globals                                     import G
@@ -21,7 +19,7 @@ class OwnTradesSocketHandler(SocketHandlerBase):
         self.api_token     = api_token
 
         self.trades        = dict()
-        self.config: Config = Config()
+        self.config        = Config()
         self.db            = pymongo.MongoClient()[DB.DATABASE_NAME]
         self.collection_ot = self.db[DB.COLLECTION_OT]
         self.collection_os = self.db[DB.COLLECTION_OS]
@@ -48,21 +46,21 @@ class OwnTradesSocketHandler(SocketHandlerBase):
                 #                           'vol': '280.00000000'}}]
                 for dictionary in message:
                     for txid, trade_info in dictionary.items():
-                        self.trades[txid] = trade_info
+                        self.trades[trade_info['ordertxid']] = trade_info
 
                         # if its not in the database, add it
-                        if self.collection_ot.count_documents({txid: trade_info}) == 0:
-                            self.collection_ot.insert_one({txid: trade_info})
+                        # if self.collection_ot.count_documents({txid: trade_info}) == 0:
+                        #     self.collection_ot.insert_one({txid: trade_info})
                         
                         data        = str(trade_info['pair']).split("/")
                         symbol      = data[0]
                         symbol_pair = data[0] + data[1]
 
                         # if it is a buy, and not in the database, insert into open symbols table and create safety order table
-                        if self.collection_os.count_documents({"symbol_pair": symbol_pair}) == 0:
-                            self.collection_os.insert_one({"symbol_pair": symbol_pair})
-                            dca = DCA(symbol, symbol_pair, self.config.BASE_ORDER_SIZE, self.config.SAFETY_ORDER_SIZE, trade_info['price'])
-                            dca.start()
+                        # if self.collection_os.count_documents({"symbol_pair": symbol_pair}) == 0:
+                        #     self.collection_os.insert_one({"symbol_pair": symbol_pair})
+                            # dca = DCA(symbol, symbol_pair, self.config.BASE_ORDER_SIZE, self.config.SAFETY_ORDER_SIZE, trade_info['price'])
+                            # dca.start()
 
                         G.log.pprint_and_log(f"ownTrades: trade", {txid: trade_info}, G.print_lock)
             else:
