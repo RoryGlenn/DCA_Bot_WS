@@ -29,7 +29,7 @@ x_list:   list = ['XETC', 'XETH', 'XLTC', 'XMLN', 'XREP', 'XXBT', 'XXDG', 'XXLM'
 reg_list: list = ['ETC', 'ETH', 'LTC', 'MLN', 'REP', 'XBT', 'XDG', 'XLM', 'XMR', 'XRP', 'ZEC']
 
 
-class BaseOrder(KrakenBotBase):
+class SafetyOrder(KrakenBotBase):
     def __init__(self, socket_handler_base_order) -> None:
         self.config = Config()
         self.socket_handler_base_order = socket_handler_base_order

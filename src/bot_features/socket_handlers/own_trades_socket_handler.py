@@ -38,17 +38,6 @@ class OwnTradesSocketHandler(SocketHandlerBase):
             if isinstance(message, list):
                 message = message[0]
                 
-                # [{'T6TB7M-VIU7J-S6XT2Z': {'cost': '4.239200',
-                #                           'fee': '0.010174',
-                #                           'margin': '0.000000',
-                #                           'ordertxid': 'OYN4IA-6PUMX-UTZZKI',
-                #                           'ordertype': 'market',
-                #                           'pair': 'SC/USD',
-                #                           'postxid': 'TKH2SE-M7IF5-CFI7LT',
-                #                           'price': '0.015140',
-                #                           'time': '1639784469.672391',
-                #                           'type': 'buy',
-                #                           'vol': '280.00000000'}}]
                 for dictionary in message:
                     for txid, trade_info in dictionary.items():
                         self.trades[trade_info['ordertxid']] = trade_info

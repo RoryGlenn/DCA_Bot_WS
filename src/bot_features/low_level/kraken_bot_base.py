@@ -20,8 +20,10 @@ class KrakenBotBase(KrakenRestAPI):
         Returns new Spot object with specified data
         
         """
-        super().__init__(api_key, api_secret)
-        # self.asset_pairs_dict: dict = {}
+        super(KrakenRestAPI, self).__init__(api_key, api_secret)
+        print("1")
+        self.asset_pairs_dict: dict = requests.get(URL_ASSET_PAIRS).json()
+        print("2")
         return
        
     def get_current_time(self) -> str:
@@ -42,7 +44,7 @@ class KrakenBotBase(KrakenRestAPI):
         return False
 
 
-    def get_all_tradable_asset_pairs(self) -> dict:
+    def get_all_tradable_asset_pairs(self) -> None:
         """
         Returns a dictionary containing all legal trading pairs on kraken
         For example, if you want to trade XLTC/USD, search the keys
@@ -50,14 +52,18 @@ class KrakenBotBase(KrakenRestAPI):
         not in the dictionary, the pair cannot be used to buy or sell.
         
         """
-        response = requests.get(URL_ASSET_PAIRS)
-        return ast.literal_eval(response.text)
+        # response = requests.get(URL_ASSET_PAIRS)
+        # return ast.literal_eval(response.text)
+        self.asset_pairs_dict = requests.get(URL_ASSET_PAIRS).json()
+        return
             
     def get_order_min(self, symbol_pair: str) -> float:  
         """
         Returns the min quantity of coin we can order per USD.
         
         """
+        pprint(self.asset_pairs_dict)
+        pprint(self.asset_pairs_dict[symbol_pair])
         return float(self.asset_pairs_dict[symbol_pair][Dicts.ORDER_MIN])
     
     def get_max_price_precision(self, symbol_pair: str) -> int:

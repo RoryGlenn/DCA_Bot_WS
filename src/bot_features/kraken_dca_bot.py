@@ -5,9 +5,10 @@ import time
 from pprint import pprint
 from pprint import PrettyPrinter
 from threading import Thread
-from bot_features.base_order import BaseOrder
+from bot_features.orders.base_order import BaseOrder
 
 from bot_features.database.mongo_database import MongoDatabase
+from bot_features.low_level.kraken_rest_api import KrakenRestAPI
 
 from bot_features.socket_handlers.balances_socket_handler import BalancesSocketHandler
 from bot_features.socket_handlers.open_orders_socket_handler import OpenOrdersSocketHandler
@@ -49,20 +50,21 @@ class KrakenDCABot(KrakenBotBase):
         self.api_secret = api_secret
         super(KrakenBotBase, self).__init__(self.api_key, self.api_secret)
 
+        self.rest_api:   KrakenRestAPI = KrakenRestAPI(api_key, api_secret)
+        self.base_order: BaseOrder     = BaseOrder(api_key, api_secret)
         self.config:     Config        = Config()
         self.tv:         TradingView   = TradingView()
         self.mdb:        MongoDatabase = MongoDatabase()
         self.dca:        DCA           = None
-        # self.base_order: BaseOrder     = BaseOrder()
 
         # why can't I initialize this variable in kraken_bot_base.py?
-        self.asset_pairs_dict = self.get_all_tradable_asset_pairs()[Dicts.RESULT]
+        # self.asset_pairs_dict = self.get_all_tradable_asset_pairs()[Dicts.RESULT]
 
         self.socket_handler_open_orders:  OpenOrdersSocketHandler  = None
         self.socket_handler_own_trades:   OwnTradesSocketHandler   = None
         self.socket_handler_balances:     BalancesSocketHandler    = None
-        self.socket_handler_safety_order: SafetyOrderSocketHandler = None
-        self.socket_handler_base_order:   BaseOrderSocketHandler   = None
+        # self.socket_handler_safety_order: SafetyOrderSocketHandler = None
+        # self.socket_handler_base_order:   BaseOrderSocketHandler   = None
         return
     
     def get_buy_dict(self) -> dict:
@@ -86,21 +88,21 @@ class KrakenDCABot(KrakenBotBase):
         self.socket_handler_open_orders  = OpenOrdersSocketHandler(ws_token)
         self.socket_handler_own_trades   = OwnTradesSocketHandler(ws_token)
         self.socket_handler_balances     = BalancesSocketHandler(ws_token)
-        self.socket_handler_base_order   = BaseOrderSocketHandler(ws_token)
-        self.socket_handler_safety_order = SafetyOrderSocketHandler(ws_token)
+
+        self.base_order.socket_handler_base_order = BaseOrderSocketHandler(ws_token)
+        # self.socket_handler_base_order   = BaseOrderSocketHandler(ws_token)
+        # self.socket_handler_safety_order = SafetyOrderSocketHandler(ws_token)
         return
 
     def start_socket_handler_threads(self) -> None:
         Thread(target=self.socket_handler_open_orders.ws_thread).start()
         Thread(target=self.socket_handler_own_trades.ws_thread).start()
         Thread(target=self.socket_handler_balances.ws_thread).start()
-        Thread(target=self.socket_handler_base_order.ws_thread).start()
-        Thread(target=self.socket_handler_safety_order.ws_thread).start()
+
+        # Thread(target=self.socket_handler_base_order.ws_thread).start()
+        # Thread(target=self.socket_handler_safety_order.ws_thread).start()
         return
     
-    def get_number_of_open_buy_orders(self):
-        return
-
     def place_base_order(self, ws_token: str, symbol: str, symbol_pair: str) -> dict:
         """Place buy order for symbol_pair."""
         pair         = symbol_pair.split("/")
@@ -132,8 +134,8 @@ class KrakenDCABot(KrakenBotBase):
             G.log.print_and_log(f"{symbol_pair} Base order placed {self.socket_handler_base_order.buy_order_result}", G.print_lock)
             
             descr       = self.socket_handler_base_order.buy_order_result['descr'].split(' ')
-            quantity    = float(descr[1])
-            order_type  = descr[4]
+            # quantity    = float(descr[1])
+            # order_type  = descr[4]
             order_txid  = self.socket_handler_base_order.buy_order_result['txid']
             
             entry_price = self.socket_handler_own_trades.get_entry_price(order_txid)
@@ -149,17 +151,16 @@ class KrakenDCABot(KrakenBotBase):
             # Round self.dca.base_target_price
             _symbol_pair    = pair.split("/")
             _symbol_pair    = _symbol_pair[0] + _symbol_pair[1]
-            max_price_prec = self.get_max_price_precision(_symbol_pair)
-            target_price   = self.round_decimals_down(self.dca.base_target_price, max_price_prec)
+            max_price_prec  = self.get_max_price_precision(_symbol_pair)
+            target_price    = self.round_decimals_down(self.dca.base_target_price, max_price_prec)
 
             # place the sell order
-            self.socket_handler_base_order.ws_sell_sync(ws_token, pair, self.dca.base_order_size, target_price)
+            limit_order_result = self.rest_api.limit_order(Trade.SELL, self.dca.base_order_size, _symbol_pair, target_price)
 
-            # check if sell order is valid
-            if self.socket_handler_base_order.is_buy_order_ok():
-                G.log.print_and_log(f"{pair} Sell order placed {self.socket_handler_base_order.buy_order_result}", G.print_lock)
+            if Dicts.RESULT in limit_order_result.keys():
+                G.log.print_and_log(f"{pair} Sell order placed {limit_order_result[Dicts.RESULT][Dicts.DESCR][Dicts.ORDER]}", G.print_lock)
             else:
-                G.log.print_and_log(f"{pair} Sell order NOT placed {self.socket_handler_base_order.buy_order_result}", G.print_lock)
+                G.log.print_and_log(f"{pair} Sell order NOT placed {limit_order_result}", G.print_lock)
         return
 
     def place_safety_orders(self, ws_token: str, base_order_result: dict, symbol: str, symbol_pair: str) -> None:
@@ -231,13 +232,17 @@ class KrakenDCABot(KrakenBotBase):
             #     for symbol, symbol_pair in elem.items():
             #         self.place_safety_orders(ws_token, symbol, symbol_pair)
 
-            buy_dict = {'SC': 'SC/USD'} # for testing only
+            buy_dict = {'PAXG': 'PAXG/USD'} # for testing only
 
-            # for symbol, symbol_pair in buy_dict.items():
-            #     if self.mdb.in_safety_orders(symbol_pair):
-            #         base_order_result = self.place_base_order(ws_token, symbol, symbol_pair)
-            #         self.place_base_sell_order(ws_token, symbol_pair)
-            #         self.place_safety_orders(ws_token, base_order_result, symbol, symbol_pair)
+            # Should base_order.py be inherited from only?
+
+            for symbol, symbol_pair in buy_dict.items():
+                if self.mdb.in_safety_orders(symbol_pair):
+                    # base_order_result = self.place_base_order(ws_token, symbol, symbol_pair)
+                    # self.place_base_sell_order(ws_token, symbol_pair)
+                    
+                    self.base_order.buy(ws_token, symbol, symbol_pair)
+                    # self.place_safety_orders(ws_token, base_order_result, symbol, symbol_pair)
             
             self.wait(message=Color.FG_BRIGHT_BLACK   + f"Main thread: waiting till {get_buy_time()} to buy" + Color.ENDC, timeout=60)
         return

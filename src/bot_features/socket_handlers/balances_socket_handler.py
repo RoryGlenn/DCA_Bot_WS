@@ -22,7 +22,9 @@ class BalancesSocketHandler(SocketHandlerBase):
             if "balances" in message.keys():
                 for symbol, quantity in message["balances"].items():
                     if quantity > 0:
-                        G.log.print_and_log(f"balances:  {symbol} {quantity}", G.print_lock)
+                        
+                        # G.log.print_and_log(f"balances:  {symbol} {quantity}", G.print_lock)
+
                         if symbol == "USD":
                             G.usd_lock.acquire()
                             G.available_usd = quantity

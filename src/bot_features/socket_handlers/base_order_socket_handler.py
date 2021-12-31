@@ -92,10 +92,19 @@ class BaseOrderSocketHandler(SocketHandlerBase):
         ws.send(api_data)
         return
 
+    def ws_close(self, ws: WebSocketApp) -> None:
+        print("Base socket handler has closed connection...")
+        return
+
+    def ws_error(self, ws: WebSocketApp, error_message: str) -> None:
+        print("Error: base order socket handler", error_message)
+        return
+
     def ws_thread(self, *args) -> None:
         self.ws = WebSocketApp(
             url=WEBSOCKET_PRIVATE_URL,
             on_open=self.ws_open,
+            on_close=self.ws_close,
             on_message=self.ws_message,
             on_error=self.ws_error)
         self.ws.run_forever()
