@@ -1,3 +1,5 @@
+import time
+
 from pprint import pprint
 
 from bot_features.database.mongo_database import MongoDatabase
@@ -40,8 +42,10 @@ class BaseOrder(KrakenBotBase):
         order_min    = self.get_order_min('X' + pair[0] + StableCoins.ZUSD) if pair[0] in reg_list else self.get_order_min(pair[0] + pair[1])
         market_price = self.get_bid_price(symbol_pair)
 
-        base_order_size   = self.config.DCA_DATA[symbol][ConfigKeys.DCA_BASE_ORDER_SIZE] 
+        base_order_size   = self.config.DCA_DATA[symbol][ConfigKeys.DCA_BASE_ORDER_SIZE]
         safety_order_size = self.config.DCA_DATA[symbol][ConfigKeys.DCA_SAFETY_ORDER_SIZE]
+
+        # NEED TO ROUND BASE_ORDER_SIZE AND SAFETY ORDER SIZE!!!
 
         if base_order_size < order_min:
             G.log.print_and_log(f"{symbol} Base order size must be at least {order_min}", G.print_lock)
@@ -59,6 +63,9 @@ class BaseOrder(KrakenBotBase):
                 return {'status': 'DCA_ALL_OR_NOTHING'}
 
         order_result = self.market_order(Trade.BUY, base_order_size, pair[0]+pair[1])
+        
+        # sleep so kraken exchange can create the data
+        time.sleep(1)
 
         if self.has_result(order_result):
             G.log.print_and_log(f"{symbol_pair} Base order placed {order_result[Dicts.RESULT][Dicts.DESCR][Dicts.ORDER]}", G.print_lock)
@@ -69,42 +76,34 @@ class BaseOrder(KrakenBotBase):
             self.dca.start()
             self.dca.store_in_db()
         else:
-            G.log.print_and_log(f"Error: order did not go through! {order_result}")
+            G.log.print_and_log(f"Error: order did not go through! {order_result}", G.print_lock)
             return {'status': f"order did not go through! {order_result}"}
         return {'status': 'ok', 'order_result': order_result}
 
-    def sell(self, symbol_pair: str):
+    def sell(self, symbol_pair_s: str):
         """place a limit order for the base order."""
+        print(Trade.SELL, self.dca.base_order_size, symbol_pair_s, self.dca.base_target_price)
 
-        # {'error': [], 'result': {'txid': ['ODKZNJ-REY6H-36ECRM'], 'descr': {'order': 'buy 280.00000000 SCUSD @ market'}}}
-        
-        print(Trade.SELL, self.dca.base_order_size, symbol_pair, self.dca.base_target_price)
+        symbol_pair = symbol_pair_s.split("/")
+        symbol_pair = symbol_pair[0] + symbol_pair[1]
 
-        sell_order_result = self.limit_order(Trade.SELL, self.dca.base_order_size, symbol_pair, self.dca.base_target_price)
+        max_price_prec  = self.get_max_price_precision(symbol_pair)
+        max_volume_prec = self.get_max_volume_precision(symbol_pair)
 
-        pprint(sell_order_result, sort_dicts=False)
+        base_target_price = round(self.dca.base_target_price, max_price_prec)
+        base_order_size   = self.round_decimals_down(self.dca.base_order_size, max_volume_prec)
+
+        # place the sell order!
+        sell_order_result = self.limit_order(Trade.SELL, base_order_size, symbol_pair, base_target_price)
 
         if self.has_result(sell_order_result):
-            # what should we store in the database after we place the sell for our base order???
-            for document in self.mdb.c_safety_orders.find({'_id': symbol_pair}):
-                for value in document.values():
-                    if isinstance(value, dict):
-                        for safety_order in value['safety_orders']:
-                            for safety_order_no, safety_order_data in safety_order.items():
-                                if not has_safety_order:
-                                    if safety_order_data['has_placed_sell_order'] == False:
-                                        safety_order_data['has_placed_sell_order'] = True
-                                        
-                                        new_values = {"$set": {symbol_pair: value}}
-                                        query      = {'_id': symbol_pair}
-                                        self.mdb.c_safety_orders.find_one_and_update(query, new_values)
-                                        has_safety_order = True
-                                        break
-        else:
-            G.log.print_and_log(f'could not place limit order sell for {symbol_pair}: {sell_order_result}')
-            return {'status': f'could not place limit order sell for {symbol_pair}: {sell_order_result}'}
-
-        return {'status': 'ok'}
+            pprint(sell_order_result, sort_dicts=False)
+            self.mdb.base_order_place_sell(symbol_pair_s)
+            G.log.print_and_log(f"Placed sell order for {sell_order_result[Dicts.RESULT][Dicts.DESCR][Dicts.ORDER]}", G.print_lock)
+            return {'status': 'ok'}
+        
+        G.log.print_and_log(f"Could not place sell order for {symbol_pair}: {sell_order_result}")
+        return{'status': 'could not place sell order'}
 
     def cancel_sell(self):
         """If a safety order has filled while the base sell order has not filled, cancel the base sell order"""

@@ -50,6 +50,11 @@ class OwnTradesSocketHandler(SocketHandlerBase):
 
                                 G.log.pprint_and_log(f"ownTrades: New trade found!", {txid: trade_info}, G.print_lock)
         else:
+            if isinstance(message, dict):
+                if message['event'] == 'systemStatus':
+                    return
+                if message['event'] == 'subscriptionStatus':
+                    return
             if "heartbeat" not in message.values():
                 G.log.pprint_and_log(f"ownTrades: ", message, G.print_lock)
         return

@@ -62,6 +62,12 @@ class KrakenDCABot(KrakenBotBase):
         # self.socket_handler_own_trades:   OwnTradesSocketHandler   = None
         # self.socket_handler_balances:     BalancesSocketHandler    = None
         return
+
+    def is_ok(self, order_result: dict):
+        if isinstance(order_result, dict):
+            if 'status' in order_result:
+                return order_result['status'] == 'ok'
+        return False
     
     def get_buy_dict(self) -> dict:
         """Returns dictionary with (symbol: symbol_pair) relationship"""
@@ -210,11 +216,11 @@ class KrakenDCABot(KrakenBotBase):
         ##################################
 
         while True:
-            # start_time = time.time()
-            # buy_dict   = self.get_buy_dict()
+            start_time = time.time()
+            buy_dict   = self.get_buy_dict()
 
-            # G.log.print_and_log(Color.FG_BRIGHT_BLACK + f"Main thread: checked all coins in {get_elapsed_time(start_time)}" + Color.ENDC, G.print_lock)
-            # G.log.print_and_log(f"Main thread: buy list {PrettyPrinter(indent=1).pformat([symbol_pair for (symbol, symbol_pair) in buy_dict.items()])}", G.print_lock)
+            G.log.print_and_log(Color.FG_BRIGHT_BLACK + f"Main thread: checked all coins in {get_elapsed_time(start_time)}" + Color.ENDC, G.print_lock)
+            G.log.print_and_log(f"Main thread: buy list {PrettyPrinter(indent=1).pformat([symbol_pair for (symbol, symbol_pair) in buy_dict.items()])}", G.print_lock)
 
             # place safety orders for previous trades before starting a new trade
             # for elem in self.mdb.c_safety_orders.find():
@@ -224,10 +230,10 @@ class KrakenDCABot(KrakenBotBase):
             buy_dict = {'SC': 'SC/USD'} # for testing only
 
             for symbol, symbol_pair in buy_dict.items():
-                if self.mdb.in_safety_orders(symbol_pair):
+                if not self.mdb.in_safety_orders(symbol_pair):
                     base_order_result = self.base_order.buy(symbol, symbol_pair)
                     
-                    if base_order_result['status'] == 'ok':
+                    if self.is_ok(base_order_result):
                         self.base_order.sell(symbol_pair)
                         # self.place_safety_orders(ws_token, base_order_result, symbol, symbol_pair)
             
