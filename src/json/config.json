@@ -4,8 +4,6 @@
     "kraken_api_key":    "F8EO+DaWBwFVAPd8HwolBBz8EIQgQYRx35l1KeCVl8u+044nUUFZgsNh",
     "kraken_secret_key": "gqnoKy0HFy/CxhChWrulMy4XEbmeOaSrZ7hn1D4VyorkwtaM2QVHpL1vwflf3Uj+NGYpl3EGbvd4y+nxTG7Ntg==",
 
-    
-
     "buy_set": {
       "AAVE": {
         "dca_target_profit_percent":        0.5,

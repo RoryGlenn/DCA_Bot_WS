@@ -302,13 +302,14 @@ class DCA():
             'profit':                     profit,
             'cost':                       self.entry_price * self.base_order_size,
             'total_cost':                 self.entry_price * self.base_order_size,
-            'has_placed_order':           True
+            'has_placed_buy_order':       True,
+            'has_placed_sell_order':      False
         }
 
         # safety orders
         for i in range(self.config.DCA_DATA[self.symbol][ConfigKeys.DCA_SAFETY_ORDERS_MAX]):
             safety_order_list.append(
-            {str(i+1): 
+            {str(i+1):
                 {
                     'deviation_percentage':       self.deviation_percentage_levels[i],
                     'quantity':                   self.quantities[i],

@@ -228,7 +228,7 @@ class KrakenDCABot(KrakenBotBase):
                     base_order_result = self.base_order.buy(symbol, symbol_pair)
                     
                     if base_order_result['status'] == 'ok':
-                        self.base_order.sell(symbol, symbol_pair)
+                        self.base_order.sell(symbol_pair)
                         # self.place_safety_orders(ws_token, base_order_result, symbol, symbol_pair)
             
             self.wait(message=Color.FG_BRIGHT_BLACK   + f"Main thread: waiting till {get_buy_time()} to buy" + Color.ENDC, timeout=60)
