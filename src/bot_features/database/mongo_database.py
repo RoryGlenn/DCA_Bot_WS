@@ -26,7 +26,7 @@ class MongoDatabase():
     def get_safety_order_table(self) -> dict():
         return self.c_safety_orders.find()
     
-    def has_safety_order_table(self, symbol_pair):
+    def has_safety_order_table(self, symbol_pair: str):
         return False if self.c_open_symbols.count_documents({"symbol_pair": symbol_pair}) == 0 else True
 
     def print_so_collection(self) -> None:
@@ -34,9 +34,9 @@ class MongoDatabase():
             pprint(document)
         return
 
-    def base_order_place_sell(self, symbol_pair) -> None:
+    def base_order_place_sell(self, symbol_pair: str) -> None:
         """Change has_placed_sell_order from False to True."""
-        for document in self.mdb.c_safety_orders.find({'_id': symbol_pair}):
+        for document in self.c_safety_orders.find({'_id': symbol_pair}):
             for value in document.values():
                 if isinstance(value, dict):
                     base_order = value['base_order']
@@ -46,3 +46,17 @@ class MongoDatabase():
                         query      = {'_id': symbol_pair}
                         self.c_safety_orders.find_one_and_update(query, new_values)
         return
+    
+    def get_number_open_safety_orders(self, symbol_pair: str) -> int:
+        count = 0
+        
+        for document in self.c_safety_orders.find({'_id': symbol_pair}):
+            for value in document.values():
+                if isinstance(value, dict):
+                    safety_orders = value['safety_orders']
+                    for safety_order in safety_orders:
+                        for so_data in safety_order.values():
+                            if so_data['has_placed_order'] and not so_data['has_filled']: 
+                                # if the order has been placed but has not been filled, it must be open!
+                                count += 1
+        return count

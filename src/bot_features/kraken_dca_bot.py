@@ -5,7 +5,9 @@ import time
 from pprint import pprint
 from pprint import PrettyPrinter
 from threading import Thread
+
 from bot_features.orders.base_order import BaseOrder
+from bot_features.orders.safety_order import SafetyOrder
 
 from bot_features.database.mongo_database import MongoDatabase
 from bot_features.low_level.kraken_rest_api import KrakenRestAPI
@@ -13,8 +15,6 @@ from bot_features.low_level.kraken_rest_api import KrakenRestAPI
 from bot_features.socket_handlers.balances_socket_handler import BalancesSocketHandler
 from bot_features.socket_handlers.open_orders_socket_handler import OpenOrdersSocketHandler
 from bot_features.socket_handlers.own_trades_socket_handler import OwnTradesSocketHandler
-from bot_features.socket_handlers.safety_order_socket_handler import SafetyOrderSocketHandler
-from bot_features.socket_handlers.base_order_socket_handler import BaseOrderSocketHandler
 
 from bot_features.low_level.kraken_bot_base import KrakenBotBase
 from bot_features.low_level.kraken_enums import *
@@ -53,14 +53,11 @@ class KrakenDCABot(KrakenBotBase):
 
         self.rest_api:   KrakenRestAPI = KrakenRestAPI(api_key, api_secret)
         self.base_order: BaseOrder     = BaseOrder(api_key, api_secret)
+        self.safety_order: SafetyOrder = SafetyOrder(api_key, api_secret)
         self.config:     Config        = Config()
         self.tv:         TradingView   = TradingView()
         self.mdb:        MongoDatabase = MongoDatabase()
         self.dca:        DCA           = None
-        
-        # self.socket_handler_open_orders:  OpenOrdersSocketHandler  = None
-        # self.socket_handler_own_trades:   OwnTradesSocketHandler   = None
-        # self.socket_handler_balances:     BalancesSocketHandler    = None
         return
 
     def is_ok(self, order_result: dict):
@@ -208,14 +205,17 @@ class KrakenDCABot(KrakenBotBase):
         self.start_socket_handler_threads()
 
         ##################################
-        self.mdb.c_safety_orders.drop()
-        self.mdb.c_open_symbols.drop()
-        self.mdb.c_own_trades.drop()
+        # self.mdb.c_safety_orders.drop()
+        # self.mdb.c_open_symbols.drop()
+        # self.mdb.c_own_trades.drop()
         # self.cancel_orders("XBTUSD")
         # self.cancel_orders("SCUSD")
         ##################################
 
         while True:
+            max_active_safety_orders     = self.config.DCA_DATA["SC"][ConfigKeys.DCA_SAFETY_ORDERS_ACTIVE_MAX]
+            number_of_open_safety_orders = self.mdb.get_number_open_safety_orders("SC/USD")
+
             start_time = time.time()
             buy_dict   = self.get_buy_dict()
 
@@ -234,7 +234,8 @@ class KrakenDCABot(KrakenBotBase):
                     base_order_result = self.base_order.buy(symbol, symbol_pair)
                     
                     if self.is_ok(base_order_result):
-                        self.base_order.sell(symbol_pair)
+                        base_order_result = self.base_order.sell(symbol_pair)
+                        self.safety_order.place_orders(symbol, symbol_pair)
                         # self.place_safety_orders(ws_token, base_order_result, symbol, symbol_pair)
             
             self.wait(message=Color.FG_BRIGHT_BLACK   + f"Main thread: waiting till {get_buy_time()} to buy" + Color.ENDC, timeout=60)

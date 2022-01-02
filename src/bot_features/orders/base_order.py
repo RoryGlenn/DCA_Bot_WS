@@ -22,10 +22,8 @@ reg_list: list = ['ETC', 'ETH', 'LTC', 'MLN', 'REP', 'XBT', 'XDG', 'XLM', 'XMR',
 class BaseOrder(KrakenBotBase):
     def __init__(self, api_key: str, api_secret: str) -> None:
         super().__init__(api_key, api_secret)
-        self.config:                    Config                 = Config()
-        self.socket_handler_base_order: BaseOrderSocketHandler = None
-        self.mdb:                       MongoDatabase          = MongoDatabase()
-               
+        self.config: Config        = Config()
+        self.mdb:    MongoDatabase = MongoDatabase()
         return
 
     def get_entry_price(self, order_result: dict) -> str:
@@ -82,7 +80,6 @@ class BaseOrder(KrakenBotBase):
 
     def sell(self, symbol_pair_s: str):
         """place a limit order for the base order."""
-        print(Trade.SELL, self.dca.base_order_size, symbol_pair_s, self.dca.base_target_price)
 
         symbol_pair = symbol_pair_s.split("/")
         symbol_pair = symbol_pair[0] + symbol_pair[1]
@@ -97,7 +94,6 @@ class BaseOrder(KrakenBotBase):
         sell_order_result = self.limit_order(Trade.SELL, base_order_size, symbol_pair, base_target_price)
 
         if self.has_result(sell_order_result):
-            pprint(sell_order_result, sort_dicts=False)
             self.mdb.base_order_place_sell(symbol_pair_s)
             G.log.print_and_log(f"Placed sell order for {sell_order_result[Dicts.RESULT][Dicts.DESCR][Dicts.ORDER]}", G.print_lock)
             return {'status': 'ok'}
