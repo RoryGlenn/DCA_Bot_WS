@@ -1,0 +1,13 @@
+[[{'T5I5VF-LLR4C-XEPG3H': {'cost': '4.334400',
+                           'fee': '0.011269',
+                           'margin': '0.000000',
+                           'ordertxid': 'OEY5B7-F7KPG-IGPXDT',
+                           'ordertype': 'market',
+                           'pair': 'SC/USD',
+                           'postxid': 'TKH2SE-M7IF5-CFI7LT',
+                           'price': '0.015480',
+                           'time': '1641087300.532067',
+                           'type': 'buy',
+                           'vol': '280.00000000'}}],
+ 'ownTrades',
+ {'sequence': 2}]

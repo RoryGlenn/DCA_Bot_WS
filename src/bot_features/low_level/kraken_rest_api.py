@@ -7,8 +7,8 @@ import time
 import urllib.parse
 import requests
 
-from util.globals              import G
-from pprint                    import pprint
+from util.globals                        import G
+from pprint                              import pprint
 from bot_features.low_level.kraken_enums import *
 
 
@@ -22,6 +22,7 @@ class KrakenRestAPI():
         self.session       = requests.Session()
         self.response      = None
         self._json_options = {}
+        return
 
     def json_options(self, **kwargs):
         """ Set keyword arguments to be passed to JSON deserialization. """
@@ -141,8 +142,8 @@ class KrakenRestAPI():
     def add_order(self, ordertype: str, type: str, volume: str, pair: str, price: str) -> dict:
         return self.__query_private(method=Method.ADD_ORDER, data={Data.ORDER_TYPE: ordertype, Data.TYPE: type, Data.VOLUME: volume, Data.SYMBOL_PAIR: pair, Data.PRICE: price})
 
-    def market_order(self, type: str, volume: str, pair: str) -> dict:
-        return self.__query_private(method=Method.ADD_ORDER, data={Data.ORDER_TYPE: Data.MARKET, Data.TYPE: type, Data.VOLUME: volume, Data.SYMBOL_PAIR: pair, Data.PRICE: Data.MARKET_PRICE})
+    def market_order(self, type: str, volume: str, pair: str, validate=False) -> dict:
+        return self.__query_private(method=Method.ADD_ORDER, data={Data.ORDER_TYPE: Data.MARKET, Data.TYPE: type, Data.VOLUME: volume, Data.SYMBOL_PAIR: pair, Data.PRICE: Data.MARKET_PRICE, "validate": validate})
 
     def limit_order(self, type: str, volume: str, pair: str, price: str) -> dict:
         return self.__query_private(method=Method.ADD_ORDER, data={Data.ORDER_TYPE: Data.LIMIT, Data.TYPE: type, Data.VOLUME: volume, Data.SYMBOL_PAIR: pair, Data.PRICE: price})

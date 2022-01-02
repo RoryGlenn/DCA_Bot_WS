@@ -46,9 +46,10 @@ def get_buy_time() -> str:
 
 class KrakenDCABot(KrakenBotBase):
     def __init__(self, api_key, api_secret) -> None:
-        self.api_key = api_key
-        self.api_secret = api_secret
-        super(KrakenBotBase, self).__init__(self.api_key, self.api_secret)
+        super().__init__(api_key, api_secret)
+
+        self.api_key:    str           = api_key
+        self.api_secret: str           = api_secret
 
         self.rest_api:   KrakenRestAPI = KrakenRestAPI(api_key, api_secret)
         self.base_order: BaseOrder     = BaseOrder(api_key, api_secret)
@@ -56,15 +57,10 @@ class KrakenDCABot(KrakenBotBase):
         self.tv:         TradingView   = TradingView()
         self.mdb:        MongoDatabase = MongoDatabase()
         self.dca:        DCA           = None
-
-        # why can't I initialize this variable in kraken_bot_base.py?
-        # self.asset_pairs_dict = self.get_all_tradable_asset_pairs()[Dicts.RESULT]
-
-        self.socket_handler_open_orders:  OpenOrdersSocketHandler  = None
-        self.socket_handler_own_trades:   OwnTradesSocketHandler   = None
-        self.socket_handler_balances:     BalancesSocketHandler    = None
-        # self.socket_handler_safety_order: SafetyOrderSocketHandler = None
-        # self.socket_handler_base_order:   BaseOrderSocketHandler   = None
+        
+        # self.socket_handler_open_orders:  OpenOrdersSocketHandler  = None
+        # self.socket_handler_own_trades:   OwnTradesSocketHandler   = None
+        # self.socket_handler_balances:     BalancesSocketHandler    = None
         return
     
     def get_buy_dict(self) -> dict:
@@ -85,22 +81,15 @@ class KrakenDCABot(KrakenBotBase):
         return buy_dict
 
     def init_socket_handlers(self, ws_token: str) -> None:
-        self.socket_handler_open_orders  = OpenOrdersSocketHandler(ws_token)
-        self.socket_handler_own_trades   = OwnTradesSocketHandler(ws_token)
-        self.socket_handler_balances     = BalancesSocketHandler(ws_token)
-
-        self.base_order.socket_handler_base_order = BaseOrderSocketHandler(ws_token)
-        # self.socket_handler_base_order   = BaseOrderSocketHandler(ws_token)
-        # self.socket_handler_safety_order = SafetyOrderSocketHandler(ws_token)
+        G.socket_handler_open_orders = OpenOrdersSocketHandler(ws_token)
+        G.socket_handler_own_trades  = OwnTradesSocketHandler(ws_token)
+        G.socket_handler_balances    = BalancesSocketHandler(ws_token)
         return
 
     def start_socket_handler_threads(self) -> None:
-        Thread(target=self.socket_handler_open_orders.ws_thread).start()
-        Thread(target=self.socket_handler_own_trades.ws_thread).start()
-        Thread(target=self.socket_handler_balances.ws_thread).start()
-
-        # Thread(target=self.socket_handler_base_order.ws_thread).start()
-        # Thread(target=self.socket_handler_safety_order.ws_thread).start()
+        Thread(target=G.socket_handler_open_orders.ws_thread).start()
+        Thread(target=G.socket_handler_own_trades.ws_thread).start()
+        Thread(target=G.socket_handler_balances.ws_thread).start()
         return
     
     def place_base_order(self, ws_token: str, symbol: str, symbol_pair: str) -> dict:
@@ -232,17 +221,15 @@ class KrakenDCABot(KrakenBotBase):
             #     for symbol, symbol_pair in elem.items():
             #         self.place_safety_orders(ws_token, symbol, symbol_pair)
 
-            buy_dict = {'PAXG': 'PAXG/USD'} # for testing only
-
-            # Should base_order.py be inherited from only?
+            buy_dict = {'SC': 'SC/USD'} # for testing only
 
             for symbol, symbol_pair in buy_dict.items():
                 if self.mdb.in_safety_orders(symbol_pair):
-                    # base_order_result = self.place_base_order(ws_token, symbol, symbol_pair)
-                    # self.place_base_sell_order(ws_token, symbol_pair)
+                    base_order_result = self.base_order.buy(symbol, symbol_pair)
                     
-                    self.base_order.buy(ws_token, symbol, symbol_pair)
-                    # self.place_safety_orders(ws_token, base_order_result, symbol, symbol_pair)
+                    if base_order_result['status'] == 'ok':
+                        self.base_order.sell(symbol, symbol_pair)
+                        # self.place_safety_orders(ws_token, base_order_result, symbol, symbol_pair)
             
             self.wait(message=Color.FG_BRIGHT_BLACK   + f"Main thread: waiting till {get_buy_time()} to buy" + Color.ENDC, timeout=60)
         return

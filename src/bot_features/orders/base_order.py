@@ -32,17 +32,20 @@ reg_list: list = ['ETC', 'ETH', 'LTC', 'MLN', 'REP', 'XBT', 'XDG', 'XLM', 'XMR',
 
 class BaseOrder(KrakenBotBase):
     def __init__(self, api_key: str, api_secret: str) -> None:
-        super(KrakenBotBase, self).__init__(api_key, api_secret)
+        super().__init__(api_key, api_secret)
         self.config:                    Config                 = Config()
-        self.socket_handler_base_order: BaseOrderSocketHandler = None
+        self.socket_handler_base_order: BaseOrderSocketHandler = None        
         return
 
-    def is_ok(self) -> bool:
-        while len(self.socket_handler_base_order.order_result) == 0:
-            time.sleep(0.05)
-        return bool(self.socket_handler_base_order.order_result['status'] == 'ok')
+    def get_entry_price(self, order_result: dict) -> str:
+        order_txid = order_result[Dicts.RESULT][Data.TXID][0]
 
-    def buy(self, ws_token: str, symbol: str, symbol_pair: str):
+        for _, trade_info in G.socket_handler_own_trades.trades.items():
+            if trade_info[Data.ORDER_TXID] == order_txid:
+                return float(trade_info['price'])
+        raise Exception("No base order price was found!")
+
+    def buy(self, symbol: str, symbol_pair: str):
         """Place buy order for symbol_pair."""
         pair         = symbol_pair.split("/")
         order_min    = self.get_order_min('X' + pair[0] + StableCoins.ZUSD) if pair[0] in reg_list else self.get_order_min(pair[0] + pair[1])
@@ -58,34 +61,28 @@ class BaseOrder(KrakenBotBase):
             G.log.print_and_log(f"{symbol} Safety order size must be at least {order_min}", G.print_lock)
             return {'status': f'Safety order size must be at least {order_min}'}
 
-        dca = DCA(symbol, symbol_pair, base_order_size, safety_order_size, market_price)
-        dca.start()
-
         if self.config.DCA_DATA[symbol][ConfigKeys.DCA_ALL_OR_NOTHING]:
+            dca = DCA(symbol, symbol_pair, base_order_size, safety_order_size, market_price)
+            dca.start()
+            
             total_cost = dca.total_cost_levels[-1]
             if total_cost > G.available_usd:
                 return {'status': 'DCA_ALL_OR_NOTHING'}
 
-        base_order = '{"event":"%(feed)s", "token":"%(token)s", "pair":"%(pair)s", "type":"%(type)s", "ordertype":"%(ordertype)s", "volume":"%(volume)s"}' \
-            % {"feed": "addOrder", "token": ws_token, "pair": symbol_pair, "type": "buy", "ordertype": "market", "volume": base_order_size}
+        order_result = self.market_order(Trade.BUY, base_order_size, pair[0]+pair[1])
 
-        self.socket_handler_base_order.ws.send(base_order)
-
-        if self.is_ok():
-            G.log.print_and_log(f"{symbol_pair} Base order placed {self.socket_handler_base_order.order_result}", G.print_lock)
+        if self.has_result(order_result):
+            G.log.print_and_log(f"{symbol_pair} Base order placed {order_result[Dicts.RESULT][Dicts.DESCR][Dicts.ORDER]}", G.print_lock)
             
-            descr       = self.socket_handler_base_order.order_result['descr'].split(' ')
-            # quantity    = float(descr[1])
-            # order_type  = descr[4]
-            entry_price = float(descr[5]) # {'descr': 'buy 280.00000000 SCUSD @ market', 'event': 'addOrderStatus', 'status': 'ok', 'txid': 'OY2E4E-EJCGS-FDBOWZ'}
-            txid        = self.socket_handler_base_order.order_result['txid']
+            entry_price = self.get_entry_price(order_result)
+            self.dca    = DCA(symbol, symbol_pair, base_order_size, safety_order_size, entry_price)
             
-            self.dca = DCA(symbol, symbol_pair, base_order_size, safety_order_size, entry_price)
             self.dca.start()
             self.dca.store_in_db()
         else:
-            print(f"Error: order did not go through! {self.socket_handler_base_order.order_result}")
-        return self.socket_handler_base_order.order_result
+            G.log.print_and_log(f"Error: order did not go through! {order_result}")
+            return {'status': f"order did not go through! {order_result}"}
+        return {'status': 'ok'}
 
     def sell(self):
         return

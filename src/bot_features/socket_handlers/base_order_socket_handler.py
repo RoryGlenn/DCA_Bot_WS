@@ -30,12 +30,9 @@ class BaseOrderSocketHandler(SocketHandlerBase):
 
     def is_sell_order_ok(self) -> bool:
         print("self.sell_order_result:", self.sell_order_result)
-
         while 'status' not in self.sell_order_result.keys():
             time.sleep(1)
-
         return self.sell_order_result['status'] == 'ok'
-
 
     def ws_buy_sync(self, ws_token: str, symbol_pair: str, order_type: str, base_order_size: float, price: float = 0.0) -> None:
         if order_type == "market":

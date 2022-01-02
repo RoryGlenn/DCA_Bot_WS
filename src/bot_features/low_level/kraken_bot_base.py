@@ -1,6 +1,6 @@
 """spot.py: Supports base functionality for buying, selling and transfering. Meant to be inherited from for additional classes"""
 
-import ast
+# import ast
 import requests
 import os
 import json
@@ -20,10 +20,8 @@ class KrakenBotBase(KrakenRestAPI):
         Returns new Spot object with specified data
         
         """
-        super(KrakenRestAPI, self).__init__(api_key, api_secret)
-        print("1")
-        self.asset_pairs_dict: dict = requests.get(URL_ASSET_PAIRS).json()
-        print("2")
+        super().__init__(api_key, api_secret)
+        self.asset_pairs_dict: dict = requests.get(URL_ASSET_PAIRS).json()[Dicts.RESULT]
         return
        
     def get_current_time(self) -> str:
@@ -52,8 +50,6 @@ class KrakenBotBase(KrakenRestAPI):
         not in the dictionary, the pair cannot be used to buy or sell.
         
         """
-        # response = requests.get(URL_ASSET_PAIRS)
-        # return ast.literal_eval(response.text)
         self.asset_pairs_dict = requests.get(URL_ASSET_PAIRS).json()
         return
             
@@ -62,8 +58,6 @@ class KrakenBotBase(KrakenRestAPI):
         Returns the min quantity of coin we can order per USD.
         
         """
-        pprint(self.asset_pairs_dict)
-        pprint(self.asset_pairs_dict[symbol_pair])
         return float(self.asset_pairs_dict[symbol_pair][Dicts.ORDER_MIN])
     
     def get_max_price_precision(self, symbol_pair: str) -> int:

@@ -5,7 +5,7 @@ import os
 import sys
 
 from pprint                              import pprint
-from util.globals                        import G
+# from util.globals                        import G
 from bot_features.low_level.kraken_enums import *
 
 
