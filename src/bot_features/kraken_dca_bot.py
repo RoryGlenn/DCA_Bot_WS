@@ -1,6 +1,6 @@
 import datetime
 import time
-
+import pandas as pd
 
 from pprint import pprint
 from pprint import PrettyPrinter
@@ -212,6 +212,24 @@ class KrakenDCABot(KrakenBotBase):
         ##################################
 
         while True:
+
+            # dca = DCA("SHIB", "SHIBUSD", 1000000, 1000000, 0.00003272)
+            # dca.start()
+
+            # df = pd.DataFrame(
+            #     {
+            #         'deviation_percentage':       dca.deviation_percentage_levels,
+            #         'quantity':                   dca.quantities,
+            #         'total_quantity':             dca.total_quantities,
+            #         'price':                      dca.price_levels,
+            #         'average_price':              dca.average_price_levels,
+            #         'required_price':             dca.required_price_levels,
+            #         'required_change_percentage': dca.required_change_percentage_levels,
+            #         'profit':                     dca.profit_levels,
+            #         'cost':                       dca.cost_levels,
+            #         'total_cost':                 dca.total_cost_levels
+            #     })
+            
             start_time = time.time()
             buy_dict   = self.get_buy_dict()
 

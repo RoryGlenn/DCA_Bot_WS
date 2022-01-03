@@ -37,10 +37,10 @@ class SafetyOrder(KrakenBotBase):
         for i in range(iterations):
             safety_order    = unplaced_safety_orders[i]
             quantity_to_buy = self.round_decimals_down(safety_order['quantity'], max_volume_prec)
-            required_price  = round(safety_order['required_price'], max_price_prec)
+            price           = round(safety_order['price'], max_price_prec)
 
             ### buy ###
-            order_result = self.limit_order(Trade.BUY, quantity_to_buy, s_symbol_pair, required_price)
+            order_result = self.limit_order(Trade.BUY, quantity_to_buy, s_symbol_pair, price)
             ###########
 
             safety_order_num = safety_order_numbers.pop(0)

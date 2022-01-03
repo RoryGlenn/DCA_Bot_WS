@@ -77,6 +77,7 @@ class BaseOrder(KrakenBotBase):
             
             self.dca.start()
             self.dca.store_in_db()
+            self.dca.print_table()
         else:
             G.log.print_and_log(f"Error: order did not go through! {order_result}", G.print_lock)
             return {'status': f"order did not go through! {order_result}"}

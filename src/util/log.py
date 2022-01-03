@@ -118,3 +118,37 @@ class Log():
         
         lock.release()
         return
+
+    def print_df_and_log(self, message: str = "", lock: Lock = None, money: bool = False, end: bool = False, e=False, error_type: str = "", filename: str = "", tb_lineno: str = "") -> None:
+        """Print to the console and write to the log file. 
+        If something went wrong, just print the error to console."""
+        try:
+            lock.acquire()
+            current_time = self.get_current_time()
+            current_date = self.get_current_date()
+            
+            result_no_color = f"[{current_date} {current_time}] \n{self.__remove_color(message)}"
+            result          = Color.FG_BRIGHT_BLACK + f"[{current_date} {current_time}]{Color.ENDC} \n{message}"
+
+            if money:
+                print(     result)
+                self.write(result_no_color)
+                result.strip()
+                return
+            if e:
+                print(f"{result}{Color.BG_RED}ERROR:{Color.ENDC} || {e}, {error_type} {filename} {tb_lineno}" )
+                self.write(f"{result_no_color} ERROR: || {e}, {error_type} {filename} {tb_lineno}")
+                return
+            if end:
+                print(     result)
+                self.write(result_no_color)
+                return
+            
+            print(     result)
+            self.write(result_no_color)
+        except Exception as e:
+            # print(f"{result} {Color.BG_RED}ERROR:{Color.ENDC} || {e}, {error_type} {filename} {tb_lineno}" )
+            print(e)
+            
+        lock.release()
+        return

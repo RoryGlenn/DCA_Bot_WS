@@ -1,8 +1,7 @@
 from pymongo.mongo_client                             import MongoClient
 from pymongo.collection                               import Collection
-
-from pprint                              import pprint
-from bot_features.low_level.kraken_enums import *
+from pprint                                           import pprint
+from bot_features.low_level.kraken_enums              import *
 
 
 class MongoDatabase():

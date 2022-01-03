@@ -1,10 +1,12 @@
 """dca.py - DCA is a dollar cost averaging technique. 
 This bot uses DCA in order lower the average buy price for a purchased coin."""
 
+import pandas as pd
+
 from bot_features.database.mongo_database import MongoDatabase
 from bot_features.low_level.kraken_enums  import *
 from util.config                          import Config
-
+from util.globals import G
 
 class DCA():
     def __init__(self, symbol: str, symbol_pair: str, base_order_size: float, safety_order_size: float, entry_price: float):
@@ -50,7 +52,7 @@ class DCA():
         This may include the quantity that we have no bought yet but is in an open order.
         """
 
-        
+        # entry_price = 0.01555, target_price = 0.0163275
 
         if not self.__has_safety_order_table():
             self.__set_base_target_price()
@@ -94,19 +96,22 @@ class DCA():
         Step 5: 8% * 2 = 16%. Order 5: 15% + 16% = 31%.
 
         For more info: https://help.3commas.io/en/articles/3108940-main-settings
-        """     
+        """
+
+        price_dev  = self.config.DCA_DATA[self.symbol][ConfigKeys.DCA_SAFETY_ORDER_PRICE_DEVIATION]
+        step_scale = self.config.DCA_DATA[self.symbol][ConfigKeys.DCA_SAFETY_ORDER_STEP_SCALE]
         
         # for first safety order
-        self.deviation_percentage_levels.append(round(self.config.DCA_DATA[self.symbol][ConfigKeys.DCA_SAFETY_ORDER_PRICE_DEVIATION], DECIMAL_MAX))
+        self.deviation_percentage_levels.append(round(price_dev, DECIMAL_MAX))
 
         # for second safety order
-        step_percent = self.config.DCA_DATA[self.symbol][ConfigKeys.DCA_SAFETY_ORDER_PRICE_DEVIATION] * self.config.DCA_DATA[self.symbol][ConfigKeys.DCA_SAFETY_ORDER_STEP_SCALE]
-        safety_order = self.config.DCA_DATA[self.symbol][ConfigKeys.DCA_SAFETY_ORDER_PRICE_DEVIATION] + step_percent
+        step_percent = price_dev * step_scale
+        safety_order = price_dev + step_percent
         self.deviation_percentage_levels.append(round(safety_order, DECIMAL_MAX))
         
         # for 3rd to DCA_.SAFETY_ORDERS_MAX
         for _ in range(2, self.config.DCA_DATA[self.symbol][ConfigKeys.DCA_SAFETY_ORDERS_MAX]):
-            step_percent = step_percent * self.config.DCA_DATA[self.symbol][ConfigKeys.DCA_SAFETY_ORDER_STEP_SCALE]
+            step_percent = step_percent * step_scale
             safety_order = safety_order + step_percent
             safety_order = round(safety_order, DECIMAL_MAX)
             self.deviation_percentage_levels.append(safety_order)
@@ -273,4 +278,27 @@ class DCA():
 
         if self.mdb.c_safety_orders.count_documents({'_id': self.symbol_pair}) == 0:
             self.mdb.c_safety_orders.insert_one({'_id': self.symbol_pair, self.symbol_pair: data})
+
         return
+
+    def print_table(self):
+        safety_order_numbers = [i for i in range(1, self.config.DCA_DATA[self.symbol][ConfigKeys.DCA_SAFETY_ORDERS_MAX]+1)]
+
+        df = pd.DataFrame(
+            {
+                'safety order number':        safety_order_numbers,
+                'deviation_percentage':       self.deviation_percentage_levels,
+                'quantity':                   self.quantities,
+                'total_quantity':             self.total_quantities,
+                'price':                      self.price_levels,
+                'average_price':              self.average_price_levels,
+                'required_price':             self.required_price_levels,
+                'required_change_percentage': self.required_change_percentage_levels,
+                'profit':                     self.profit_levels,
+                'cost':                       self.cost_levels,
+                'total_cost':                 self.total_cost_levels
+            })
+
+        G.log.print_df_and_log(f"{df}", G.print_lock)
+        return
+               
