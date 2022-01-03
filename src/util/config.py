@@ -5,7 +5,7 @@ import os
 import sys
 
 from pprint                              import pprint
-# from util.globals                        import G
+from util.globals                        import G
 from bot_features.low_level.kraken_enums import *
 
 
@@ -34,3 +34,6 @@ class Config():
             G.log.print_and_log("Could not find config.json file")
             sys.exit(0)
         return
+
+
+g_config: Config = Config()

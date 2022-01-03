@@ -3,7 +3,6 @@
 from util.log  import Log
 from threading import Event, Lock
 
-
 class Globals:
     event:               Event   = Event()
        

@@ -1,3 +1,4 @@
+import time
 
 from pprint import pprint
 
@@ -8,6 +9,7 @@ from bot_features.low_level.kraken_enums import *
 
 from util.config  import Config
 from util.globals import G
+
 
 x_list:   list = ['XETC', 'XETH', 'XLTC', 'XMLN', 'XREP', 'XXBT', 'XXDG', 'XXLM', 'XXMR', 'XXRP', 'XZEC']
 reg_list: list = ['ETC', 'ETH', 'LTC', 'MLN', 'REP', 'XBT', 'XDG', 'XLM', 'XMR', 'XRP', 'ZEC']
@@ -41,6 +43,7 @@ class SafetyOrder(KrakenBotBase):
 
             ### buy ###
             order_result = self.limit_order(Trade.BUY, quantity_to_buy, s_symbol_pair, price)
+            time.sleep(1)
             ###########
 
             safety_order_num = safety_order_numbers.pop(0)

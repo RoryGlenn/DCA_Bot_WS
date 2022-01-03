@@ -10,6 +10,7 @@ import sys
 from bot_features.kraken_dca_bot           import KrakenDCABot
 from bot_features.low_level.kraken_enums   import *
 from util.globals                          import G
+from util.config import g_config
 
 
 def get_keys() -> str:
@@ -29,5 +30,4 @@ if __name__ == "__main__":
     G.log.directory_create()
     G.log.file_create()
     
-    api_key, api_secret = get_keys()
-    KrakenDCABot(api_key, api_secret).start_trade_loop()
+    KrakenDCABot(g_config.API_KEY, g_config.API_SECRET).start_trade_loop()
