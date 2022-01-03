@@ -64,37 +64,10 @@ class DCA():
             self.__set_profit_levels()
             self.__set_cost_levels()
             self.__set_total_cost_levels()
-            # self.__set_safety_order_table()
-        
-        # self.__set_buy_orders()
         return
 
     def __has_safety_order_table(self) -> bool:
         """Returns True if safety orders exists."""
-        # sql = SQL()
-        # result_set = sql.con_query(f"SELECT * FROM safety_orders WHERE symbol_pair='{self.symbol_pair}'")
-
-        """
-        XBTUSD:
-                {
-                    symbol:                           symbol, 
-                    symbol_pair:                      symbol_pair, 
-                    order_number:                     order_number[i], 
-                    percentage_deviation_level:       percentage_deviation_levels[i],
-                    quantity:                         quantities[i],
-                    total_quantity:                   total_quantities[i],
-                    price_level:                      price_levels[i],
-                    average_price_level:              average_price_levels[i], 
-                    required_price_level:             required_price_levels[i], 
-                    required_change_percentage_level: required_change_percentage_levels[i],
-                    profit_level:                     profit_levels[i],
-                    cost_level:                       cost_levels[i],
-                    total_cost_levels:                total_cost_levels[i],
-                    order_placed:                     False
-                }
-    
-        """
-
         if self.mdb.c_open_symbols.count_documents({"symbol_pair": self.symbol_pair}) == 0:
             return False
         return True
@@ -247,42 +220,6 @@ class DCA():
             self.total_cost_levels.append(total_cost)
         return
 
-    def __set_safety_order_table(self) -> None:
-        """Set the Dataframe with the values calculated in previous functions."""
-        # sql = SQL()
-        
-        # for i in range(DCA_.SAFETY_ORDERS_MAX):
-        #     sql.con_update(f"""INSERT INTO safety_orders {sql.so_columns} VALUES (
-        #        '{self.symbol_pair}', 
-        #        '{self.symbol}', 
-        #         {order_numbers[i]}, 
-        #         {self.percentage_deviation_levels[i]},
-        #         {self.quantities[i]},
-        #         {self.total_quantities[i]},
-        #         {self.price_levels[i]},
-        #         {self.average_price_levels[i]}, 
-        #         {self.required_price_levels[i]}, 
-        #         {self.required_change_percentage_levels[i]},
-        #         {self.profit_levels[i]},
-        #         {self.cost_levels[i]},
-        #         {self.total_cost_levels[i]},
-        #         false,
-        #         so_no)""")
-        return
-    
-    def __set_buy_orders(self) -> None:
-        """Read rows in the .xlsx file into memory."""
-        # sql = SQL()
-
-        # quantities = sql.con_get_quantities(self.symbol_pair)
-        # prices     = sql.con_get_prices(self.symbol_pair)
-        # iterations = len(prices) if len(prices) < DCA_.SAFETY_ORDERS_ACTIVE_MAX else DCA_.SAFETY_ORDERS_ACTIVE_MAX
-
-        # for i in range(iterations):
-        #     self.safety_orders[prices[i]] = quantities[i]
-        return
-
-
     def store_in_db(self):
         safety_order_list = list()
         data              = {'symbol': self.symbol, 'symbol_pair': self.symbol_pair, 'base_order': {}, 'safety_orders': {}}
@@ -292,7 +229,7 @@ class DCA():
 
         # base order
         base_order = {
-            'deviation_percentage':       "0",
+            'deviation_percentage':       0,
             'quantity':                   self.base_order_size,
             'total_quantity':             self.base_order_size,
             'price':                      self.entry_price,
@@ -303,7 +240,9 @@ class DCA():
             'cost':                       self.entry_price * self.base_order_size,
             'total_cost':                 self.entry_price * self.base_order_size,
             'has_placed_buy_order':       True,
-            'has_placed_sell_order':      False
+            'has_placed_sell_order':      False,
+            'has_cancelled_sell_order':   False,
+            'sell_order_txid':            ''
         }
 
         # safety orders
@@ -322,7 +261,10 @@ class DCA():
                     'cost':                       self.cost_levels[i],
                     'total_cost':                 self.total_cost_levels[i],
                     'has_placed_order':           False,
-                    'has_filled':                 False
+                    'has_filled':                 False,
+                    'has_cancelled_sell_order':   False,
+                    'buy_order_txid':             '',
+                    'sell_order_txid':            ''
                 }
             })
         

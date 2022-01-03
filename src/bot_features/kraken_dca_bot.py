@@ -44,20 +44,20 @@ def get_buy_time() -> str:
     return ( datetime.timedelta(minutes=Buy_.TIME_MINUTES) + datetime.datetime.now() ).strftime("%H:%M:%S")
 
 
+
 class KrakenDCABot(KrakenBotBase):
     def __init__(self, api_key, api_secret) -> None:
         super().__init__(api_key, api_secret)
 
-        self.api_key:    str           = api_key
-        self.api_secret: str           = api_secret
-
-        self.rest_api:   KrakenRestAPI = KrakenRestAPI(api_key, api_secret)
-        self.base_order: BaseOrder     = BaseOrder(api_key, api_secret)
-        self.safety_orders: SafetyOrder = SafetyOrder(api_key, api_secret)
-        self.config:     Config        = Config()
-        self.tv:         TradingView   = TradingView()
-        self.mdb:        MongoDatabase = MongoDatabase()
-        self.dca:        DCA           = None
+        self.api_key:       str           = api_key
+        self.api_secret:    str           = api_secret
+        self.rest_api:      KrakenRestAPI = KrakenRestAPI(api_key, api_secret)
+        self.base_order:    BaseOrder     = BaseOrder(api_key, api_secret)
+        self.safety_orders: SafetyOrder   = SafetyOrder(api_key, api_secret)
+        self.config:        Config        = Config()
+        self.tv:            TradingView   = TradingView()
+        self.mdb:           MongoDatabase = MongoDatabase()
+        self.dca:           DCA           = None
         return
 
     def is_ok(self, order_result: dict):
@@ -205,11 +205,10 @@ class KrakenDCABot(KrakenBotBase):
         self.start_socket_handler_threads()
 
         ##################################
-        # self.mdb.c_safety_orders.drop()
-        # self.mdb.c_open_symbols.drop()
-        # self.mdb.c_own_trades.drop()
-        # self.cancel_orders("XBTUSD")
-        # self.cancel_orders("SCUSD")
+        self.mdb.c_safety_orders.drop()
+        self.mdb.c_open_symbols.drop()
+        self.mdb.c_own_trades.drop()
+        self.cancel_orders("SCUSD")
         ##################################
 
         while True:
@@ -233,7 +232,6 @@ class KrakenDCABot(KrakenBotBase):
                     if self.is_ok(base_order_result):
                         base_order_result = self.base_order.sell(symbol_pair)
                         self.safety_orders.buy(symbol, symbol_pair)
-                        # self.place_safety_orders(ws_token, base_order_result, symbol, symbol_pair)
             
             self.wait(message=Color.FG_BRIGHT_BLACK   + f"Main thread: waiting till {get_buy_time()} to buy" + Color.ENDC, timeout=60)
         return

@@ -43,7 +43,11 @@ class BaseOrder(KrakenBotBase):
         base_order_size   = self.config.DCA_DATA[symbol][ConfigKeys.DCA_BASE_ORDER_SIZE]
         safety_order_size = self.config.DCA_DATA[symbol][ConfigKeys.DCA_SAFETY_ORDER_SIZE]
 
-        # NEED TO ROUND BASE_ORDER_SIZE AND SAFETY ORDER SIZE!!!
+        max_price_prec    = self.get_max_price_precision(pair[0]+pair[1])
+        max_volume_prec   = self.get_max_volume_precision(pair[0]+pair[1])
+        base_order_size   = self.round_decimals_down(base_order_size, max_volume_prec)
+        safety_order_size = self.round_decimals_down(safety_order_size, max_volume_prec)
+        market_price      = round(market_price, max_price_prec)
 
         if base_order_size < order_min:
             G.log.print_and_log(f"{symbol} Base order size must be at least {order_min}", G.print_lock)
@@ -94,8 +98,9 @@ class BaseOrder(KrakenBotBase):
         sell_order_result = self.limit_order(Trade.SELL, base_order_size, symbol_pair, base_target_price)
 
         if self.has_result(sell_order_result):
-            self.mdb.base_order_place_sell(symbol_pair_s)
-            G.log.print_and_log(f"Placed sell order for {sell_order_result[Dicts.RESULT][Dicts.DESCR][Dicts.ORDER]}", G.print_lock)
+            sell_order_txid = sell_order_result[Dicts.RESULT][Data.TXID][0]
+            self.mdb.base_order_place_sell(symbol_pair_s, sell_order_txid)
+            G.log.print_and_log(f"{symbol_pair_s} Base order placed {sell_order_result[Dicts.RESULT][Dicts.DESCR][Dicts.ORDER]}", G.print_lock)
             return {'status': 'ok'}
         
         G.log.print_and_log(f"Could not place sell order for {symbol_pair}: {sell_order_result}")

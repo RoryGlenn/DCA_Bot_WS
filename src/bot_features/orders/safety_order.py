@@ -1,6 +1,5 @@
 
 from pprint import pprint
-from pprint import PrettyPrinter
 
 from bot_features.database.mongo_database import MongoDatabase
 
@@ -42,12 +41,19 @@ class SafetyOrder(KrakenBotBase):
 
             ### buy ###
             order_result = self.limit_order(Trade.BUY, quantity_to_buy, s_symbol_pair, required_price)
-            ###
+            ###########
+
+            safety_order_num = safety_order_numbers.pop(0)
 
             if self.has_result(order_result):
-                G.log.print_and_log(f"Safety order {safety_order_numbers.pop(0)} placed: {order_result[Dicts.RESULT][Dicts.DESCR][Dicts.ORDER]}", G.print_lock)
+                G.log.print_and_log(f"{s_symbol_pair} Safety order {safety_order_num} placed: {order_result[Dicts.RESULT][Dicts.DESCR][Dicts.ORDER]}", G.print_lock)
+                
+                # store the buy order txid
+                buy_order_txid = order_result[Dicts.RESULT][Data.TXID][0]
+                self.mdb.store_safety_order_buy_txid(s_symbol_pair, safety_order_num, buy_order_txid)
+                self.mdb.update_placed_safety_order(s_symbol_pair, safety_order_num, buy_order_txid)
             else:
-                G.log.print_and_log(f"Could not place safety order {safety_order_numbers.pop(0)} {order_result}", G.print_lock)
+                G.log.print_and_log(f"{s_symbol_pair} Could not place safety order {safety_order_num} {order_result}", G.print_lock)
         return
 
     def sell(self):
