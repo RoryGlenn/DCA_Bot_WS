@@ -1,22 +1,11 @@
-import datetime
-import time
-
 
 from pprint import pprint
 from pprint import PrettyPrinter
-from threading import Thread
 
 from bot_features.database.mongo_database import MongoDatabase
 
-from bot_features.socket_handlers.safety_order_socket_handler import SafetyOrderSocketHandler
-from bot_features.socket_handlers.base_order_socket_handler import BaseOrderSocketHandler
-
 from bot_features.low_level.kraken_bot_base import KrakenBotBase
 from bot_features.low_level.kraken_enums import *
-
-from bot_features.tradingview import TradingView
-
-from bot_features.dca import DCA
 
 from util.config  import Config
 from util.globals import G
@@ -32,15 +21,33 @@ class SafetyOrder(KrakenBotBase):
         self.mdb:    MongoDatabase = MongoDatabase()
         return
 
-    def place_orders(self, symbol: str, symbol_pair: str):
-        # get the number of open safety order from the db
+    def buy(self, symbol: str, s_symbol_pair: str):
         max_active_safety_orders     = self.config.DCA_DATA[symbol][ConfigKeys.DCA_SAFETY_ORDERS_ACTIVE_MAX]
-        number_of_open_safety_orders = self.mdb.get_number_open_safety_orders(symbol_pair)
+        number_of_open_safety_orders = self.mdb.get_number_open_safety_orders(s_symbol_pair)
         iterations                   = max_active_safety_orders - number_of_open_safety_orders
+    
+        unplaced_safety_orders = self.mdb.get_unplaced_safety_order_data(s_symbol_pair)
+        safety_order_numbers   = self.mdb.get_unplaced_safety_order_numbers(s_symbol_pair)
+
+        symbol_pair = s_symbol_pair.split("/")
+        symbol_pair = symbol_pair[0] + symbol_pair[1]
+
+        max_volume_prec = self.get_max_volume_precision(symbol_pair)
+        max_price_prec  = self.get_max_price_precision(symbol_pair)
 
         for i in range(iterations):
-            pass
+            safety_order    = unplaced_safety_orders[i]
+            quantity_to_buy = self.round_decimals_down(safety_order['quantity'], max_volume_prec)
+            required_price  = round(safety_order['required_price'], max_price_prec)
 
+            ### buy ###
+            order_result = self.limit_order(Trade.BUY, quantity_to_buy, s_symbol_pair, required_price)
+            ###
+
+            if self.has_result(order_result):
+                G.log.print_and_log(f"Safety order {safety_order_numbers.pop(0)} placed: {order_result[Dicts.RESULT][Dicts.DESCR][Dicts.ORDER]}", G.print_lock)
+            else:
+                G.log.print_and_log(f"Could not place safety order {safety_order_numbers.pop(0)} {order_result}", G.print_lock)
         return
 
     def sell(self):

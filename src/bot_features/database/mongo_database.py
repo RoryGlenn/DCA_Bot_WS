@@ -19,10 +19,6 @@ class MongoDatabase():
     def in_safety_orders(self, symbol_pair: str) -> bool:
         return bool(self.c_safety_orders.count_documents({"_id": symbol_pair}) != 0)
 
-    def not_in_safety_orders(self, symbol_pair: str) -> bool:
-        print(self.c_safety_orders.count_documents({"_id": symbol_pair}) != 0)
-        return self.c_safety_orders.count_documents({"_id": symbol_pair}) != 0
-
     def get_safety_order_table(self) -> dict():
         return self.c_safety_orders.find()
     
@@ -60,3 +56,28 @@ class MongoDatabase():
                                 # if the order has been placed but has not been filled, it must be open!
                                 count += 1
         return count
+
+
+    def get_unplaced_safety_order_data(self, symbol_pair_s: str) -> list:
+        unplaced_list = []
+        for document in self.c_safety_orders.find({'_id': symbol_pair_s}):
+            for value in document.values():
+                if isinstance(value, dict):
+                    for safety_order in value['safety_orders']:
+                        for so_num, so_data in safety_order.items():
+                            if not so_data['has_placed_order'] and not so_data['has_filled']:
+                                unplaced_list.append(so_data)
+        return unplaced_list
+
+
+
+    def get_unplaced_safety_order_numbers(self, symbol_pair_s: str) -> list:
+        so_numbers = []
+        for document in self.c_safety_orders.find({'_id': symbol_pair_s}):
+            for value in document.values():
+                if isinstance(value, dict):
+                    for safety_order in value['safety_orders']:
+                        for so_num, so_data in safety_order.items():
+                            if not so_data['has_placed_order'] and not so_data['has_filled']:
+                                so_numbers.append(so_num)
+        return so_numbers

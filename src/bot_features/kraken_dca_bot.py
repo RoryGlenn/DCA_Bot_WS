@@ -53,7 +53,7 @@ class KrakenDCABot(KrakenBotBase):
 
         self.rest_api:   KrakenRestAPI = KrakenRestAPI(api_key, api_secret)
         self.base_order: BaseOrder     = BaseOrder(api_key, api_secret)
-        self.safety_order: SafetyOrder = SafetyOrder(api_key, api_secret)
+        self.safety_orders: SafetyOrder = SafetyOrder(api_key, api_secret)
         self.config:     Config        = Config()
         self.tv:         TradingView   = TradingView()
         self.mdb:        MongoDatabase = MongoDatabase()
@@ -213,9 +213,6 @@ class KrakenDCABot(KrakenBotBase):
         ##################################
 
         while True:
-            max_active_safety_orders     = self.config.DCA_DATA["SC"][ConfigKeys.DCA_SAFETY_ORDERS_ACTIVE_MAX]
-            number_of_open_safety_orders = self.mdb.get_number_open_safety_orders("SC/USD")
-
             start_time = time.time()
             buy_dict   = self.get_buy_dict()
 
@@ -235,7 +232,7 @@ class KrakenDCABot(KrakenBotBase):
                     
                     if self.is_ok(base_order_result):
                         base_order_result = self.base_order.sell(symbol_pair)
-                        self.safety_order.place_orders(symbol, symbol_pair)
+                        self.safety_orders.buy(symbol, symbol_pair)
                         # self.place_safety_orders(ws_token, base_order_result, symbol, symbol_pair)
             
             self.wait(message=Color.FG_BRIGHT_BLACK   + f"Main thread: waiting till {get_buy_time()} to buy" + Color.ENDC, timeout=60)
