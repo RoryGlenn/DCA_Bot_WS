@@ -106,29 +106,14 @@ class KrakenDCABot(KrakenBotBase):
         self.start_socket_handler_threads()
 
         ##################################
-        # self.mdb.c_safety_orders.drop()
-        # self.mdb.c_open_symbols.drop()
-        # self.mdb.c_own_trades.drop()
+        self.mdb.c_safety_orders.drop()
+        self.mdb.c_open_symbols.drop()
+        self.mdb.c_own_trades.drop()
         ##################################
 
         time.sleep(5)
 
         while True:
-            # if we cancel an order, which if block will execute inside of open_orders_socket_handler.py?
-
-            # print("1: G.available_usd", G.available_usd)
-            # time.sleep(45)
-            
-            # order_result = self.limit_order(Trade.BUY, 10000, "SC/USD", 0.0001)
-            # time.sleep(1)
-            # txid = order_result['result']['txid'][0]
-
-            # # cancel the order manually right here!!!
-            # time.sleep(1)
-            # self.cancel_order(txid)
-            # time.sleep(1)
-            # print("2: G.available_usd", G.available_usd)
-            
             start_time = time.time()
             buy_dict = self.get_buy_dict()
 

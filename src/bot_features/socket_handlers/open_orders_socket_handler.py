@@ -45,7 +45,7 @@ class OpenOrdersSocketHandler(SocketHandlerBase):
 
                             G.usd_lock.acquire()
                             G.available_usd -= cost
-                            print("sequence 1:")
+                            # print("sequence 1:")
                             G.available_usd = round(G.available_usd, 8)
                             G.usd_lock.release()
             elif "openOrders" in message and message[-1]['sequence'] == 2:
@@ -63,8 +63,8 @@ class OpenOrdersSocketHandler(SocketHandlerBase):
                             G.usd_lock.acquire()
                             G.available_usd -= cost
                             G.available_usd = round(G.available_usd, 8)
-                            print("sequence 2:")
-                            print("openOrders: G.available_usd", G.available_usd)
+                            # print("sequence 2:")
+                            # print("openOrders: G.available_usd", G.available_usd)
                             G.usd_lock.release()
             elif "openOrders" in message and message[-1]['sequence'] == 3:
 
@@ -80,7 +80,7 @@ class OpenOrdersSocketHandler(SocketHandlerBase):
                     {'sequence': 3}
                 """
 
-                print("sequence 3:", message[0])
+                # print("sequence 3:", message[0])
                 return
                       
         return

@@ -85,14 +85,15 @@ class OwnTradesSocketHandler(SocketHandlerBase):
                                                     cancel_result   = self.rest_api.cancel_order(base_order_txid)
                                                 else:
                                                     # cancel the sell limit safety order whose so_num is: filled_so_nums[-1] - 1
-                                                    pass
+                                                    self.rest_api.cancel_order(txid)
+                                                    txid = self.mdb.get_safety_order_sell_txid(s_symbol_pair, filled_so_nums[-2])
 
-                                                value         = self.mdb.get_value(s_symbol_pair, order_txid)
-                                                cancel_result = self.rest_api.cancel_order(...)
+                                                # value         = self.mdb.get_value(s_symbol_pair, order_txid)
+                                                # cancel_result = self.rest_api.cancel_order(...)
 
-                                                if 'result' in cancel_result.keys():
-                                                    if cancel_result['result']['count'] == 1: # {'error': [], 'result': {'count': 1}}
-                                                        self.mdb.cancel_sell_order(s_symbol_pair)
+                                                # if 'result' in cancel_result.keys():
+                                                #     if cancel_result['result']['count'] == 1: # {'error': [], 'result': {'count': 1}}
+                                                #         self.mdb.cancel_sell_order(s_symbol_pair)
 
                                         # cancel the open sell order associated with s_symbol_pair
                                         # place new sell order
