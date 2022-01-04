@@ -321,11 +321,11 @@ class KrakenRestAPI():
 
         if Dicts.RESULT in open_orders.keys():
             for txid in open_orders[Dicts.RESULT][Dicts.OPEN]:
-                for key in open_orders[txid].keys():
+                for key in open_orders[Dicts.RESULT][Dicts.OPEN][txid].keys():
                     if key == Dicts.DESCR:
-                        if open_orders[txid][Dicts.DESCR][Data.TYPE] == Data.BUY:
-                            price     = float(open_orders[txid][Dicts.DESCR][Data.PRICE])
-                            qty       = float(open_orders[txid][Dicts.DESCR][Dicts.ORDER].split(" ")[1])
+                        if open_orders[Dicts.RESULT][Dicts.OPEN][txid][Dicts.DESCR][Data.TYPE] == Data.BUY:
+                            price     = float(open_orders[Dicts.RESULT][Dicts.OPEN][txid][Dicts.DESCR][Data.PRICE])
+                            qty       = float(open_orders[Dicts.RESULT][Dicts.OPEN][txid][Dicts.DESCR][Dicts.ORDER].split(" ")[1])
                             buy_total += price * qty
                             break
         return round(buy_total, 3)

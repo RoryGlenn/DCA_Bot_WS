@@ -46,35 +46,60 @@ class OwnTradesSocketHandler(SocketHandlerBase):
                         for dictionary in message:
                             for txid, trade_info in dictionary.items():
                                 self.trades[ trade_info['ordertxid'] ] = trade_info
-                                G.log.pprint_and_log(f"ownTrades: New trade found!", {txid: trade_info}, G.print_lock)
+                                # G.log.pprint_and_log(f"ownTrades: New trade found!", {txid: trade_info}, G.print_lock)
 
-                                # if the new trade matches a safety order inside of the db, 
-                                # cancel the current sell order and place a new one.
-                                
+                                # "TDLH43-DVQXD-2KHVYY": {
+                                #     "cost": "1000000.00000",
+                                #     "fee": "1600.00000",
+                                #     "margin": "0.00000",
+                                #     "ordertxid": "TDLH43-DVQXD-2KHVYY",
+                                #     "ordertype": "limit",
+                                #     "pair": "XBT/EUR",
+                                #     "postxid": "OGTT3Y-C6I3P-XRI6HX",
+                                #     "price": "100000.00000",
+                                #     "time": "1560516023.070651",
+                                #     "type": "sell",
+                                #     "vol": "1000000000.00000000"
+                                # }
 
-                                # is the new trade a buy or a sell
                                 # if its a buy, cancel the current sell order and place a new one
-                                # if its a sell, cancel all orders associated with the symbol and wipe the db
+                                if trade_info['type'] == 'buy':
+                                    s_symbol_pair = trade_info['pair']
+                                    order_txid    = trade_info['ordertxid']
+                                    type          = trade_info['type'] # buy or sell
+    
+                                    # query the db to find the safety order associated with s_symbol_pair
+                                    placed_safety_orders = self.mdb.get_placed_safety_order_data(s_symbol_pair)
+                                    for safety_order in placed_safety_orders:
+                                        if safety_order['order_txid'] == order_txid:
+                                            self.mdb.update_filled_safety_order(s_symbol_pair, order_txid)
 
-                                s_symbol_pair = trade_info['pair']
-                                order_txid    = trade_info['ordertxid']
 
-                                # query the db to find the safety order associated with s_symbol_pair
-                                placed_safety_orders = self.mdb.get_placed_safety_order_data(s_symbol_pair)
-                                for safety_order in placed_safety_orders:
-                                    if safety_order['order_txid'] == order_txid:
-                                        self.mdb.update_filled_safety_order(s_symbol_pair, order_txid)
+                                            # every time we cancel an order, we need to figure out 
+                                            # the price and the quantity to get the value
+                                            # and add that back to G.availableusd.
+                                            cancel_result = self.rest_api.cancel_order(...)
 
-                                        cancel_result = self.rest_api.cancel_order(...)
+                                            if 'result' in cancel_result.keys():
+                                                if cancel_result['result']['count'] == 1: # {'error': [], 'result': {'count': 1}}
+                                                    self.mdb.cancel_sell_order(s_symbol_pair)
 
-                                        if 'result' in cancel_result.keys():
-                                            if cancel_result['result']['count'] == 1: # {'error': [], 'result': {'count': 1}}
-                                                self.mdb.cancel_sell_order(s_symbol_pair)
+                                    # cancel the open sell order associated with s_symbol_pair
+                                    # place new sell order
+
+                                elif trade_info['type'] == 'sell':
+                                    # if its a sell, cancel all orders associated with the symbol and wipe the db
+                                    placed_safety_orders = self.mdb.get_placed_safety_order_data(s_symbol_pair)
+                                    
+                                    # cancel all orders associated with the symbol
+                                    for safety_order in placed_safety_orders:
+                                        self.rest_api.cancel_order(safety_order['order_txid'])
+
+                                    # remove all data associated with s_symbol_pair from db
+                                    self.mdb.c_safety_orders.delete_one({"_id": s_symbol_pair})
                                         
-                                        
-                                        # cancel the open sell order associated with s_symbol_pair
-                                        # place new sell order
-                                        pass
+
+                                    # print how much we profited.
         else:
             if isinstance(message, dict):
                 if message['event'] == 'systemStatus':

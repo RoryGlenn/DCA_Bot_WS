@@ -12,6 +12,7 @@ from bot_features.database.mongo_database import MongoDatabase
 from bot_features.low_level.kraken_rest_api import KrakenRestAPI
 
 from bot_features.socket_handlers.balances_socket_handler import BalancesSocketHandler
+# from bot_features.socket_handlers.cancel_order_socket_handler import CancelOrderSocketHandler
 from bot_features.socket_handlers.open_orders_socket_handler import OpenOrdersSocketHandler
 from bot_features.socket_handlers.own_trades_socket_handler import OwnTradesSocketHandler
 
@@ -56,7 +57,6 @@ class KrakenDCABot(KrakenBotBase):
         self.safety_orders: SafetyOrder   = SafetyOrder(api_key, api_secret)
         self.tv:            TradingView   = TradingView()
         self.mdb:           MongoDatabase = MongoDatabase()
-        self.dca:           DCA           = None
         return
 
     def is_ok(self, order_result: dict):
@@ -83,23 +83,25 @@ class KrakenDCABot(KrakenBotBase):
         return buy_dict
 
     def init_socket_handlers(self, ws_token: str) -> None:
-        G.socket_handler_open_orders = OpenOrdersSocketHandler(ws_token)
-        G.socket_handler_own_trades  = OwnTradesSocketHandler(ws_token)
-        G.socket_handler_balances    = BalancesSocketHandler(ws_token)
+        G.socket_handler_open_orders  = OpenOrdersSocketHandler(ws_token)
+        G.socket_handler_own_trades   = OwnTradesSocketHandler(ws_token)
+        G.socket_handler_balances     = BalancesSocketHandler(ws_token)
+        # G.socket_handler_cancel_order = CancelOrderSocketHandler(ws_token)
         return
 
     def start_socket_handler_threads(self) -> None:
         Thread(target=G.socket_handler_open_orders.ws_thread).start()
         Thread(target=G.socket_handler_own_trades.ws_thread).start()
         Thread(target=G.socket_handler_balances.ws_thread).start()
+        # Thread(target=G.socket_handler_cancel_order.ws_thread).start()
         return
 
-    def cancel_orders(self, symbol_pair: str) -> None:
-        open_orders = self.get_open_orders()['result']['open']
-        for txid, data in open_orders.items():
-            if data['descr']['pair'] == symbol_pair:
-                self.cancel_order(txid)        
-        return
+    # def cancel_orders(self, symbol_pair: str) -> None:
+    #     open_orders = self.get_open_orders()['result']['open']
+    #     for txid, data in open_orders.items():
+    #         if data['descr']['pair'] == symbol_pair:
+    #             self.cancel_order(txid)        
+    #     return
 
     def start_trade_loop(self) -> None:
         ws_token = self.get_web_sockets_token()["result"]["token"]
@@ -108,24 +110,41 @@ class KrakenDCABot(KrakenBotBase):
         self.start_socket_handler_threads()
 
         ##################################
-        self.mdb.c_safety_orders.drop()
-        self.mdb.c_open_symbols.drop()
-        self.mdb.c_own_trades.drop()
-        self.cancel_orders("SCUSD")
+        # self.mdb.c_safety_orders.drop()
+        # self.mdb.c_open_symbols.drop()
+        # self.mdb.c_own_trades.drop()
         ##################################
 
+        time.sleep(5)
+
         while True:
+            # if we cancel an order, which if block will execute inside of open_orders_socket_handler.py?
+
+            print("1: G.available_usd", G.available_usd)
+            time.sleep(45)
+            
+            order_result = self.limit_order(Trade.BUY, 10000, "SC/USD", 0.0001)
+            time.sleep(1)
+            txid = order_result['result']['txid'][0]
+
+            # cancel the order manually right here!!!
+            time.sleep(1)
+            self.cancel_order(txid)
+            time.sleep(1)
+            print("2: G.available_usd", G.available_usd)
             
             start_time = time.time()
-            buy_dict   = self.get_buy_dict()
+            buy_dict = self.get_buy_dict()
 
             G.log.print_and_log(Color.FG_BRIGHT_BLACK + f"Main thread: checked all coins in {get_elapsed_time(start_time)}" + Color.ENDC, G.print_lock)
-            G.log.print_and_log(f"Main thread: buy list {PrettyPrinter(indent=1).pformat([symbol_pair for (symbol, symbol_pair) in buy_dict.items()])}", G.print_lock)
+            G.log.print_and_log(f"Main thread: buy list {PrettyPrinter(indent=1).pformat([symbol_pair for (_, symbol_pair) in buy_dict.items()])}", G.print_lock)
 
             # place safety orders for previous trades before starting a new trade
             # for elem in self.mdb.c_safety_orders.find():
             #     for symbol, symbol_pair in elem.items():
             #         self.place_safety_orders(ws_token, symbol, symbol_pair)
+
+            buy_dict = {"COMP":"COMP/USD"}
 
             for symbol, symbol_pair in buy_dict.items():
                 if not self.mdb.in_safety_orders(symbol_pair):

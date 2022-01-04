@@ -6,7 +6,7 @@ from pprint                                           import pprint
 from websocket._app                                   import WebSocketApp
 from bot_features.socket_handlers.socket_handler_base import SocketHandlerBase
 from bot_features.low_level.kraken_enums              import *
-# from util.globals                                     import G
+from util.globals                                     import G
 
 
 class OpenOrdersSocketHandler(SocketHandlerBase):
@@ -22,6 +22,10 @@ class OpenOrdersSocketHandler(SocketHandlerBase):
         self.c_safety_orders = self.db[DB.COLLECTION_SO]
         return
 
+    def ws_error(self, ws: WebSocketApp, error_message: str) -> None:
+        G.log.print_and_log("openOrders: " + str(error_message), G.print_lock)
+        return
+
     def ws_message(self, ws: WebSocketApp, message: str) -> None:
         message = json.loads(message)
 
@@ -30,62 +34,8 @@ class OpenOrdersSocketHandler(SocketHandlerBase):
                 return
 
         else:
-            """if we have a new order"""
-            if "openOrders" in message and message[-1]['sequence'] == 2:
-                for open_orders in message[0]:
-                    for txid, order_info in open_orders.items():
-                        if order_info[Status.STATUS] == Status.PENDING or order_info[Status.STATUS] == Status.OPEN:
-                            self.open_orders[txid] = order_info
-
-                            # add symbol_pair to open_symbol_pairs
-                            # pair = order_info["descr"]["pair"].split("/")
-                            # symbol_pair = pair[0] + pair[1]
-
-                            # pprint(self.c_safety_orders.list_indexes())
-
-                            symbol_pair = order_info["descr"]["pair"]
-
-                            """Check in the db if there is an order that corresponds to either the base_order
-                             or the safety order for that symbol pair."""
-                            
-                            ##############
-                            """How do we tell the difference between a safety order and a base order???"""
-                            ##############
-
-                            # pprint(order_info)
-                            # print()
-                            # pprint(message)
-                            # print()
-
-                            """
-                            Characteristics of a base order:
-                                symbol_pair won't be in db
-                                could be a market/limit order
-                                quantity == self.config.BASE_ORDER_SIZE
-                            """
-
-                            # if its not in the open_order collection, add it
-                            # if self.c_open_orders.count_documents({txid: order_info}) == 0:
-                            #     self.c_open_orders.insert_one({txid: order_info})
-
-                            # # if its not in the open_symbols collection, add it
-                            # if self.c_open_symbols.count_documents({"open_symbols": symbol_pair}) == 0:
-                            #     self.c_open_symbols.insert_one({"open_symbols": symbol_pair})
-
-                            # G.log.pprint_and_log(f"openOrders: open order", order_info, G.print_lock)
-                        if order_info[Status.STATUS] == Status.CANCELED:
-                            self.open_orders.pop(txid)
-                            self.c_open_orders.delete_one({txid: order_info})
-
-                            pair = order_info["descr"]["pair"].split("/")
-                            symbol_pair = pair[0] + pair[1]
-                            if symbol_pair in self.open_symbol_pairs:
-                                self.open_symbol_pairs.remove(symbol_pair)
-
-                            G.log.pprint_and_log(f"openOrders: canceled order", message, G.print_lock)
-            
-            elif "openOrders" in message and message[-1]['sequence'] == 1:
-                """add up total cost of open orders"""
+            if "openOrders" in message and message[-1]['sequence'] == 1:
+                """add up total cost of all the current open orders"""
                 for open_orders in message[0]:
                     for txid, order_info in open_orders.items():
                         if order_info['descr']['type'] == 'buy':
@@ -95,20 +45,44 @@ class OpenOrdersSocketHandler(SocketHandlerBase):
 
                             G.usd_lock.acquire()
                             G.available_usd -= cost
+                            print("sequence 1:")
                             G.available_usd = round(G.available_usd, 8)
                             G.usd_lock.release()
-            elif "openOrders" in message and message[-1]['sequence'] == 3:
-                # pprint(message)
-                # [
-                #     [{'OQZADS-5VQPD-MJDO7V': {
-                #         'status': 'open', 
-                #         'userref': 0}}],
-                        
-                #     'openOrders',
-                #     {'sequence': 3}
-                # ]
-                pass
+            elif "openOrders" in message and message[-1]['sequence'] == 2:
+                """if we have a new order"""
+                for open_orders in message[0]:
+                    for txid, order_info in open_orders.items():
+                        if order_info[Status.STATUS] == Status.PENDING or order_info[Status.STATUS] == Status.OPEN:
+                            self.open_orders[txid] = order_info
+                            
+                            # subtract the value from G.availableusd
+                            price    = float(order_info['descr']['price'])
+                            quantity = float(order_info['vol'])
+                            cost     = price * quantity
 
+                            G.usd_lock.acquire()
+                            G.available_usd -= cost
+                            G.available_usd = round(G.available_usd, 8)
+                            print("sequence 2:")
+                            print("openOrders: G.available_usd", G.available_usd)
+                            G.usd_lock.release()
+            elif "openOrders" in message and message[-1]['sequence'] == 3:
+
+                # this block of code is for an orders status change!
+
+                """
+                    [
+                        {'OFMGU4-U3SPH-JWD5SO': {'status': 'open', 'userref': 0}}
+                    ], 
+                    
+                    'openOrders',
+
+                    {'sequence': 3}
+                """
+
+                print("sequence 3:", message[0])
+                return
+                      
         return
 
     def ws_open(self, ws: WebSocketApp) -> None:

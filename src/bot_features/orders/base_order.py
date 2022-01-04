@@ -34,6 +34,20 @@ class BaseOrder(KrakenBotBase):
                 return float(trade_info['price'])
         raise Exception("No base order price was found!")
 
+    def all_or_nothing(self, symbol: str, symbol_pair: str, base_order_size: float, safety_order_size: float, market_price: float) -> bool:
+        if self.config.DCA_DATA[symbol][ConfigKeys.DCA_ALL_OR_NOTHING]:
+            dca = DCA(symbol, symbol_pair, base_order_size, safety_order_size, market_price)
+            dca.start()
+            
+            total_cost = dca.total_cost_levels[-1]
+
+            if total_cost > G.available_usd:
+                return True
+
+        dca.print_table()
+        return False
+
+
     def buy(self, symbol: str, symbol_pair: str):
         """Place buy order for symbol_pair."""
         pair         = symbol_pair.split("/")
@@ -56,13 +70,16 @@ class BaseOrder(KrakenBotBase):
             G.log.print_and_log(f"{symbol} Safety order size must be at least {order_min}", G.print_lock)
             return {'status': f'Safety order size must be at least {order_min}'}
 
-        if self.config.DCA_DATA[symbol][ConfigKeys.DCA_ALL_OR_NOTHING]:
-            dca = DCA(symbol, symbol_pair, base_order_size, safety_order_size, market_price)
-            dca.start()
+        # if self.config.DCA_DATA[symbol][ConfigKeys.DCA_ALL_OR_NOTHING]:
+        #     dca = DCA(symbol, symbol_pair, base_order_size, safety_order_size, market_price)
+        #     dca.start()
             
-            total_cost = dca.total_cost_levels[-1]
-            if total_cost > G.available_usd:
-                return {'status': 'DCA_ALL_OR_NOTHING'}
+        #     total_cost = dca.total_cost_levels[-1]
+        #     if total_cost > G.available_usd:
+        #         return {'status': 'DCA_ALL_OR_NOTHING'}
+
+        if self.all_or_nothing(symbol, symbol_pair, base_order_size, safety_order_size, market_price):
+            return {'status': 'DCA_ALL_OR_NOTHING'}
 
         order_result = self.market_order(Trade.BUY, base_order_size, pair[0]+pair[1])
         
@@ -110,3 +127,16 @@ class BaseOrder(KrakenBotBase):
     def cancel_sell(self):
         """If a safety order has filled while the base sell order has not filled, cancel the base sell order"""
         return
+
+
+"""
+safety order number  deviation_percentage  quantity  total_quantity       price  average_price  required_price  required_change_percentage    profit        cost  total_cost
+                  1              1.300000  0.010000        0.020000  220.900470     222.355235      223.467011                    1.161854  0.022090    2.209005    4.447105
+                  2              3.328000  0.025000        0.045000  216.361603     219.025440      220.120567                    1.737352  0.048681    5.409040    9.856145
+                  3              6.491680  0.062500        0.107500  209.280971     213.360051      214.426851                    2.458838  0.112489   13.080061   22.936205
+                  4             11.427021  0.156250        0.263750  198.235185     204.399822      205.421821                    3.625308  0.261423   30.974248   53.910453
+                  5             19.126152  0.390625        0.654375  181.003758     190.433690      191.385859                    5.735848  0.592222   70.704593  124.615046
+                  6             31.136798  0.976562        1.630937  154.122733     168.691644      169.535102                   10.000062  1.256823  150.510481  275.125527
+                  7             49.873405  2.441406        4.072344  112.188333     134.817407      135.491494                   20.771466  2.284347  273.897298  549.022825
+
+"""

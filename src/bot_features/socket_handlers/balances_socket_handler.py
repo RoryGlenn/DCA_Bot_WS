@@ -25,6 +25,8 @@ class BalancesSocketHandler(SocketHandlerBase):
                         
                         # G.log.print_and_log(f"balances:  {symbol} {quantity}", G.print_lock)
 
+                        # just because we have 1200 dollars in the exchange does not mean all of it is available!
+
                         if symbol == "USD":
                             G.usd_lock.acquire()
                             G.available_usd = quantity

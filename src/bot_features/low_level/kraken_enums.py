@@ -319,27 +319,3 @@ class SQLTable:
     SAFETY_ORDERS     = "safety_orders"
     OPEN_BUY_ORDERS   = "open_buy_orders"
     OPEN_SELL_ORDERS  = "open_sell_orders"
-    
-    
-class BaseOrderRow():
-    def __init__(self, symbol_pair: str , symbol: str , safety_order_no: int, deviation: float, quantity: float,
-                 total_quantity: float, price: float, average_price: float, required_price: float, required_change: float, 
-                 profit: float, cost: float, total_cost: float, cancelled: bool, filled: bool, oso_txid: str, oso_no: int) -> None:
-        self.symbol_pair:     str   = symbol_pair
-        self.symbol:          str   = symbol
-        self.safety_order_no: int   = safety_order_no
-        self.deviation:       float = deviation
-        self.quantity:        float = quantity
-        self.total_quantity:  float = total_quantity
-        self.price:           float = price
-        self.average_price:   float = average_price
-        self.required_price:  float = required_price
-        self.required_change: float = required_change
-        self.profit:          float = profit
-        self.cost:            float = cost
-        self.total_cost:      float = total_cost
-        self.cancelled:       bool  = cancelled
-        self.filled:          bool  = filled
-        self.oso_txid:        str   = oso_txid
-        self.oso_no:          int   = oso_no
-        return
