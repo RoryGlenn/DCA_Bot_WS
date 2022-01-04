@@ -24,7 +24,7 @@ class SafetyOrder(KrakenBotBase):
 
     def buy(self, symbol: str, s_symbol_pair: str):
         max_active_safety_orders     = self.config.DCA_DATA[symbol][ConfigKeys.DCA_SAFETY_ORDERS_ACTIVE_MAX]
-        number_of_open_safety_orders = self.mdb.get_number_open_safety_orders(s_symbol_pair)
+        number_of_open_safety_orders = self.mdb.get_number_of_open_safety_orders(s_symbol_pair)
         iterations                   = max_active_safety_orders - number_of_open_safety_orders
     
         unplaced_safety_orders = self.mdb.get_unplaced_safety_order_data(s_symbol_pair)

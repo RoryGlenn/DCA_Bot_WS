@@ -62,31 +62,43 @@ class OwnTradesSocketHandler(SocketHandlerBase):
                                 #     "vol": "1000000000.00000000"
                                 # }
 
+                                s_symbol_pair = trade_info['pair']
+                                order_txid    = trade_info['ordertxid']
+
                                 # if its a buy, cancel the current sell order and place a new one
                                 if trade_info['type'] == 'buy':
-                                    s_symbol_pair = trade_info['pair']
-                                    order_txid    = trade_info['ordertxid']
-                                    type          = trade_info['type'] # buy or sell
-    
-                                    # query the db to find the safety order associated with s_symbol_pair
-                                    placed_safety_orders = self.mdb.get_placed_safety_order_data(s_symbol_pair)
-                                    for safety_order in placed_safety_orders:
-                                        if safety_order['order_txid'] == order_txid:
-                                            self.mdb.update_filled_safety_order(s_symbol_pair, order_txid)
+                                    if self.mdb.is_safety_order(s_symbol_pair, order_txid):
+                                        placed_safety_orders = self.mdb.get_placed_safety_order_data(s_symbol_pair)
+                                        
+                                        for safety_order in placed_safety_orders:
+                                            if safety_order['order_txid'] == order_txid:
+                                                self.mdb.update_filled_safety_order(s_symbol_pair, order_txid)
 
+                                                # figure out which safety order number was just filled (if it was a safety order at all...)
+                                                # if safety order number 1 was filled, cancel the base sell order
+                                                # if safety order number 2 was filled, cancel safety order 1 sell order...
+                                                filled_so_nums = self.mdb.get_filled_safety_order_numbers(s_symbol_pair)
 
-                                            # every time we cancel an order, we need to figure out 
-                                            # the price and the quantity to get the value
-                                            # and add that back to G.availableusd.
-                                            cancel_result = self.rest_api.cancel_order(...)
+                                                if filled_so_nums[-1] == 1:
+                                                    # cancel the base sell order
+                                                    base_order_txid = self.mdb.get_base_order_sell_txid(s_symbol_pair)
+                                                    cancel_result   = self.rest_api.cancel_order(base_order_txid)
+                                                else:
+                                                    # cancel the sell limit safety order whose so_num is: filled_so_nums[-1] - 1
+                                                    pass
 
-                                            if 'result' in cancel_result.keys():
-                                                if cancel_result['result']['count'] == 1: # {'error': [], 'result': {'count': 1}}
-                                                    self.mdb.cancel_sell_order(s_symbol_pair)
+                                                value         = self.mdb.get_value(s_symbol_pair, order_txid)
+                                                cancel_result = self.rest_api.cancel_order(...)
 
-                                    # cancel the open sell order associated with s_symbol_pair
-                                    # place new sell order
+                                                if 'result' in cancel_result.keys():
+                                                    if cancel_result['result']['count'] == 1: # {'error': [], 'result': {'count': 1}}
+                                                        self.mdb.cancel_sell_order(s_symbol_pair)
 
+                                        # cancel the open sell order associated with s_symbol_pair
+                                        # place new sell order
+                                    else:
+                                        """the base order was filled, no need to do anything..."""
+                                        pass
                                 elif trade_info['type'] == 'sell':
                                     # if its a sell, cancel all orders associated with the symbol and wipe the db
                                     placed_safety_orders = self.mdb.get_placed_safety_order_data(s_symbol_pair)
@@ -97,7 +109,6 @@ class OwnTradesSocketHandler(SocketHandlerBase):
 
                                     # remove all data associated with s_symbol_pair from db
                                     self.mdb.c_safety_orders.delete_one({"_id": s_symbol_pair})
-                                        
 
                                     # print how much we profited.
         else:

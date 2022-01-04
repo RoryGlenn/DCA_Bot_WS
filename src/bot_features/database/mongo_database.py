@@ -16,11 +16,6 @@ class MongoDatabase():
         return
 
 
-    def get_safety_order_table(self) -> dict():
-        return self.c_safety_orders.find()
-    
-    def has_safety_order_table(self, symbol_pair: str):
-        return False if self.c_open_symbols.count_documents({"symbol_pair": symbol_pair}) == 0 else True
 
     def print_so_collection(self) -> None:
         for document in self.c_safety_orders.find():
@@ -46,19 +41,39 @@ class MongoDatabase():
                         self.c_safety_orders.find_one_and_update(query, new_values)
         return
 
-    def cancel_base_order_sell(self, symbol_pair: str, sell_order_txid: str) -> None:
-        
-        return
+    def get_base_order_sell_txid(self, s_symbol_pair: str) -> str:
+        for document in self.c_safety_orders.find({'_id': s_symbol_pair}):
+            for value in document.values():
+                if isinstance(value, dict):
+                    base_order = value['base_order']
+                    return base_order['sell_order_txid']
+        raise Exception("Can't find base order txid!")
+
 
 
 ####################
 ### SAFETY ORDERS
 ####################
+    def get_safety_order_table(self) -> dict():
+        return self.c_safety_orders.find()
+    
+    def has_safety_order_table(self, symbol_pair: str):
+        return False if self.c_open_symbols.count_documents({"symbol_pair": symbol_pair}) == 0 else True
 
     def in_safety_orders(self, symbol_pair: str) -> bool:
         return bool(self.c_safety_orders.count_documents({"_id": symbol_pair}) != 0)
 
-    def get_number_open_safety_orders(self, symbol_pair: str) -> int:
+    def is_safety_order(self, s_symbol_pair: str, order_txid: str) -> bool:
+        for document in self.c_safety_orders.find({'_id': s_symbol_pair}):
+            for value in document.values():
+                if isinstance(value, dict):
+                    for safety_order in value['safety_orders']:
+                        for so_data in safety_order.values():
+                            if so_data['buy_order_txid'] == order_txid:
+                                return True
+        return False
+
+    def get_number_of_open_safety_orders(self, symbol_pair: str) -> int:
         count = 0
         
         for document in self.c_safety_orders.find({'_id': symbol_pair}):
@@ -93,6 +108,20 @@ class MongoDatabase():
                             if so_data['has_placed_order'] and not so_data['has_filled']:
                                 unplaced_list.append(so_data)
         return unplaced_list
+
+
+    def get_filled_safety_order_numbers(self, s_symbol_pair: str) -> list:
+        filled_list = []
+        for document in self.c_safety_orders.find({'_id': s_symbol_pair}):
+            for value in document.values():
+                if isinstance(value, dict):
+                    for safety_order in value['safety_orders']:
+                        for so_num, so_data in safety_order.items():
+                            if so_data['has_placed_order'] and so_data['has_filled']:
+                                filled_list.append(so_num)
+        return filled_list
+
+
 
     def get_unplaced_safety_order_numbers(self, s_symbol_pair: str) -> list:
         so_numbers = []
@@ -150,5 +179,20 @@ class MongoDatabase():
                                 self.c_safety_orders.find_one_and_update(query, new_values)
         return
 
+
+
+##########################################################
+
+    def get_value(self, s_symbol_pair: str, order_txid: str) -> float:
+        for document in self.c_safety_orders.find({'_id': s_symbol_pair}):
+            for value in document.values():
+                if isinstance(value, dict):
+                    for safety_order in value['safety_orders']:
+                        for so_data in safety_order.values():
+                            if so_data['buy_order_txid'] == order_txid:
+                                price = so_data['price']
+                                quantity = so_data['quantity']
+                                return round(price * quantity, DECIMAL_MAX)
+        return 0.0
 
 

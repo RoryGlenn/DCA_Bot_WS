@@ -12,7 +12,6 @@ from bot_features.database.mongo_database import MongoDatabase
 from bot_features.low_level.kraken_rest_api import KrakenRestAPI
 
 from bot_features.socket_handlers.balances_socket_handler import BalancesSocketHandler
-# from bot_features.socket_handlers.cancel_order_socket_handler import CancelOrderSocketHandler
 from bot_features.socket_handlers.open_orders_socket_handler import OpenOrdersSocketHandler
 from bot_features.socket_handlers.own_trades_socket_handler import OwnTradesSocketHandler
 
@@ -49,7 +48,6 @@ def get_buy_time() -> str:
 class KrakenDCABot(KrakenBotBase):
     def __init__(self, api_key, api_secret) -> None:
         super().__init__(api_key, api_secret)
-
         self.api_key:       str           = api_key
         self.api_secret:    str           = api_secret
         self.rest_api:      KrakenRestAPI = KrakenRestAPI(api_key, api_secret)
@@ -83,17 +81,15 @@ class KrakenDCABot(KrakenBotBase):
         return buy_dict
 
     def init_socket_handlers(self, ws_token: str) -> None:
-        G.socket_handler_open_orders  = OpenOrdersSocketHandler(ws_token)
-        G.socket_handler_own_trades   = OwnTradesSocketHandler(ws_token)
-        G.socket_handler_balances     = BalancesSocketHandler(ws_token)
-        # G.socket_handler_cancel_order = CancelOrderSocketHandler(ws_token)
+        G.socket_handler_open_orders = OpenOrdersSocketHandler(ws_token)
+        G.socket_handler_own_trades  = OwnTradesSocketHandler(ws_token)
+        G.socket_handler_balances    = BalancesSocketHandler(ws_token)
         return
 
     def start_socket_handler_threads(self) -> None:
         Thread(target=G.socket_handler_open_orders.ws_thread).start()
         Thread(target=G.socket_handler_own_trades.ws_thread).start()
         Thread(target=G.socket_handler_balances.ws_thread).start()
-        # Thread(target=G.socket_handler_cancel_order.ws_thread).start()
         return
 
     # def cancel_orders(self, symbol_pair: str) -> None:
@@ -120,18 +116,18 @@ class KrakenDCABot(KrakenBotBase):
         while True:
             # if we cancel an order, which if block will execute inside of open_orders_socket_handler.py?
 
-            print("1: G.available_usd", G.available_usd)
-            time.sleep(45)
+            # print("1: G.available_usd", G.available_usd)
+            # time.sleep(45)
             
-            order_result = self.limit_order(Trade.BUY, 10000, "SC/USD", 0.0001)
-            time.sleep(1)
-            txid = order_result['result']['txid'][0]
+            # order_result = self.limit_order(Trade.BUY, 10000, "SC/USD", 0.0001)
+            # time.sleep(1)
+            # txid = order_result['result']['txid'][0]
 
-            # cancel the order manually right here!!!
-            time.sleep(1)
-            self.cancel_order(txid)
-            time.sleep(1)
-            print("2: G.available_usd", G.available_usd)
+            # # cancel the order manually right here!!!
+            # time.sleep(1)
+            # self.cancel_order(txid)
+            # time.sleep(1)
+            # print("2: G.available_usd", G.available_usd)
             
             start_time = time.time()
             buy_dict = self.get_buy_dict()
@@ -143,8 +139,6 @@ class KrakenDCABot(KrakenBotBase):
             # for elem in self.mdb.c_safety_orders.find():
             #     for symbol, symbol_pair in elem.items():
             #         self.place_safety_orders(ws_token, symbol, symbol_pair)
-
-            buy_dict = {"COMP":"COMP/USD"}
 
             for symbol, symbol_pair in buy_dict.items():
                 if not self.mdb.in_safety_orders(symbol_pair):
