@@ -20,8 +20,6 @@ from bot_features.low_level.kraken_enums import *
 
 from bot_features.tradingview import TradingView
 
-from bot_features.dca import DCA
-
 from util.colors  import Color
 from util.globals import G
 
@@ -92,13 +90,6 @@ class KrakenDCABot(KrakenBotBase):
         Thread(target=G.socket_handler_balances.ws_thread).start()
         return
 
-    # def cancel_orders(self, symbol_pair: str) -> None:
-    #     open_orders = self.get_open_orders()['result']['open']
-    #     for txid, data in open_orders.items():
-    #         if data['descr']['pair'] == symbol_pair:
-    #             self.cancel_order(txid)        
-    #     return
-
     def start_trade_loop(self) -> None:
         ws_token = self.get_web_sockets_token()["result"]["token"]
 
@@ -111,7 +102,7 @@ class KrakenDCABot(KrakenBotBase):
         self.mdb.c_own_trades.drop()
         ##################################
 
-        time.sleep(5)
+        time.sleep(3)
 
         while True:
             start_time = time.time()
@@ -125,6 +116,8 @@ class KrakenDCABot(KrakenBotBase):
             #     for symbol, symbol_pair in elem.items():
             #         self.place_safety_orders(ws_token, symbol, symbol_pair)
 
+            buy_dict = {"SC": "SC/USD"}
+
             for symbol, symbol_pair in buy_dict.items():
                 if not self.mdb.in_safety_orders(symbol_pair):
                     base_order_result = self.base_order.buy(symbol, symbol_pair)
@@ -134,4 +127,5 @@ class KrakenDCABot(KrakenBotBase):
                         self.safety_orders.buy(symbol, symbol_pair)
             
             self.wait(message=Color.FG_BRIGHT_BLACK   + f"Main thread: waiting till {get_buy_time()} to buy" + Color.ENDC, timeout=60)
+            time.sleep(1)
         return

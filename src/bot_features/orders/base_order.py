@@ -32,19 +32,13 @@ class BaseOrder(KrakenBotBase):
         for _, trade_info in G.socket_handler_own_trades.trades.items(): 
             if trade_info[Data.ORDER_TXID] == order_txid:
                 return float(trade_info['price'])
-        raise Exception("No base order price was found!") # FLOW/USD Base order placed buy 0.30000000 FLOWUSD @ market
+        raise Exception("No base order price was found!")
 
     def all_or_nothing(self, symbol: str, symbol_pair: str, base_order_size: float, safety_order_size: float, market_price: float) -> bool:
         if self.config.DCA_DATA[symbol][ConfigKeys.DCA_ALL_OR_NOTHING]:
             self.dca = DCA(symbol, symbol_pair, base_order_size, safety_order_size, market_price)
             self.dca.start()
-            
-            total_cost = self.dca.total_cost_levels[-1]
-
-            if total_cost > G.available_usd:
-                return True
-
-        return False
+            return True if self.dca.total_cost_levels[-1] > G.available_usd else False
 
     def buy(self, symbol: str, symbol_pair: str):
         """Place buy order for symbol_pair."""
@@ -70,7 +64,6 @@ class BaseOrder(KrakenBotBase):
         if self.all_or_nothing(symbol, symbol_pair, base_order_size, safety_order_size, market_price):
             return {'status': 'DCA_ALL_OR_NOTHING'}
 
-
         order_result = self.market_order(Trade.BUY, base_order_size, pair[0]+pair[1])
         
         # sleep so kraken exchange can create the data
@@ -78,6 +71,7 @@ class BaseOrder(KrakenBotBase):
 
         if self.has_result(order_result):
             self.dca.print_table()
+
             G.log.print_and_log(f"{symbol_pair} Base order placed {order_result[Dicts.RESULT][Dicts.DESCR][Dicts.ORDER]}", G.print_lock)
             
             entry_price = self.get_entry_price(order_result)
@@ -85,7 +79,6 @@ class BaseOrder(KrakenBotBase):
             
             self.dca.start()
             self.dca.store_in_db()
-            # self.dca.print_table()
         else:
             G.log.print_and_log(f"Error: order did not go through! {order_result}", G.print_lock)
             return {'status': f"order did not go through! {order_result}"}

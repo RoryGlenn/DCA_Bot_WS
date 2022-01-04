@@ -298,7 +298,8 @@ class DCA():
                 'cost':                       self.cost_levels,
                 'total_cost':                 self.total_cost_levels
             })
-        G.log.print_and_log(f"{self.symbol_pair}")
+
+        G.log.print_and_log(f"{self.symbol_pair}", G.print_lock)
         G.log.print_df_and_log(f"{df}", G.print_lock)
         return
                

@@ -46,7 +46,7 @@ class OwnTradesSocketHandler(SocketHandlerBase):
                         for dictionary in message:
                             for txid, trade_info in dictionary.items():
                                 self.trades[ trade_info['ordertxid'] ] = trade_info
-                                # G.log.pprint_and_log(f"ownTrades: New trade found!", {txid: trade_info}, G.print_lock)
+                                G.log.pprint_and_log(f"ownTrades: New trade found!", {txid: trade_info}, G.print_lock)
 
                                 # "TDLH43-DVQXD-2KHVYY": {
                                 #     "cost": "1000000.00000",
