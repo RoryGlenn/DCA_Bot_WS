@@ -278,7 +278,6 @@ class DCA():
 
         if self.mdb.c_safety_orders.count_documents({'_id': self.symbol_pair}) == 0:
             self.mdb.c_safety_orders.insert_one({'_id': self.symbol_pair, self.symbol_pair: data})
-
         return
 
     def print_table(self):
@@ -299,7 +298,6 @@ class DCA():
                 'total_cost':                 self.total_cost_levels
             })
 
-        # G.log.print_and_log(f"{self.symbol_pair}", G.print_lock)
         G.log.print_df_and_log(f"{self.symbol_pair}\n{df}", G.print_lock)
         return
                

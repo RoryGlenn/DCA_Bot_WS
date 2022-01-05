@@ -1,4 +1,3 @@
-import time
 import json
 import pymongo
 
@@ -70,7 +69,7 @@ class OwnTradesSocketHandler(SocketHandlerBase):
                                                     base_order_txid = self.mdb.get_base_order_sell_txid(s_symbol_pair)
                                                     cancel_result   = self.rest_api.cancel_order(base_order_txid)
                                                     
-                                                    print(cancel_result)
+                                                    # print(cancel_result)
                                                     # place the first safety order sell
 
                                                     # get the limit price and the quantity to sell
@@ -134,6 +133,8 @@ class OwnTradesSocketHandler(SocketHandlerBase):
         return
         
     def ws_open(self, ws: WebSocketApp) -> None:
+        print("ownTrades: opened socket")
+        
         api_data = '{"event":"subscribe", "subscription":{"name":"%(feed)s", "token":"%(token)s"}}' % {"feed":"ownTrades", "token":self.api_token}
         ws.send(api_data)
         return

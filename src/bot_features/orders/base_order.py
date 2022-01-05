@@ -1,13 +1,10 @@
 import time
 
-from pprint import pprint
+from pprint                                 import pprint
 
-from bot_features.database.mongo_database import MongoDatabase
-
-from bot_features.socket_handlers.base_order_socket_handler import BaseOrderSocketHandler
-
+from bot_features.database.mongo_database   import MongoDatabase
 from bot_features.low_level.kraken_bot_base import KrakenBotBase
-from bot_features.low_level.kraken_enums import *
+from bot_features.low_level.kraken_enums    import *
 
 from bot_features.dca import DCA
 
@@ -28,11 +25,8 @@ class BaseOrder(KrakenBotBase):
 
     def get_entry_price(self, order_result: dict) -> str:
         order_txid = order_result[Dicts.RESULT][Data.TXID][0]
-        
-        pprint(order_result)
-
-        pprint(G.socket_handler_own_trades.trades)
-
+        # pprint(order_result)
+        # pprint(G.socket_handler_own_trades.trades)
         for _, trade_info in G.socket_handler_own_trades.trades.items(): 
             if trade_info[Data.ORDER_TXID] == order_txid:
                 return float(trade_info['price'])
@@ -74,8 +68,6 @@ class BaseOrder(KrakenBotBase):
         time.sleep(1)
 
         if self.has_result(order_result):
-            # self.dca.print_table()
-
             G.log.print_and_log(f"{symbol_pair} Base order filled {order_result[Dicts.RESULT][Dicts.DESCR][Dicts.ORDER]}", G.print_lock)
             
             entry_price = self.get_entry_price(order_result)

@@ -5,7 +5,6 @@ from tradingview_ta import TA_Handler
 
 from bot_features.low_level.kraken_enums import *
 from util.globals              import G
-# from bot_features.my_sql       import SQL
 
 
 class TradingView:
@@ -42,30 +41,3 @@ class TradingView:
             if rec != TVData.BUY and rec != TVData.STRONG_BUY:
                 return False
         return True
-
-    def get_buy_set(self) -> set:
-        """
-        For every coin on the kraken exchange,
-        get the analysis to see which one is a buy according to the time intervals.
-
-        """
-
-        sql = SQL()
-        buy_set = set()
-        iteration = 1
-
-        result_set = sql.con_query("SELECT symbol FROM kraken_coins")
-
-        if result_set.rowcount > 0:
-            symbol_list = result_set.fetchall()
-            total = len(symbol_list)
-
-            for _tuple in symbol_list:
-                symbol = _tuple[0]
-                G.log.print_and_log(f"{iteration} of {total}: {symbol}")
-
-                if symbol not in StableCoins.STABLE_COINS_LIST:
-                    if self.is_buy(symbol + StableCoins.USD):
-                        buy_set.add(symbol)
-                iteration += 1
-        return buy_set

@@ -18,7 +18,6 @@ def on_open(ws):
     _thread.start_new_thread(run, ())
 
 if __name__ == "__main__":
-    # websocket.enableTrace(True)
     ws = websocket.WebSocketApp("wss://ws.kraken.com/",
                               on_open=on_open,
                               on_message=on_message,

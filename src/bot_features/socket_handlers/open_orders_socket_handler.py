@@ -45,8 +45,6 @@ class OpenOrdersSocketHandler(SocketHandlerBase):
                 for open_orders in message[0]:
                     for txid, order_info in open_orders.items():
                         if Status.STATUS not in order_info.keys():
-                            # a market order was placed!
-                            # G.log.print_and_log(f"openOrders: {message}", G.print_lock)
                             return
 
                         if order_info[Status.STATUS] == Status.PENDING:
@@ -79,6 +77,8 @@ class OpenOrdersSocketHandler(SocketHandlerBase):
         return
 
     def ws_open(self, ws: WebSocketApp) -> None:
+        print("openOrders: opened socket")
+        
         api_data = (
             '{"event":"subscribe", "subscription":{"name":"%(feed)s", "token":"%(token)s"}}'
                 % {"feed":"openOrders", "token": self.api_token})

@@ -85,13 +85,11 @@ class KrakenDCABot(KrakenBotBase):
     def init_socket_handlers(self, ws_token: str) -> None:
         G.socket_handler_open_orders = OpenOrdersSocketHandler(ws_token)
         G.socket_handler_own_trades  = OwnTradesSocketHandler(ws_token)
-        G.socket_handler_balances    = BalancesSocketHandler(ws_token)
         return
 
     def start_socket_handler_threads(self) -> None:
         Thread(target=G.socket_handler_open_orders.ws_thread).start()
         Thread(target=G.socket_handler_own_trades.ws_thread).start()
-        Thread(target=G.socket_handler_balances.ws_thread).start()
         return
 
     def start_trade_loop(self) -> None:
@@ -124,5 +122,4 @@ class KrakenDCABot(KrakenBotBase):
                         self.safety_orders.buy(symbol, symbol_pair)
             
             self.wait(message=Color.FG_BRIGHT_BLACK   + f"Main thread: waiting till {get_buy_time()} to buy" + Color.ENDC, timeout=60)
-            # time.sleep(1)
         return

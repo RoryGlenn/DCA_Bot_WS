@@ -5,7 +5,7 @@ from threading import Event, Lock
 
 class Globals:
     event:               Event   = Event()
-       
+
     print_lock:          Lock    = Lock()
     usd_lock:            Lock    = Lock()
     safety_orders_lock:  Lock    = Lock()
@@ -18,8 +18,7 @@ class Globals:
 
     socket_handler_open_orders  = None
     socket_handler_own_trades   = None
-    socket_handler_balances     = None
-    # socket_handler_cancel_order = None
+    # socket_handler_balances     = None
     
 
 # Global variable "G" is shared between files and classes

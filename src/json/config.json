@@ -629,7 +629,6 @@
         "dca_all_or_nothing":               true,
         "dca_time_intervals":               ["1m", "5m", "15m", "1h", "2h", "4h"]
       }
-
     }
   }
 }

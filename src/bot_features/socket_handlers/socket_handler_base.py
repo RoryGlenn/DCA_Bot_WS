@@ -15,10 +15,11 @@ class SocketHandlerBase:
         return
 
     def ws_thread(self, *args) -> None:
-        ws = WebSocketApp(
-            url="wss://ws-auth.kraken.com/",
-            on_open=self.ws_open,
-            on_message=self.ws_message,
-            on_error=self.ws_error)
-        ws.run_forever()
+        while True:
+            ws = WebSocketApp(
+                url="wss://ws-auth.kraken.com/",
+                on_open=self.ws_open,
+                on_message=self.ws_message,
+                on_error=self.ws_error)
+            ws.run_forever()
         return
