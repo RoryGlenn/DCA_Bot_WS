@@ -31,9 +31,6 @@ class BalancesSocketHandler(SocketHandlerBase):
         return
             
     def ws_open(self, ws: WebSocketApp) -> None:
-        api_data = (
-            '{"event":"subscribe", "subscription":{"name":"%(feed)s", "token":"%(token)s"}}'
-            % {"feed": "balances", "token": self.api_token}
-        )
+        api_data = '{"event":"subscribe", "subscription":{"name":"%(feed)s", "token":"%(token)s"}}' % {"feed": "balances", "token": self.api_token}
         ws.send(api_data)
         return

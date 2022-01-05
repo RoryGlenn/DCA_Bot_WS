@@ -4,13 +4,13 @@ import _thread
 # https://websocket-client.readthedocs.io/en/latest/examples.html
 
 def on_message(ws, message):
-    print(message)
+    return
 
 def on_error(ws, error):
-    print(error)
+    return
 
 def on_close(ws, close_status_code, close_msg):
-    print("### closed ###")
+    return
 
 def on_open(ws):
     def run(*args):
