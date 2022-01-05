@@ -97,10 +97,10 @@ class KrakenDCABot(KrakenBotBase):
         self.start_socket_handler_threads()
 
         ##################################
-        self.mdb.c_safety_orders.drop()
-        self.mdb.c_open_symbols.drop()
-        self.mdb.c_own_trades.drop()
-        self.cancel_all_orders()
+        # self.mdb.c_safety_orders.drop()
+        # self.mdb.c_open_symbols.drop()
+        # self.mdb.c_own_trades.drop()
+        # self.cancel_all_orders()
         ##################################
 
         while True:

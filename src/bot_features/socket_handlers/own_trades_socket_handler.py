@@ -30,10 +30,6 @@ class OwnTradesSocketHandler(SocketHandlerBase):
     def ws_message(self, ws: WebSocketApp, message: str) -> None:
         message = json.loads(message)
 
-        G.log.print_and_log(f"ownTrades: {message}", G.print_lock)
-
-        # is not sensing when a sell limit order has filled
-
         if isinstance(message, list):
             if isinstance(message[-1], dict):
                 if 'sequence' in message[-1].keys():
@@ -43,12 +39,13 @@ class OwnTradesSocketHandler(SocketHandlerBase):
                         for dictionary in message:
                             for txid, trade_info in dictionary.items():
                                 self.trades[ trade_info['ordertxid'] ] = trade_info
-                                G.log.pprint_and_log(f"ownTrades: New trade found!", {txid: trade_info}, G.print_lock)
+                                # G.log.pprint_and_log(f"ownTrades: New trade found!", {txid: trade_info}, G.print_lock)
 
                                 s_symbol_pair = trade_info['pair']
                                 order_txid    = trade_info['ordertxid']
 
                                 # if its a buy, cancel the current sell order and place a new one
+                                # self.safety_order.sell()
                                 if trade_info['type'] == 'buy':
                                     if self.mdb.is_safety_order(s_symbol_pair, order_txid):
                                         placed_safety_orders = self.mdb.get_placed_safety_order_data(s_symbol_pair)
@@ -91,8 +88,18 @@ class OwnTradesSocketHandler(SocketHandlerBase):
                                     # remove all data associated with s_symbol_pair from db
                                     self.mdb.c_safety_orders.delete_one({"_id": s_symbol_pair})
 
-                                    # print how much we profited.
-                                    
+                                    # to calculate profit, figure out if we sold the base order or a safety order
+                                    # if its a safety order, which one did you sell?
+                                    # grab that number from the mdb
+
+                                    # https://www.kraken.com/en-us/features/fee-schedule/#kraken-pro
+                                    # CALCULATE PROFIT BY: (EXIT_COST - ENTRY_COST - FEE)
+                                    # entry_cost = 2.2774
+                                    # exit_cost = 2.2892
+                                    # maker_fee = 0.0016
+                                    # taker_fee = 0.0026
+
+                                    # profit = exit_cost - entry_cost - maker_fee - taker_fee
         else:
             if isinstance(message, dict):
                 if message['event'] == 'systemStatus':
