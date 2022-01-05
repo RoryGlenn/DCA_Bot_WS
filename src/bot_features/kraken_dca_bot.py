@@ -110,11 +110,6 @@ class KrakenDCABot(KrakenBotBase):
             G.log.print_and_log(Color.FG_BRIGHT_BLACK + f"Main thread: checked all coins in {get_elapsed_time(start_time)}" + Color.ENDC, G.print_lock)
             G.log.print_and_log(f"Main thread: buy list {PrettyPrinter(indent=1).pformat([symbol_pair for (_, symbol_pair) in buy_dict.items()])}", G.print_lock)
 
-            # place safety orders for previous trades before starting a new trade
-            # for elem in self.mdb.c_safety_orders.find():
-            #     for symbol, symbol_pair in elem.items():
-            #         self.place_safety_orders(ws_token, symbol, symbol_pair)
-
             for symbol, symbol_pair in buy_dict.items():
                 if not self.mdb.in_safety_orders(symbol_pair):
                     base_order_result = self.base_order.buy(symbol, symbol_pair)

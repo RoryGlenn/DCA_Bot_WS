@@ -30,18 +30,18 @@ class OwnTradesSocketHandler(SocketHandlerBase):
     def ws_message(self, ws: WebSocketApp, message: str) -> None:
         message = json.loads(message)
 
+        G.log.print_and_log(f"ownTrades: {message}", G.print_lock)
+
+        # is not sensing when a sell limit order has filled
+
         if isinstance(message, list):
             if isinstance(message[-1], dict):
                 if 'sequence' in message[-1].keys():
                     if message[-1]['sequence'] >= 2:
-            
                         message = message[0]
                         
                         for dictionary in message:
                             for txid, trade_info in dictionary.items():
-                                
-                                # base order is not being stored inside of G.socket_handler_own_trades.trades
-
                                 self.trades[ trade_info['ordertxid'] ] = trade_info
                                 G.log.pprint_and_log(f"ownTrades: New trade found!", {txid: trade_info}, G.print_lock)
 
@@ -86,12 +86,13 @@ class OwnTradesSocketHandler(SocketHandlerBase):
                                     
                                     # cancel all orders associated with the symbol
                                     for safety_order in placed_safety_orders:
-                                        self.rest_api.cancel_order(safety_order['order_txid']) # ERROR HERE!
+                                        self.rest_api.cancel_order(safety_order['buy_order_txid'])
 
                                     # remove all data associated with s_symbol_pair from db
                                     self.mdb.c_safety_orders.delete_one({"_id": s_symbol_pair})
 
                                     # print how much we profited.
+                                    
         else:
             if isinstance(message, dict):
                 if message['event'] == 'systemStatus':
