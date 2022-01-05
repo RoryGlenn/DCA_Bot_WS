@@ -28,6 +28,10 @@ class BaseOrder(KrakenBotBase):
 
     def get_entry_price(self, order_result: dict) -> str:
         order_txid = order_result[Dicts.RESULT][Data.TXID][0]
+        
+        pprint(order_result)
+
+        pprint(G.socket_handler_own_trades.trades)
 
         for _, trade_info in G.socket_handler_own_trades.trades.items(): 
             if trade_info[Data.ORDER_TXID] == order_txid:
@@ -72,7 +76,7 @@ class BaseOrder(KrakenBotBase):
         if self.has_result(order_result):
             self.dca.print_table()
 
-            G.log.print_and_log(f"{symbol_pair} Base order placed {order_result[Dicts.RESULT][Dicts.DESCR][Dicts.ORDER]}", G.print_lock)
+            G.log.print_and_log(f"{symbol_pair} Base order filled {order_result[Dicts.RESULT][Dicts.DESCR][Dicts.ORDER]}", G.print_lock)
             
             entry_price = self.get_entry_price(order_result)
             self.dca    = DCA(symbol, symbol_pair, base_order_size, safety_order_size, entry_price)

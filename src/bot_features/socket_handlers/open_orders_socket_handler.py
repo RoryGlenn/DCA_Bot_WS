@@ -1,6 +1,4 @@
 import json
-import pymongo
-
 
 from pprint                                           import pprint
 from websocket._app                                   import WebSocketApp
@@ -46,6 +44,11 @@ class OpenOrdersSocketHandler(SocketHandlerBase):
                 """if we have a new order"""
                 for open_orders in message[0]:
                     for txid, order_info in open_orders.items():
+                        if Status.STATUS not in order_info.keys():
+                            # a market order was placed!
+                            # G.log.print_and_log(f"openOrders: {message}", G.print_lock)
+                            return
+
                         if order_info[Status.STATUS] == Status.PENDING:
                             self.open_orders[txid] = order_info
 
@@ -78,10 +81,10 @@ class OpenOrdersSocketHandler(SocketHandlerBase):
     def ws_open(self, ws: WebSocketApp) -> None:
         api_data = (
             '{"event":"subscribe", "subscription":{"name":"%(feed)s", "token":"%(token)s"}}'
-            % {"feed":"openOrders", "token": self.api_token})
+                % {"feed":"openOrders", "token": self.api_token})
         ws.send(api_data)
         return
 
     def ws_close(self, ws: WebSocketApp, arg1: str, arg2: str) -> None:
-        print(arg1, arg2)
+        G.log.print_and_log("Closing openOrders socket", G.print_lock)
         return

@@ -100,9 +100,8 @@ class KrakenDCABot(KrakenBotBase):
         self.mdb.c_safety_orders.drop()
         self.mdb.c_open_symbols.drop()
         self.mdb.c_own_trades.drop()
+        self.cancel_all_orders()
         ##################################
-
-        time.sleep(3)
 
         while True:
             start_time = time.time()
@@ -115,8 +114,6 @@ class KrakenDCABot(KrakenBotBase):
             # for elem in self.mdb.c_safety_orders.find():
             #     for symbol, symbol_pair in elem.items():
             #         self.place_safety_orders(ws_token, symbol, symbol_pair)
-
-            buy_dict = {"SC": "SC/USD"}
 
             for symbol, symbol_pair in buy_dict.items():
                 if not self.mdb.in_safety_orders(symbol_pair):
