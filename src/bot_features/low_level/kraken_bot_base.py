@@ -22,6 +22,7 @@ class KrakenBotBase(KrakenRestAPI):
         """
         super().__init__(api_key, api_secret)
         self.asset_pairs_dict: dict = requests.get(URL_ASSET_PAIRS).json()[Dicts.RESULT]
+        self.asset_info:       dict = self.get_asset_info()[Dicts.RESULT]
         return
        
     def get_current_time(self) -> str:
@@ -76,7 +77,7 @@ class KrakenBotBase(KrakenRestAPI):
         
     def get_withdrawal_precision_max(self, symbol: str) -> int:
         """Gets maximum decimal places when withdrawal of coin"""
-        return int(self.get_asset_info()[Dicts.RESULT][symbol][Dicts.DECIMALS])
+        return int(self.asset_info[symbol][Dicts.DECIMALS])
         
     def get_ask_price(self, symbol_pair: str) -> float:
         """
@@ -93,9 +94,12 @@ class KrakenBotBase(KrakenRestAPI):
         current_price = self.parse_ticker_information(current_price)
         return self.parse_bid_price(current_price)
 
-    def get_alt_name(self, symbol: str) -> str:
-        assets = self.get_asset_info()
-        return assets[Dicts.RESULT][symbol][Dicts.ALT_NAME]
+    def get_alt_name(self, symbol: str) -> str | None:
+        if symbol in self.asset_info.keys():
+            return self.asset_info[symbol][Dicts.ALT_NAME]
+        if 'X' + symbol in self.asset_info.keys():
+            return self.asset_info['X'+symbol][Dicts.ALT_NAME]
+        return None
 
     def get_tradable_asset_pair(self, symbol: str) -> str:
         """Returns the asset pair that matches the symbol and can be traded with either USD or ZUSD."""

@@ -26,8 +26,8 @@ from util.globals import G
 from util.config import g_config
 
 
-x_list:   list = ['XETC', 'XETH', 'XLTC', 'XMLN', 'XREP', 'XXBT', 'XXDG', 'XXLM', 'XXMR', 'XXRP', 'XZEC']
-reg_list: list = ['ETC', 'ETH', 'LTC', 'MLN', 'REP', 'XBT', 'XDG', 'XLM', 'XMR', 'XRP', 'ZEC']
+x_list   = ['XETC', 'XETH', 'XLTC', 'XMLN', 'XREP', 'XXBT', 'XXDG', 'XXLM', 'XXMR', 'XXRP', 'XZEC']
+reg_list = ['ETC', 'ETH', 'LTC', 'MLN', 'REP', 'XBT', 'XDG', 'XLM', 'XMR', 'XRP', 'ZEC']
 
 
 def get_elapsed_time(start_time: float) -> str:
@@ -63,11 +63,15 @@ class KrakenDCABot(KrakenBotBase):
     
     def get_buy_dict(self) -> dict:
         """Returns dictionary with (symbol: symbol_pair) relationship"""
-        buy_dict = dict()
-        
+        buy_dict = {}
+
         for symbol in g_config.DCA_DATA:
-            alt_name    = self.get_alt_name('X' + symbol) if symbol in reg_list else self.get_alt_name(symbol)
-            symbol_pair = alt_name + StableCoins.USD
+            alt_name = self.get_alt_name(symbol)
+
+            if alt_name is None:
+                continue
+            
+            symbol_pair = self.get_alt_name(symbol) + StableCoins.USD
 
             G.log.print_and_log(f"Main thread: checking {symbol_pair}", G.print_lock)
 
@@ -100,12 +104,11 @@ class KrakenDCABot(KrakenBotBase):
         # self.mdb.c_safety_orders.drop()
         # self.mdb.c_open_symbols.drop()
         # self.mdb.c_own_trades.drop()
-        # self.cancel_all_orders()
         ##################################
 
         while True:
             start_time = time.time()
-            buy_dict = self.get_buy_dict()
+            buy_dict   = self.get_buy_dict()
 
             G.log.print_and_log(Color.FG_BRIGHT_BLACK + f"Main thread: checked all coins in {get_elapsed_time(start_time)}" + Color.ENDC, G.print_lock)
             G.log.print_and_log(f"Main thread: buy list {PrettyPrinter(indent=1).pformat([symbol_pair for (_, symbol_pair) in buy_dict.items()])}", G.print_lock)

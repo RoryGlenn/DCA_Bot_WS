@@ -95,9 +95,9 @@ class OwnTradesSocketHandler(SocketHandlerBase):
                                     # https://www.kraken.com/en-us/features/fee-schedule/#kraken-pro
                                     # CALCULATE PROFIT BY: (EXIT_COST - ENTRY_COST - FEE)
                                     # entry_cost = 2.2774
-                                    # exit_cost = 2.2892
-                                    # maker_fee = 0.0016
-                                    # taker_fee = 0.0026
+                                    # exit_cost  = 2.2892
+                                    # maker_fee  = 0.0016
+                                    # taker_fee  = 0.0026
 
                                     # profit = exit_cost - entry_cost - maker_fee - taker_fee
         else:
