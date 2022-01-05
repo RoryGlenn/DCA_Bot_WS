@@ -77,7 +77,7 @@ class OpenOrdersSocketHandler(SocketHandlerBase):
         return
 
     def ws_open(self, ws: WebSocketApp) -> None:
-        print("openOrders: opened socket")
+        G.log.print_and_log("openOrders: opened socket", G.print_lock)
         
         api_data = ('{"event":"subscribe", "subscription":{"name":"%(feed)s", "token":"%(token)s"}}' 
             % {"feed":"openOrders", "token": self.api_token})

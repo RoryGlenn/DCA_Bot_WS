@@ -60,6 +60,7 @@ class BaseOrder(KrakenBotBase):
             G.log.print_and_log(f"{symbol} Safety order size must be at least {order_min}", G.print_lock)
             return {'status': f'Safety order size must be at least {order_min}'}
         if self.all_or_nothing(symbol, symbol_pair, base_order_size, safety_order_size, market_price):
+            G.log.print_and_log(f"All or Nothing: Not enough USD to start {symbol_pair} trade", G.print_lock)
             return {'status': 'DCA_ALL_OR_NOTHING'}
 
         order_result = self.market_order(Trade.BUY, base_order_size, pair[0]+pair[1])

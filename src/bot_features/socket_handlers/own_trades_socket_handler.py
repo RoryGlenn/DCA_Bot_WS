@@ -133,7 +133,7 @@ class OwnTradesSocketHandler(SocketHandlerBase):
         return
         
     def ws_open(self, ws: WebSocketApp) -> None:
-        print("ownTrades: opened socket")
+        G.log.print_and_log("ownTrades: opened socket", G.print_lock)
         
         api_data = '{"event":"subscribe", "subscription":{"name":"%(feed)s", "token":"%(token)s"}}' % {"feed":"ownTrades", "token":self.api_token}
         ws.send(api_data)

@@ -97,6 +97,7 @@ class KrakenDCABot(KrakenBotBase):
 
         self.init_socket_handlers(ws_token)
         self.start_socket_handler_threads()
+        time.sleep(1)
 
         ##################################
         # self.mdb.c_safety_orders.drop()
@@ -116,7 +117,7 @@ class KrakenDCABot(KrakenBotBase):
             for symbol, symbol_pair in buy_dict.items():
                 if not self.mdb.in_safety_orders(symbol_pair):
                     base_order_result = self.base_order.buy(symbol, symbol_pair)
-                    
+
                     if self.is_ok(base_order_result):
                         base_order_result = self.base_order.sell(symbol_pair)
                         self.safety_orders.buy(symbol, symbol_pair)
