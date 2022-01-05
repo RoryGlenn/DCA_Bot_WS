@@ -142,8 +142,7 @@ class MongoDatabase():
                                 so_data['has_filled'] = True
                                 new_values = {"$set": {s_symbol_pair: value}}
                                 query = {'_id': s_symbol_pair}
-                                self.c_safety_orders.find_one_and_update(
-                                    query, new_values)
+                                self.c_safety_orders.find_one_and_update(query, new_values)
         return
 
     def update_placed_safety_order(self, s_symbol_pair: str, safety_order_num: int, buy_order_txid: str) -> None:
@@ -161,9 +160,6 @@ class MongoDatabase():
                                     query = {'_id': s_symbol_pair}
                                     self.c_safety_orders.find_one_and_update(
                                         query, new_values)
-        return
-
-    def cancel_safety_sell_order(self, s_symbol_pair: str, order_txid: str) -> None:
         return
 
     def store_safety_order_buy_txid(self, s_symbol_pair: str, safety_order_num: int, buy_order_txid: str) -> None:
@@ -188,6 +184,18 @@ class MongoDatabase():
                             if so_num == safety_order_num:
                                 return so_data['sell_order_txid']
         return
+
+
+    def get_safety_order_data_by_num(self, s_symbol_pair: str, safety_order_num: int) -> dict:
+        for document in self.c_safety_orders.find({'_id': s_symbol_pair}):
+            for value in document.values():
+                if isinstance(value, dict):
+                    for safety_order in value['safety_orders']:
+                        for so_num, so_data in safety_order.items():
+                            if so_num == safety_order_num:
+                                return so_data
+        return
+    
 
 ##########################################################
 

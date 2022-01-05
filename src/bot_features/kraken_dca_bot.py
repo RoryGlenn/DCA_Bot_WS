@@ -70,7 +70,7 @@ class KrakenDCABot(KrakenBotBase):
 
             if alt_name is None:
                 continue
-            
+
             symbol_pair = self.get_alt_name(symbol) + StableCoins.USD
 
             G.log.print_and_log(f"Main thread: checking {symbol_pair}", G.print_lock)
@@ -113,6 +113,8 @@ class KrakenDCABot(KrakenBotBase):
             G.log.print_and_log(Color.FG_BRIGHT_BLACK + f"Main thread: checked all coins in {get_elapsed_time(start_time)}" + Color.ENDC, G.print_lock)
             G.log.print_and_log(f"Main thread: buy list {PrettyPrinter(indent=1).pformat([symbol_pair for (_, symbol_pair) in buy_dict.items()])}", G.print_lock)
 
+            buy_dict = {"COMP": "COMP/USD"}
+
             for symbol, symbol_pair in buy_dict.items():
                 if not self.mdb.in_safety_orders(symbol_pair):
                     base_order_result = self.base_order.buy(symbol, symbol_pair)
@@ -122,5 +124,5 @@ class KrakenDCABot(KrakenBotBase):
                         self.safety_orders.buy(symbol, symbol_pair)
             
             self.wait(message=Color.FG_BRIGHT_BLACK   + f"Main thread: waiting till {get_buy_time()} to buy" + Color.ENDC, timeout=60)
-            time.sleep(1)
+            # time.sleep(1)
         return

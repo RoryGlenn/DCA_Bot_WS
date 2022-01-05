@@ -1,17 +1,16 @@
 """spot.py: Supports base functionality for buying, selling and transfering. Meant to be inherited from for additional classes"""
 
-# import ast
 import requests
 import os
 import json
 import sys
 
-from datetime import datetime
+from datetime                               import datetime
+from pprint                                 import pprint
 
-from pprint import pprint
-from util.globals import G
+from util.globals                           import G
 from bot_features.low_level.kraken_rest_api import KrakenRestAPI
-from bot_features.low_level.kraken_enums import *
+from bot_features.low_level.kraken_enums    import *
 
 
 class KrakenBotBase(KrakenRestAPI):
@@ -136,12 +135,12 @@ class KrakenBotBase(KrakenRestAPI):
                 return float(value)
         return 0
 
-    def get_keys(self) -> str:
-        if os.path.exists(CONFIG_JSON):
-            with open(CONFIG_JSON) as file:
-                try:
-                    config = json.load(file)[ConfigKeys.CONFIG]
-                    return config[ConfigKeys.KRAKEN_API_KEY], config[ConfigKeys.KRAKEN_SECRET_KEY]
-                except Exception as e:
-                    print(e)
-        sys.exit(0)    
+    # def get_keys(self) -> str:
+    #     if os.path.exists(CONFIG_JSON):
+    #         with open(CONFIG_JSON) as file:
+    #             try:
+    #                 config = json.load(file)[ConfigKeys.CONFIG]
+    #                 return config[ConfigKeys.KRAKEN_API_KEY], config[ConfigKeys.KRAKEN_SECRET_KEY]
+    #             except Exception as e:
+    #                 print(e)
+    #     sys.exit(0)    

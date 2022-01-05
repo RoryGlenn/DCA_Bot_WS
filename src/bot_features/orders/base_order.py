@@ -74,7 +74,7 @@ class BaseOrder(KrakenBotBase):
         time.sleep(1)
 
         if self.has_result(order_result):
-            self.dca.print_table()
+            # self.dca.print_table()
 
             G.log.print_and_log(f"{symbol_pair} Base order filled {order_result[Dicts.RESULT][Dicts.DESCR][Dicts.ORDER]}", G.print_lock)
             
