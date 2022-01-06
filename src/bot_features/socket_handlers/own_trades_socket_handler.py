@@ -16,12 +16,12 @@ from util.config                                      import g_config
 
 class OwnTradesSocketHandler(SocketHandlerBase):
     def __init__(self, api_token) -> None:
-        self.api_token: str = api_token
+        self.api_token = api_token
 
-        self.trades: dict   = {}
-        self.rest_api = KrakenRestAPI(g_config.API_KEY, g_config.API_SECRET)
-        self.mdb      = MongoDatabase()
-        self.mdb      = MongoDatabase()
+        self.trades    = {}
+        self.rest_api  = KrakenRestAPI(g_config.API_KEY, g_config.API_SECRET)
+        self.mdb       = MongoDatabase()
+        
         return
 
     def __finish_trade(self, s_symbol_pair: str) -> None:

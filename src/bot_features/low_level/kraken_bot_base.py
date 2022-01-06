@@ -1,4 +1,10 @@
-"""spot.py: Supports base functionality for buying, selling and transfering. Meant to be inherited from for additional classes"""
+"""
+kraken_bot_base.py
+
+    Supports base functionality for buying, selling. 
+    Meant to be inherited from for additional classes.
+
+"""
 
 import requests
 import time
@@ -14,7 +20,7 @@ from bot_features.low_level.kraken_enums    import *
 class KrakenBotBase(KrakenRestAPI):
     def __init__(self, api_key: str = "", api_secret: str = "") -> None:
         """
-        Returns new Spot object with specified data
+        Returns new object with specified data
         
         """
         super().__init__(api_key, api_secret)

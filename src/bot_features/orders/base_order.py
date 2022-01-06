@@ -5,7 +5,7 @@ from pprint                                 import pprint
 from bot_features.database.mongo_database   import MongoDatabase
 from bot_features.low_level.kraken_bot_base import KrakenBotBase
 from bot_features.low_level.kraken_enums    import *
-from bot_features.dca                       import DCA
+from bot_features.dca.dca                       import DCA
 from util.config                            import g_config
 from util.globals                           import G
 

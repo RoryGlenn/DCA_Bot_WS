@@ -16,7 +16,7 @@ from bot_features.low_level.kraken_rest_api                  import KrakenRestAP
 from bot_features.low_level.kraken_bot_base                  import KrakenBotBase
 from bot_features.low_level.kraken_enums                     import *
 
-from bot_features.tradingview                                import TradingView
+from bot_features.tradingview.trading_view                   import TradingView
 
 from util.colors                                             import Color
 from util.globals                                            import G
@@ -24,11 +24,9 @@ from util.config                                             import g_config
 
 
 class KrakenDCABot(KrakenBotBase):
-    def __init__(self, api_key, api_secret) -> None:
-        super().__init__(api_key, api_secret)
-        self.api_key:       str           = api_key
-        self.api_secret:    str           = api_secret
-        self.rest_api:      KrakenRestAPI = KrakenRestAPI(api_key, api_secret)
+    def __init__(self) -> None:
+        super().__init__(g_config.API_KEY, g_config.API_SECRET)
+        self.rest_api:      KrakenRestAPI = KrakenRestAPI(g_config.API_KEY, g_config.API_SECRET)
         self.tv:            TradingView   = TradingView()
         self.mdb:           MongoDatabase = MongoDatabase()
         return
@@ -50,8 +48,8 @@ class KrakenDCABot(KrakenBotBase):
             if alt_name is None:
                 continue
 
-            symbol_pair = self.get_alt_name(symbol) + StableCoins.USD
-
+            symbol_pair = alt_name + StableCoins.USD
+            
             G.log.print_and_log(f"Main thread: checking {symbol_pair}", G.print_lock)
 
             if self.tv.is_buy(symbol_pair, g_config.DCA_DATA[symbol]['dca_time_intervals']):
@@ -81,7 +79,7 @@ class KrakenDCABot(KrakenBotBase):
     def start_trade_loop(self) -> None:
         base_order    = BaseOrder(g_config.API_KEY, g_config.API_SECRET)
         safety_orders = SafetyOrder(g_config.API_KEY, g_config.API_SECRET)
-        ws_token      = self.get_web_sockets_token()["result"]["token"]
+        ws_token      = self.get_web_sockets_token()[Dicts.RESULT]["token"]
 
         self.init_socket_handlers(ws_token)
         self.start_socket_handler_threads()
@@ -92,13 +90,13 @@ class KrakenDCABot(KrakenBotBase):
         # self.nuke()
 
         while True:
-            start_time = time.time()
-            buy_dict   = self.get_buy_dict()
+            start_time     = time.time()
+            buy_dict       = self.get_buy_dict()
+            current_trades = self.mdb.get_current_trades()
 
             G.log.print_and_log(Color.FG_BRIGHT_BLACK + f"Main thread: checked all coins in {self.get_elapsed_time(start_time)}" + Color.ENDC, G.print_lock)
             G.log.print_and_log(f"Main thread: buy list {PrettyPrinter(indent=1).pformat([symbol_pair for (_, symbol_pair) in buy_dict.items()])}", G.print_lock)
-
-            # buy_dict = {"COMP": "COMP/USD"} # for testing only
+            G.log.print_and_log(f"Main thread: Current trades {current_trades}", G.print_lock)
 
             for symbol, symbol_pair in buy_dict.items():
                 if not self.mdb.in_safety_orders(symbol_pair):
@@ -108,5 +106,5 @@ class KrakenDCABot(KrakenBotBase):
                         base_order_result = base_order.sell(symbol_pair)
                         safety_orders.buy(symbol, symbol_pair)
             
-            self.wait(message=Color.FG_BRIGHT_BLACK   + f"Main thread: waiting till {self.get_buy_time()} to buy" + Color.ENDC, timeout=60)
+            self.wait(message=Color.FG_BRIGHT_BLACK + f"Main thread: waiting until {self.get_buy_time()} to buy" + Color.ENDC, timeout=60)
         return

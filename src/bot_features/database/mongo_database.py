@@ -4,7 +4,6 @@ from pprint                              import pprint
 from bot_features.low_level.kraken_enums import *
 
 
-
 class MongoDatabase():
     def __init__(self) -> None:
         self.mdb:             MongoClient = MongoClient()[DB.DATABASE_NAME]
@@ -199,7 +198,7 @@ class MongoDatabase():
                     for safety_order in value['safety_orders']:
                         for so_data in safety_order.values():
                             if so_data['buy_order_txid'] == order_txid:
-                                price = so_data['price']
+                                price    = so_data['price']
                                 quantity = so_data['quantity']
                                 return round(price * quantity, DECIMAL_MAX)
         return 0.0
@@ -225,9 +224,24 @@ class MongoDatabase():
                             if so_data['sell_order_txid'] == order_txid:
                                 so_data['has_cancelled_sell_order'] = True
                                 new_values = {"$set": {s_symbol_pair: value}}
-                                query = {'_id': s_symbol_pair}
+                                query      = {'_id': s_symbol_pair}
                                 self.c_safety_orders.find_one_and_update(query, new_values)                                
         return
+
+
+#######################################################
+### Current Trades
+#######################################################
+
+    def get_current_trades(self) -> list:
+        symbol_pairs = []
+        for document in self.c_safety_orders.find():
+            for value in document.values():
+                if isinstance(value, dict):
+                    symbol_pairs.append(value['symbol_pair'])
+
+        symbol_pairs.sort()
+        return symbol_pairs
 
 
 # medical 
