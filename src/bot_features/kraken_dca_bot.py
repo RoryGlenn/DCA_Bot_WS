@@ -1,19 +1,19 @@
 import datetime
 import time
 
-from pprint import pprint
-from pprint import PrettyPrinter
+from pprint    import pprint
+from pprint    import PrettyPrinter
 from threading import Thread
 
-from bot_features.orders.base_order import BaseOrder
+from bot_features.orders.base_order   import BaseOrder
 from bot_features.orders.safety_order import SafetyOrder
 
-from bot_features.database.mongo_database import MongoDatabase
+from bot_features.database.mongo_database   import MongoDatabase
 from bot_features.low_level.kraken_rest_api import KrakenRestAPI
 
-from bot_features.socket_handlers.balances_socket_handler import BalancesSocketHandler
+from bot_features.socket_handlers.balances_socket_handler    import BalancesSocketHandler
 from bot_features.socket_handlers.open_orders_socket_handler import OpenOrdersSocketHandler
-from bot_features.socket_handlers.own_trades_socket_handler import OwnTradesSocketHandler
+from bot_features.socket_handlers.own_trades_socket_handler  import OwnTradesSocketHandler
 
 from bot_features.low_level.kraken_bot_base import KrakenBotBase
 from bot_features.low_level.kraken_enums import *
@@ -85,11 +85,13 @@ class KrakenDCABot(KrakenBotBase):
     def init_socket_handlers(self, ws_token: str) -> None:
         G.socket_handler_open_orders = OpenOrdersSocketHandler(ws_token)
         G.socket_handler_own_trades  = OwnTradesSocketHandler(ws_token)
+        G.socket_handler_balances    = BalancesSocketHandler(ws_token)
         return
 
     def start_socket_handler_threads(self) -> None:
         Thread(target=G.socket_handler_open_orders.ws_thread).start()
         Thread(target=G.socket_handler_own_trades.ws_thread).start()
+        Thread(target=G.socket_handler_balances.ws_thread).start()
         return
 
     def start_trade_loop(self) -> None:

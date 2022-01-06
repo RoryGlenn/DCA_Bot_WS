@@ -22,8 +22,6 @@ class BalancesSocketHandler(SocketHandlerBase):
             if "balances" in message.keys():
                 for symbol, quantity in message["balances"].items():
                     if quantity > 0:
-                        # G.log.print_and_log(f"balances:  {symbol} {quantity}", G.print_lock)
-
                         if symbol == "USD":
                             G.usd_lock.acquire()
                             G.available_usd = quantity
@@ -31,6 +29,16 @@ class BalancesSocketHandler(SocketHandlerBase):
         return
             
     def ws_open(self, ws: WebSocketApp) -> None:
+        G.log.print_and_log("balances: opened socket", G.print_lock)
+
         api_data = '{"event":"subscribe", "subscription":{"name":"%(feed)s", "token":"%(token)s"}}' % {"feed": "balances", "token": self.api_token}
         ws.send(api_data)
+        return
+
+    def ws_close(self, ws: WebSocketApp, close_status_code: int, close_msg: str) -> None:
+        G.log.print_and_log("balances: closed socket", G.print_lock)
+        return
+
+    def ws_error(self, ws: WebSocketApp, error_message: str) -> None:
+        G.log.print_and_log("balances: Error " + str(error_message), G.print_lock)
         return

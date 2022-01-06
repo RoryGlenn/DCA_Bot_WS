@@ -76,5 +76,5 @@ class SafetyOrder(KrakenBotBase):
         # cancel the sell limit safety order whose so_num is: filled_so_nums[-1] - 1
         txid_to_cancel = self.mdb.get_safety_order_sell_txid(s_symbol_pair, so_num)
         self.cancel_order(txid_to_cancel)
-        # self.mdb.cancel_sell_order(s_symbol_pair)        
+        self.mdb.cancel_sell_order(s_symbol_pair, txid_to_cancel)
         return

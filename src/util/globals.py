@@ -18,7 +18,7 @@ class Globals:
 
     socket_handler_open_orders  = None
     socket_handler_own_trades   = None
-    # socket_handler_balances     = None
+    socket_handler_balances     = None
     
 
 # Global variable "G" is shared between files and classes

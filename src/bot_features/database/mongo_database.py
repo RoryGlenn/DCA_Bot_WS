@@ -223,6 +223,19 @@ class MongoDatabase():
                                 return price, quantity
         return
 
+    def cancel_sell_order(self, s_symbol_pair: str, order_txid: str) -> None:
+        for document in self.c_safety_orders.find({'_id': s_symbol_pair}):
+            for value in document.values():
+                if isinstance(value, dict):
+                    for safety_order in value['safety_orders']:
+                        for so_data in safety_order.values():
+                            if so_data['sell_order_txid'] == order_txid:
+                                so_data['has_cancelled_sell_order'] = True
+                                new_values = {"$set": {s_symbol_pair: value}}
+                                query = {'_id': s_symbol_pair}
+                                self.c_safety_orders.find_one_and_update(query, new_values)                                
+        return
+
 
 # medical 
 # reject code 65
