@@ -13,10 +13,6 @@ class OpenOrdersSocketHandler(SocketHandlerBase):
         self.open_orders:       dict = { }
         return
 
-    def ws_error(self, ws: WebSocketApp, error_message: str) -> None:
-        G.log.print_and_log("openOrders: " + str(error_message), G.print_lock)
-        return
-
     def ws_message(self, ws: WebSocketApp, message: str) -> None:
         message = json.loads(message)
         
@@ -83,7 +79,11 @@ class OpenOrdersSocketHandler(SocketHandlerBase):
         return
 
     def ws_close(self, ws: WebSocketApp, close_status_code: int, close_msg: str) -> None:
-        G.log.print_and_log("openOrders: closed socket", G.print_lock)
+        G.log.print_and_log(f"openOrders: closed socket, status code: {close_status_code}, close message:{close_msg}", G.print_lock)
+        return
+
+    def ws_error(self, ws: WebSocketApp, error_message: str) -> None:
+        G.log.print_and_log("openOrders: " + str(error_message), G.print_lock)
         return
 
     def ws_thread(self, *args) -> None:

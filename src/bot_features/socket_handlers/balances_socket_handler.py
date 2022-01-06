@@ -36,7 +36,7 @@ class BalancesSocketHandler(SocketHandlerBase):
         return
 
     def ws_close(self, ws: WebSocketApp, close_status_code: int, close_msg: str) -> None:
-        G.log.print_and_log("balances: closed socket", G.print_lock)
+        G.log.print_and_log(f"balances: closed socket, status code: {close_status_code}, close message:{close_msg}", G.print_lock)
         return
 
     def ws_error(self, ws: WebSocketApp, error_message: str) -> None:

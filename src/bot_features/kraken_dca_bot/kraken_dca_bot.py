@@ -49,7 +49,7 @@ class KrakenDCABot(KrakenBotBase):
                 continue
 
             symbol_pair = alt_name + StableCoins.USD
-            
+
             G.log.print_and_log(f"Main thread: checking {symbol_pair}", G.print_lock)
 
             if self.tv.is_buy(symbol_pair, g_config.DCA_DATA[symbol]['dca_time_intervals']):
@@ -100,10 +100,8 @@ class KrakenDCABot(KrakenBotBase):
 
             for symbol, symbol_pair in buy_dict.items():
                 if not self.mdb.in_safety_orders(symbol_pair):
-                    base_order_result = base_order.buy(symbol, symbol_pair)
-
-                    if self.is_ok(base_order_result):
-                        base_order_result = base_order.sell(symbol_pair)
+                    if self.is_ok(base_order.buy(symbol, symbol_pair)):
+                        base_order.sell(symbol_pair)
                         safety_orders.buy(symbol, symbol_pair)
             
             self.wait(message=Color.FG_BRIGHT_BLACK + f"Main thread: waiting until {self.get_buy_time()} to buy" + Color.ENDC, timeout=60)

@@ -17,11 +17,9 @@ from util.config                                      import g_config
 class OwnTradesSocketHandler(SocketHandlerBase):
     def __init__(self, api_token) -> None:
         self.api_token = api_token
-
         self.trades    = {}
         self.rest_api  = KrakenRestAPI(g_config.API_KEY, g_config.API_SECRET)
         self.mdb       = MongoDatabase()
-        
         return
 
     def __finish_trade(self, s_symbol_pair: str) -> None:
@@ -47,7 +45,7 @@ class OwnTradesSocketHandler(SocketHandlerBase):
         # taker_fee  = 0.0026
 
         # profit = exit_cost - entry_cost - maker_fee - taker_fee
-        G.log.print_and_log(f"{s_symbol_pair} trade complete!", G.print_lock)        
+        G.log.print_and_log(f"{s_symbol_pair} trade complete!", G.print_lock)
         return
 
     def ws_message(self, ws: WebSocketApp, message: str) -> None:
@@ -109,12 +107,12 @@ class OwnTradesSocketHandler(SocketHandlerBase):
         ws.send(api_data)
         return
 
-    def ws_error(self, ws: WebSocketApp, error_message: str) -> None:
-        G.log.print_and_log(f"ownTrades: Error {str(error_message)}", G.print_lock)
+    def ws_close(self, ws: WebSocketApp, close_status_code: int, close_msg: str) -> None:
+        G.log.print_and_log(f"ownTrades: closed socket, status code: {close_status_code}, close message:{close_msg}", G.print_lock)
         return
 
-    def ws_close(self, ws: WebSocketApp, close_status_code: int, close_msg: str) -> None:
-        G.log.print_and_log("ownTrades: closed socket", G.print_lock)
+    def ws_error(self, ws: WebSocketApp, error_message: str) -> None:
+        G.log.print_and_log(f"ownTrades: Error {str(error_message)}", G.print_lock)
         return
 
     def ws_thread(self, *args) -> None:
