@@ -102,9 +102,10 @@ class KrakenDCABot(KrakenBotBase):
         time.sleep(1)
 
         ##################################
-        # self.mdb.c_safety_orders.drop()
-        # self.mdb.c_open_symbols.drop()
-        # self.mdb.c_own_trades.drop()
+        self.mdb.c_safety_orders.drop()
+        self.mdb.c_open_symbols.drop()
+        self.mdb.c_own_trades.drop()
+        self.cancel_all_orders()
         ##################################
 
         while True:
@@ -114,7 +115,7 @@ class KrakenDCABot(KrakenBotBase):
             G.log.print_and_log(Color.FG_BRIGHT_BLACK + f"Main thread: checked all coins in {get_elapsed_time(start_time)}" + Color.ENDC, G.print_lock)
             G.log.print_and_log(f"Main thread: buy list {PrettyPrinter(indent=1).pformat([symbol_pair for (_, symbol_pair) in buy_dict.items()])}", G.print_lock)
 
-            buy_dict = {"COMP": "COMP/USD"}
+            buy_dict = {"COMP": "COMP/USD"} # for testing only
 
             for symbol, symbol_pair in buy_dict.items():
                 if not self.mdb.in_safety_orders(symbol_pair):

@@ -110,7 +110,7 @@ class OwnTradesSocketHandler(SocketHandlerBase):
         return
 
     def ws_error(self, ws: WebSocketApp, error_message: str) -> None:
-        G.log.print_and_log(f"ownTrades: Error {str(error_message)}")
+        G.log.print_and_log(f"ownTrades: Error {str(error_message)}", G.print_lock)
         return
 
     def ws_close(self, ws: WebSocketApp, close_status_code: int, close_msg: str) -> None:
