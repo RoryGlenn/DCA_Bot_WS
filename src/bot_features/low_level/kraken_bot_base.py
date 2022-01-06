@@ -1,11 +1,9 @@
 """spot.py: Supports base functionality for buying, selling and transfering. Meant to be inherited from for additional classes"""
 
 import requests
-import os
-import json
-import sys
+import time
+import datetime
 
-from datetime                               import datetime
 from pprint                                 import pprint
 
 from util.globals                           import G
@@ -23,10 +21,21 @@ class KrakenBotBase(KrakenRestAPI):
         self.asset_pairs_dict: dict = requests.get(URL_ASSET_PAIRS).json()[Dicts.RESULT]
         self.asset_info:       dict = self.get_asset_info()[Dicts.RESULT]
         return
-       
+
+    def get_elapsed_time(self, start_time: float) -> str:
+        end_time     = time.time()
+        elapsed_time = round(end_time - start_time)
+        minutes      = elapsed_time // 60
+        seconds      = elapsed_time % 60
+        return f"{minutes} minutes {seconds} seconds"
+
+    def get_buy_time(self) -> str:
+        """Returns the next time to buy as specified in the config file."""
+        return ( datetime.timedelta(minutes=Buy_.TIME_MINUTES) + datetime.datetime.now() ).strftime("%H:%M:%S")
+
     def get_current_time(self) -> str:
         """Returns the current time in hours:minutes:seconds format."""
-        return datetime.now().strftime("%H:%M:%S")
+        return datetime.datetime.now().strftime("%H:%M:%S")
 
     def wait(self, message: str = "", timeout: int = Nap.NORMAL) -> bool:
         """
@@ -134,13 +143,3 @@ class KrakenBotBase(KrakenRestAPI):
             if sym == symbol:
                 return float(value)
         return 0
-
-    # def get_keys(self) -> str:
-    #     if os.path.exists(CONFIG_JSON):
-    #         with open(CONFIG_JSON) as file:
-    #             try:
-    #                 config = json.load(file)[ConfigKeys.CONFIG]
-    #                 return config[ConfigKeys.KRAKEN_API_KEY], config[ConfigKeys.KRAKEN_SECRET_KEY]
-    #             except Exception as e:
-    #                 print(e)
-    #     sys.exit(0)    

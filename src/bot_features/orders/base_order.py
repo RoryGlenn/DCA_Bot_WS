@@ -5,45 +5,45 @@ from pprint                                 import pprint
 from bot_features.database.mongo_database   import MongoDatabase
 from bot_features.low_level.kraken_bot_base import KrakenBotBase
 from bot_features.low_level.kraken_enums    import *
-
-from bot_features.dca import DCA
-
-from util.config  import Config
-from util.globals import G
+from bot_features.dca                       import DCA
+from util.config                            import g_config
+from util.globals                           import G
 
 
-x_list:   list = ['XETC', 'XETH', 'XLTC', 'XMLN', 'XREP', 'XXBT', 'XXDG', 'XXLM', 'XXMR', 'XXRP', 'XZEC']
-reg_list: list = ['ETC', 'ETH', 'LTC', 'MLN', 'REP', 'XBT', 'XDG', 'XLM', 'XMR', 'XRP', 'ZEC']
 
 
 class BaseOrder(KrakenBotBase):
     def __init__(self, api_key: str, api_secret: str) -> None:
         super().__init__(api_key, api_secret)
-        self.config: Config        = Config()
-        self.mdb:    MongoDatabase = MongoDatabase()
+        self.mdb: MongoDatabase = MongoDatabase()
         return
 
     def get_entry_price(self, order_result: dict) -> str:
         order_txid = order_result[Dicts.RESULT][Data.TXID][0]
-        for _, trade_info in G.socket_handler_own_trades.trades.items(): 
+
+        # wait for ownTrades to finish setting variables for us to use
+        time.sleep(3)
+
+        for _, trade_info in G.socket_handler_own_trades.trades.items():
             if trade_info[Data.ORDER_TXID] == order_txid:
                 return float(trade_info['price'])
         raise Exception("No base order price was found!")
 
     def all_or_nothing(self, symbol: str, symbol_pair: str, base_order_size: float, safety_order_size: float, market_price: float) -> bool:
-        if self.config.DCA_DATA[symbol][ConfigKeys.DCA_ALL_OR_NOTHING]:
+        if g_config.DCA_DATA[symbol][ConfigKeys.DCA_ALL_OR_NOTHING]:
             self.dca = DCA(symbol, symbol_pair, base_order_size, safety_order_size, market_price)
             self.dca.start()
             return True if self.dca.total_cost_levels[-1] > G.available_usd else False
 
     def buy(self, symbol: str, symbol_pair: str):
         """Place buy order for symbol_pair."""
+        reg_list     = ['ETC', 'ETH', 'LTC', 'MLN', 'REP', 'XBT', 'XDG', 'XLM', 'XMR', 'XRP', 'ZEC']
         pair         = symbol_pair.split("/")
         order_min    = self.get_order_min('X' + pair[0] + StableCoins.ZUSD) if pair[0] in reg_list else self.get_order_min(pair[0] + pair[1])
         market_price = self.get_bid_price(symbol_pair)
 
-        base_order_size   = self.config.DCA_DATA[symbol][ConfigKeys.DCA_BASE_ORDER_SIZE]
-        safety_order_size = self.config.DCA_DATA[symbol][ConfigKeys.DCA_SAFETY_ORDER_SIZE]
+        base_order_size   = g_config.DCA_DATA[symbol][ConfigKeys.DCA_BASE_ORDER_SIZE]
+        safety_order_size = g_config.DCA_DATA[symbol][ConfigKeys.DCA_SAFETY_ORDER_SIZE]
 
         max_price_prec    = self.get_max_price_precision(pair[0]+pair[1])
         max_volume_prec   = self.get_max_volume_precision(pair[0]+pair[1])
@@ -70,8 +70,8 @@ class BaseOrder(KrakenBotBase):
             G.log.print_and_log(f"{symbol_pair} Base order filled {order_result[Dicts.RESULT][Dicts.DESCR][Dicts.ORDER]}", G.print_lock)
             
             entry_price = self.get_entry_price(order_result)
-            self.dca    = DCA(symbol, symbol_pair, base_order_size, safety_order_size, entry_price)
             
+            self.dca    = DCA(symbol, symbol_pair, base_order_size, safety_order_size, entry_price)
             self.dca.start()
             self.dca.store_in_db()
         else:
@@ -99,7 +99,6 @@ class BaseOrder(KrakenBotBase):
             self.mdb.base_order_place_sell(symbol_pair_s, sell_order_txid)
             G.log.print_and_log(f"{symbol_pair_s} Base order placed {sell_order_result[Dicts.RESULT][Dicts.DESCR][Dicts.ORDER]}", G.print_lock)
             return {'status': 'ok'}
-        
         G.log.print_and_log(f"Could not place sell order for {symbol_pair}: {sell_order_result}")
         return{'status': 'could not place sell order'}
 
@@ -115,7 +114,7 @@ class BaseOrder(KrakenBotBase):
 
         order_result = self.limit_order(Trade.SELL, quantity, s_symbol_pair, price)
 
-        if 'result' in order_result.keys():
+        if self.has_result(order_result):
             G.log.print_and_log(f"{s_symbol_pair} sell order placed {order_result[Dicts.RESULT]}", G.print_lock)
         else:
             G.log.print_and_log(f"{s_symbol_pair} could not place sell order {order_result}", G.print_lock)        

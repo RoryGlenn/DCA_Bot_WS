@@ -78,12 +78,21 @@ class OpenOrdersSocketHandler(SocketHandlerBase):
 
     def ws_open(self, ws: WebSocketApp) -> None:
         G.log.print_and_log("openOrders: opened socket", G.print_lock)
-        
-        api_data = ('{"event":"subscribe", "subscription":{"name":"%(feed)s", "token":"%(token)s"}}' 
-            % {"feed":"openOrders", "token": self.api_token})
+        api_data = '{"event":"subscribe", "subscription":{"name":"%(feed)s", "token":"%(token)s"}}' % {"feed":"openOrders", "token": self.api_token}
         ws.send(api_data)
         return
 
     def ws_close(self, ws: WebSocketApp, close_status_code: int, close_msg: str) -> None:
         G.log.print_and_log("openOrders: closed socket", G.print_lock)
+        return
+
+    def ws_thread(self, *args) -> None:
+        while True:
+            ws = WebSocketApp(
+                url=WEBSOCKET_PRIVATE_URL,
+                on_open=self.ws_open,
+                on_close=self.ws_close,
+                on_message=self.ws_message,
+                on_error=self.ws_error)
+            ws.run_forever()
         return

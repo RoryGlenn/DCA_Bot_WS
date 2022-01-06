@@ -7,6 +7,7 @@ from bot_features.database.mongo_database import MongoDatabase
 from bot_features.low_level.kraken_enums  import *
 from util.config                          import Config
 from util.globals import G
+from util.config import g_config
 
 class DCA():
     def __init__(self, symbol: str, symbol_pair: str, base_order_size: float, safety_order_size: float, entry_price: float):
@@ -30,31 +31,18 @@ class DCA():
         self.safety_order_size:                 float         = safety_order_size
         self.safety_orders:                     dict          = { }
         self.mdb:                               MongoDatabase = MongoDatabase()
-        self.config:                            Config        = Config()
+        g_config:                            Config        = Config()
         return
 
     def start(self) -> None:
-        """Essentially the main function for DCA class.
+        """
+        Sets all values for dollar cost averaging based on the entry price, 
+        base order size, safety order size and values from the config file which is set by the user.
 
-        1. If the .xlsx file associated with the symbol passed in exists, the bot has previously
-        put in at least DCA_.SAFETY_ORDERS_ACTIVE_MAX orders into the exchange. 
-        The bot will continue to read from the .xlsx file until it runs out of safety orders.
-        
-        2. Once the bot runs out of safety orders, there is nothing left to do but to wait until the
-        right time to sell the coin.
-
-        3. If the sheet doesn't exist, the bot has not traded the coin and we should create a new one if the bot trades it.
-        
         """
 
-        """
-        Need a way to sell the amount of coin from all the previous orders.
-        This may include the quantity that we have no bought yet but is in an open order.
-        """
-
-        # entry_price = 0.01555, target_price = 0.0163275
-
-        if not self.__has_safety_order_table():
+        # if not self.__has_safety_order_table():
+        if not self.mdb.in_safety_orders(self.symbol_pair):
             self.__set_base_target_price()
             self.__set_deviation_percentage_levels()
             self.__set_price_levels()
@@ -68,14 +56,10 @@ class DCA():
             self.__set_total_cost_levels()
         return
 
-    def __has_safety_order_table(self) -> bool:
-        """Returns True if safety orders exists."""
-        if self.mdb.c_open_symbols.count_documents({"symbol_pair": self.symbol_pair}) == 0:
-            return False
-        return True
 
     def __set_base_target_price(self) -> None:
-        self.base_target_price = self.entry_price + ( self.entry_price * (self.config.DCA_DATA[self.symbol][ConfigKeys.DCA_TARGET_PROFIT_PERCENT]/100) )
+        # self.base_target_price = self.entry_price + ( self.entry_price * (g_config.DCA_DATA[self.symbol][ConfigKeys.DCA_TARGET_PROFIT_PERCENT]/100) )
+        self.base_target_price = self.entry_price + ( self.entry_price * (g_config.DCA_DATA[self.symbol][ConfigKeys.DCA_TARGET_PROFIT_PERCENT]/100) )
         return
 
     def __set_deviation_percentage_levels(self) -> None:
@@ -98,8 +82,8 @@ class DCA():
         For more info: https://help.3commas.io/en/articles/3108940-main-settings
         """
 
-        price_dev  = self.config.DCA_DATA[self.symbol][ConfigKeys.DCA_SAFETY_ORDER_PRICE_DEVIATION]
-        step_scale = self.config.DCA_DATA[self.symbol][ConfigKeys.DCA_SAFETY_ORDER_STEP_SCALE]
+        price_dev  = g_config.DCA_DATA[self.symbol][ConfigKeys.DCA_SAFETY_ORDER_PRICE_DEVIATION]
+        step_scale = g_config.DCA_DATA[self.symbol][ConfigKeys.DCA_SAFETY_ORDER_STEP_SCALE]
         
         # for first safety order
         self.deviation_percentage_levels.append(round(price_dev, DECIMAL_MAX))
@@ -110,7 +94,7 @@ class DCA():
         self.deviation_percentage_levels.append(round(safety_order, DECIMAL_MAX))
         
         # for 3rd to DCA_.SAFETY_ORDERS_MAX
-        for _ in range(2, self.config.DCA_DATA[self.symbol][ConfigKeys.DCA_SAFETY_ORDERS_MAX]):
+        for _ in range(2, g_config.DCA_DATA[self.symbol][ConfigKeys.DCA_SAFETY_ORDERS_MAX]):
             step_percent = step_percent * step_scale
             safety_order = safety_order + step_percent
             safety_order = round(safety_order, DECIMAL_MAX)
@@ -124,7 +108,7 @@ class DCA():
         Order n: ..."""
 
         # safety orders
-        for i in range(self.config.DCA_DATA[self.symbol][ConfigKeys.DCA_SAFETY_ORDERS_MAX]):
+        for i in range(g_config.DCA_DATA[self.symbol][ConfigKeys.DCA_SAFETY_ORDERS_MAX]):
             level = self.deviation_percentage_levels[i] / 100
             price = self.entry_price - (self.entry_price * level)
             self.price_levels.append(round(price, DECIMAL_MAX))
@@ -139,16 +123,16 @@ class DCA():
         self.quantities.append(self.safety_order_size)
 
         # remaining safety orders
-        for _ in range(1, self.config.DCA_DATA[self.symbol][ConfigKeys.DCA_SAFETY_ORDERS_MAX]):
-            quantity = round(self.config.DCA_DATA[self.symbol][ConfigKeys.DCA_SAFETY_ORDER_VOLUME_SCALE] * prev, DECIMAL_MAX)
+        for _ in range(1, g_config.DCA_DATA[self.symbol][ConfigKeys.DCA_SAFETY_ORDERS_MAX]):
+            quantity = round(g_config.DCA_DATA[self.symbol][ConfigKeys.DCA_SAFETY_ORDER_VOLUME_SCALE] * prev, DECIMAL_MAX)
             self.quantities.append(quantity)
-            prev = self.config.DCA_DATA[self.symbol][ConfigKeys.DCA_SAFETY_ORDER_VOLUME_SCALE] * prev
+            prev = g_config.DCA_DATA[self.symbol][ConfigKeys.DCA_SAFETY_ORDER_VOLUME_SCALE] * prev
         return
     
     def __set_total_quantity_levels(self) -> None:
         """Sets the total quantity bought at each level."""
         prev = self.safety_order_size
-        for i in range(self.config.DCA_DATA[self.symbol][ConfigKeys.DCA_SAFETY_ORDERS_MAX]):
+        for i in range(g_config.DCA_DATA[self.symbol][ConfigKeys.DCA_SAFETY_ORDERS_MAX]):
             sum = prev + self.quantities[i]
             sum = round(sum, DECIMAL_MAX)
             self.total_quantities.append(sum)
@@ -160,7 +144,7 @@ class DCA():
         """Sets the weighted average price level for each safety order number."""
         base_order_qty = self.entry_price * self.safety_order_size
         
-        for i in range(self.config.DCA_DATA[self.symbol][ConfigKeys.DCA_SAFETY_ORDERS_MAX]):
+        for i in range(g_config.DCA_DATA[self.symbol][ConfigKeys.DCA_SAFETY_ORDERS_MAX]):
             numerator = 0
             for j in range(i+1):
                 numerator += self.price_levels[j] * self.quantities[j]
@@ -173,10 +157,10 @@ class DCA():
     
     def __set_required_price_levels(self) -> None:
         """Sets the required price for each safety order number."""
-        target_profit_decimal = (self.config.DCA_DATA[self.symbol][ConfigKeys.DCA_TARGET_PROFIT_PERCENT] / 100)
+        target_profit_decimal = (g_config.DCA_DATA[self.symbol][ConfigKeys.DCA_TARGET_PROFIT_PERCENT] / 100)
 
         # safety orders
-        for i in range(self.config.DCA_DATA[self.symbol][ConfigKeys.DCA_SAFETY_ORDERS_MAX]):
+        for i in range(g_config.DCA_DATA[self.symbol][ConfigKeys.DCA_SAFETY_ORDERS_MAX]):
             required_price = self.average_price_levels[i] + (self.average_price_levels[i] * target_profit_decimal)
             required_price = round(required_price, DECIMAL_MAX)
             self.required_price_levels.append(required_price)
@@ -184,7 +168,7 @@ class DCA():
 
     def __set_required_change_percentage_levels(self) -> None:
         """Sets the required change percent for each safety order number."""
-        for i in range(self.config.DCA_DATA[self.symbol][ConfigKeys.DCA_SAFETY_ORDERS_MAX]):
+        for i in range(g_config.DCA_DATA[self.symbol][ConfigKeys.DCA_SAFETY_ORDERS_MAX]):
             required_change_percentage = ((self.required_price_levels[i] / self.price_levels[i]) - 1) * 100
             required_change_percentage = round(required_change_percentage, DECIMAL_MAX)
             self.required_change_percentage_levels.append(required_change_percentage)
@@ -196,9 +180,9 @@ class DCA():
         
         prev = self.safety_order_size
         
-        for i in range(self.config.DCA_DATA[self.symbol][ConfigKeys.DCA_SAFETY_ORDERS_MAX]):
+        for i in range(g_config.DCA_DATA[self.symbol][ConfigKeys.DCA_SAFETY_ORDERS_MAX]):
             usd_value  = self.price_levels[i] * (self.quantities[i] + prev)
-            usd_profit = (self.config.DCA_DATA[self.symbol][ConfigKeys.DCA_TARGET_PROFIT_PERCENT] / 100) * usd_value
+            usd_profit = (g_config.DCA_DATA[self.symbol][ConfigKeys.DCA_TARGET_PROFIT_PERCENT] / 100) * usd_value
             usd_profit = round(usd_profit, DECIMAL_MAX)
             self.profit_levels.append(usd_profit)
             prev += self.quantities[i]
@@ -207,7 +191,7 @@ class DCA():
     def __set_cost_levels(self) -> None:
         """Sets the cost (USD) spent for each safety order row."""
 
-        for i in range(self.config.DCA_DATA[self.symbol][ConfigKeys.DCA_SAFETY_ORDERS_MAX]):
+        for i in range(g_config.DCA_DATA[self.symbol][ConfigKeys.DCA_SAFETY_ORDERS_MAX]):
             cost = self.price_levels[i] * self.quantities[i]
             cost = round(cost, DECIMAL_MAX)
             self.cost_levels.append(cost)
@@ -219,7 +203,7 @@ class DCA():
 
         total_cost = self.entry_price * self.safety_order_size
         
-        for i in range(self.config.DCA_DATA[self.symbol][ConfigKeys.DCA_SAFETY_ORDERS_MAX]):
+        for i in range(g_config.DCA_DATA[self.symbol][ConfigKeys.DCA_SAFETY_ORDERS_MAX]):
             total_cost += self.price_levels[i] * self.quantities[i]
             total_cost = round(total_cost, DECIMAL_MAX)
             self.total_cost_levels.append(total_cost)
@@ -229,7 +213,7 @@ class DCA():
         safety_order_list = list()
         data              = {'symbol': self.symbol, 'symbol_pair': self.symbol_pair, 'base_order': {}, 'safety_orders': {}}
         value             = self.entry_price * self.base_order_size
-        profit            = value * (self.config.DCA_DATA[self.symbol][ConfigKeys.DCA_TARGET_PROFIT_PERCENT] / 100)
+        profit            = value * (g_config.DCA_DATA[self.symbol][ConfigKeys.DCA_TARGET_PROFIT_PERCENT] / 100)
         profit            = round(profit, 8)
 
         # base order
@@ -239,8 +223,8 @@ class DCA():
             'total_quantity':             self.base_order_size,
             'price':                      self.entry_price,
             'average_price':              self.entry_price,
-            'required_price':             self.entry_price + (self.entry_price * (self.config.DCA_DATA[self.symbol][ConfigKeys.DCA_TARGET_PROFIT_PERCENT] / 100)),
-            'required_change_percentage': self.config.DCA_DATA[self.symbol][ConfigKeys.DCA_TARGET_PROFIT_PERCENT],
+            'required_price':             self.entry_price + (self.entry_price * (g_config.DCA_DATA[self.symbol][ConfigKeys.DCA_TARGET_PROFIT_PERCENT] / 100)),
+            'required_change_percentage': g_config.DCA_DATA[self.symbol][ConfigKeys.DCA_TARGET_PROFIT_PERCENT],
             'profit':                     profit,
             'cost':                       self.entry_price * self.base_order_size,
             'total_cost':                 self.entry_price * self.base_order_size,
@@ -251,7 +235,7 @@ class DCA():
         }
 
         # safety orders
-        for i in range(self.config.DCA_DATA[self.symbol][ConfigKeys.DCA_SAFETY_ORDERS_MAX]):
+        for i in range(g_config.DCA_DATA[self.symbol][ConfigKeys.DCA_SAFETY_ORDERS_MAX]):
             safety_order_list.append(
             {str(i+1):
                 {
@@ -281,7 +265,7 @@ class DCA():
         return
 
     def print_table(self):
-        safety_order_numbers = [i for i in range(1, self.config.DCA_DATA[self.symbol][ConfigKeys.DCA_SAFETY_ORDERS_MAX]+1)]
+        safety_order_numbers = [i for i in range(1, g_config.DCA_DATA[self.symbol][ConfigKeys.DCA_SAFETY_ORDERS_MAX]+1)]
 
         df = pd.DataFrame(
             {

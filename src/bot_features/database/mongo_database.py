@@ -4,14 +4,10 @@ from pprint                              import pprint
 from bot_features.low_level.kraken_enums import *
 
 
+
 class MongoDatabase():
     def __init__(self) -> None:
         self.mdb:             MongoClient = MongoClient()[DB.DATABASE_NAME]
-        self.c_open_symbols:  Collection = self.mdb[DB.COLLECTION_OS]
-        self.c_add_order:     Collection = self.mdb[DB.COLLECTION_AO]
-        self.c_balances:      Collection = self.mdb[DB.COLLECTION_B]
-        self.c_own_trades:    Collection = self.mdb[DB.COLLECTION_OT]
-        self.c_open_orders:   Collection = self.mdb[DB.COLLECTION_OO]
         self.c_safety_orders: Collection = self.mdb[DB.COLLECTION_SO]
         return
 
@@ -46,6 +42,7 @@ class MongoDatabase():
                     base_order = value['base_order']
                     return base_order['sell_order_txid']
         raise Exception("Can't find base order txid!")
+        # raise BaseOrderPrice()
 
 
 ####################
@@ -54,9 +51,6 @@ class MongoDatabase():
 
     def get_safety_order_table(self) -> dict():
         return self.c_safety_orders.find()
-
-    def has_safety_order_table(self, symbol_pair: str):
-        return False if self.c_open_symbols.count_documents({"symbol_pair": symbol_pair}) == 0 else True
 
     def in_safety_orders(self, symbol_pair: str) -> bool:
         return bool(self.c_safety_orders.count_documents({"_id": symbol_pair}) != 0)
@@ -73,7 +67,6 @@ class MongoDatabase():
 
     def get_number_of_open_safety_orders(self, symbol_pair: str) -> int:
         count = 0
-
         for document in self.c_safety_orders.find({'_id': symbol_pair}):
             for value in document.values():
                 if isinstance(value, dict):

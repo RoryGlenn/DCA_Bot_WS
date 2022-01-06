@@ -18,7 +18,7 @@ class OwnTradesSocketHandler(SocketHandlerBase):
     def __init__(self, api_token) -> None:
         self.api_token: str = api_token
 
-        self.trades   = dict()
+        self.trades: dict   = {}
         self.rest_api = KrakenRestAPI(g_config.API_KEY, g_config.API_SECRET)
         self.mdb      = MongoDatabase()
         self.mdb      = MongoDatabase()
@@ -115,4 +115,15 @@ class OwnTradesSocketHandler(SocketHandlerBase):
 
     def ws_close(self, ws: WebSocketApp, close_status_code: int, close_msg: str) -> None:
         G.log.print_and_log("ownTrades: closed socket", G.print_lock)
+        return
+
+    def ws_thread(self, *args) -> None:
+        while True:
+            ws = WebSocketApp(
+                url=WEBSOCKET_PRIVATE_URL,
+                on_open=self.ws_open,
+                on_close=self.ws_close,
+                on_message=self.ws_message,
+                on_error=self.ws_error)
+            ws.run_forever()
         return
