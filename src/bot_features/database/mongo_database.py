@@ -20,7 +20,6 @@ class MongoDatabase():
             pprint(document)
         return
 
-
 ####################
 # BASE ORDER
 ####################
@@ -52,7 +51,6 @@ class MongoDatabase():
 ####################
 # SAFETY ORDERS
 ####################
-
 
     def get_safety_order_table(self) -> dict():
         return self.c_safety_orders.find()
@@ -198,8 +196,10 @@ class MongoDatabase():
     
 
 ##########################################################
+### Extra ###
+##########################################################
 
-    def get_value(self, s_symbol_pair: str, order_txid: str) -> float:
+    def get_usd_value(self, s_symbol_pair: str, order_txid: str) -> float:
         for document in self.c_safety_orders.find({'_id': s_symbol_pair}):
             for value in document.values():
                 if isinstance(value, dict):
@@ -210,3 +210,20 @@ class MongoDatabase():
                                 quantity = so_data['quantity']
                                 return round(price * quantity, DECIMAL_MAX)
         return 0.0
+
+    def get_price_and_quantity(self, s_symbol_pair: str, order_txid: str) -> float:
+        for document in self.c_safety_orders.find({'_id': s_symbol_pair}):
+            for value in document.values():
+                if isinstance(value, dict):
+                    for safety_order in value['safety_orders']:
+                        for so_data in safety_order.values():
+                            if so_data['sell_order_txid'] == order_txid:
+                                price    = float(so_data['price'])
+                                quantity = float(so_data['quantity'])
+                                return price, quantity
+        return
+
+
+# medical 
+# reject code 65
+# 800 977 2273

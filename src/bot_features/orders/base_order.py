@@ -25,8 +25,6 @@ class BaseOrder(KrakenBotBase):
 
     def get_entry_price(self, order_result: dict) -> str:
         order_txid = order_result[Dicts.RESULT][Data.TXID][0]
-        # pprint(order_result)
-        # pprint(G.socket_handler_own_trades.trades)
         for _, trade_info in G.socket_handler_own_trades.trades.items(): 
             if trade_info[Data.ORDER_TXID] == order_txid:
                 return float(trade_info['price'])
@@ -105,6 +103,20 @@ class BaseOrder(KrakenBotBase):
         G.log.print_and_log(f"Could not place sell order for {symbol_pair}: {sell_order_result}")
         return{'status': 'could not place sell order'}
 
-    def cancel_sell(self):
+    def cancel_sell(self, s_symbol_pair: str, so_num: int) -> None:
         """If a safety order has filled while the base sell order has not filled, cancel the base sell order"""
+        base_order_txid = self.mdb.get_base_order_sell_txid(s_symbol_pair)
+        cancel_result   = self.cancel_order(base_order_txid)
+        
+        # get the limit price and the quantity to sell
+        so_data  = self.mdb.get_safety_order_data_by_num(s_symbol_pair, so_num)
+        price    = float(so_data['price'])
+        quantity = float(so_data['quantity'])
+
+        order_result = self.limit_order(Trade.SELL, quantity, s_symbol_pair, price)
+
+        if 'result' in order_result.keys():
+            G.log.print_and_log(f"{s_symbol_pair} sell order placed {order_result[Dicts.RESULT]}", G.print_lock)
+        else:
+            G.log.print_and_log(f"{s_symbol_pair} could not place sell order {order_result}", G.print_lock)        
         return

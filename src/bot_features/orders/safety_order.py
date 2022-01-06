@@ -59,8 +59,22 @@ class SafetyOrder(KrakenBotBase):
                 G.log.print_and_log(f"{s_symbol_pair} Could not place safety order {safety_order_num} {order_result}", G.print_lock)
         return
 
-    def sell(self):
+    def sell(self, s_symbol_pair: str, so_num: int) -> None:
+        txid_to_place   = self.mdb.get_safety_order_sell_txid(s_symbol_pair, so_num)
+        price, quantity = self.mdb.get_price_and_quantity(s_symbol_pair, txid_to_place)
+        
+        # place the new sell safety order
+        order_result = self.limit_order(Trade.SELL, quantity, s_symbol_pair, price)
+
+        if self.has_result(order_result):
+            G.log.print_and_log(f"{s_symbol_pair} safety order sell {so_num} placed {order_result[Dicts.RESULT][Dicts.DESCR][Dicts.ORDER]}", G.print_lock)
+        else:
+            G.log.print_and_log(f"{s_symbol_pair} sell order did not go through! {order_result}", G.print_lock)        
         return
 
-    def cancel(self):
+    def cancel_sell(self, s_symbol_pair: str, so_num: int) -> None:
+        # cancel the sell limit safety order whose so_num is: filled_so_nums[-1] - 1
+        txid_to_cancel = self.mdb.get_safety_order_sell_txid(s_symbol_pair, so_num)
+        self.cancel_order(txid_to_cancel)
+        # self.mdb.cancel_sell_order(s_symbol_pair)        
         return
