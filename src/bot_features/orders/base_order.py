@@ -37,10 +37,13 @@ class BaseOrder(KrakenBotBase):
 
     def buy(self, symbol: str, symbol_pair: str):
         """Place buy order for symbol_pair."""
-        reg_list     = ['ETC', 'ETH', 'LTC', 'MLN', 'REP', 'XBT', 'XDG', 'XLM', 'XMR', 'XRP', 'ZEC']
         pair         = symbol_pair.split("/")
-        order_min    = self.get_order_min('X' + pair[0] + StableCoins.ZUSD) if pair[0] in reg_list else self.get_order_min(pair[0] + pair[1])
+        order_min    = self.get_order_min('X' + pair[0] + StableCoins.ZUSD) if pair[0] in G.reg_list else self.get_order_min(pair[0] + pair[1])
+        
         market_price = self.get_bid_price(symbol_pair)
+        if market_price == 0:
+            # if market_price is 0, we gave it a bad symbol_pair, so try again without the slash.
+            market_price = self.get_bid_price(pair[0]+pair[1])
 
         base_order_size   = g_config.DCA_DATA[symbol][ConfigKeys.DCA_BASE_ORDER_SIZE]
         safety_order_size = g_config.DCA_DATA[symbol][ConfigKeys.DCA_SAFETY_ORDER_SIZE]

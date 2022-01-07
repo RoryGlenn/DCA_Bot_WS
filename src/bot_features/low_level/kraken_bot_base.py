@@ -13,6 +13,7 @@ import datetime
 from pprint                                 import pprint
 
 from util.globals                           import G
+from util.config                            import g_config
 from bot_features.low_level.kraken_rest_api import KrakenRestAPI
 from bot_features.low_level.kraken_enums    import *
 
@@ -26,6 +27,11 @@ class KrakenBotBase(KrakenRestAPI):
         super().__init__(api_key, api_secret)
         self.asset_pairs_dict: dict = requests.get(URL_ASSET_PAIRS).json()[Dicts.RESULT]
         self.asset_info:       dict = self.get_asset_info()[Dicts.RESULT]
+        # self.ticker_info:      dict = { }
+
+        # for symbol in g_config.DCA_DATA:
+        #     self.ticker_info[]
+
         return
 
     def get_elapsed_time(self, start_time: float) -> str:
@@ -98,13 +104,17 @@ class KrakenBotBase(KrakenRestAPI):
         Gets the current ask price for a symbol pair on kraken. 
         
         """
-        current_price = self.get_ticker_information(pair=symbol_pair)
+        current_price = self.get_ticker_information(symbol_pair) # STORE THIS INFO IN A DICT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         current_price = self.parse_ticker_information(current_price)
         return self.parse_ask_price(current_price)
 
     def get_bid_price(self, symbol_pair: str) -> float:
         """Gets the current bid price for a symbol pair"""
-        current_price = self.get_ticker_information(pair=symbol_pair)
+        # current_price = None
+        # if symbol_pair in self.ticker_info.keys():
+        #     current_price = self.ticker_info[symbol_pair]
+
+        current_price = self.get_ticker_information(symbol_pair) # STORE THIS INFO IN A DICT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         current_price = self.parse_ticker_information(current_price)
         return self.parse_bid_price(current_price)
 

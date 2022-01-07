@@ -71,10 +71,12 @@ class OwnTradesSocketHandler(SocketHandlerBase):
                                     else: 
                                         # A safety order was filled!
                                         
+                                        G.log.print_and_log(f"A safety order was filled: {s_symbol_pair} {order_txid}")
+                                        
                                         placed_safety_orders = self.mdb.get_placed_safety_order_data(s_symbol_pair)
                                         
                                         for safety_order in placed_safety_orders:
-                                            if safety_order['order_txid'] == order_txid:
+                                            if safety_order['buy_order_txid'] == order_txid:
                                                 self.mdb.update_filled_safety_order(s_symbol_pair, order_txid)
                                                 filled_so_nums = self.mdb.get_filled_safety_order_numbers(s_symbol_pair)
 

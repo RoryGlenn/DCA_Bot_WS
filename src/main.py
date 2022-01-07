@@ -4,10 +4,10 @@
 
 import os
 
-from bot_features.kraken_dca_bot.kraken_dca_bot           import KrakenDCABot
-from bot_features.low_level.kraken_enums   import *
+from bot_features.kraken_dca_bot.kraken_dca_bot import KrakenDCABot
+from bot_features.low_level.kraken_enums        import *
 
-from util.globals                          import G
+from util.globals                               import G
 
 
 if __name__ == "__main__":

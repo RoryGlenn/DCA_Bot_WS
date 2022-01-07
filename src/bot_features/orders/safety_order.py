@@ -2,12 +2,12 @@ import time
 
 from pprint import pprint
 
-from bot_features.database.mongo_database import MongoDatabase
+from bot_features.database.mongo_database   import MongoDatabase
 
 from bot_features.low_level.kraken_bot_base import KrakenBotBase
-from bot_features.low_level.kraken_enums import *
+from bot_features.low_level.kraken_enums    import *
 
-from util.config  import Config
+from util.config  import g_config
 from util.globals import G
 
 
@@ -18,12 +18,11 @@ reg_list: list = ['ETC', 'ETH', 'LTC', 'MLN', 'REP', 'XBT', 'XDG', 'XLM', 'XMR',
 class SafetyOrder(KrakenBotBase):
     def __init__(self, api_key, api_secret) -> None:
         super().__init__(api_key, api_secret)
-        self.config: Config        = Config()
         self.mdb:    MongoDatabase = MongoDatabase()
         return
 
     def buy(self, symbol: str, s_symbol_pair: str):
-        max_active_safety_orders     = self.config.DCA_DATA[symbol][ConfigKeys.DCA_SAFETY_ORDERS_ACTIVE_MAX]
+        max_active_safety_orders     = g_config.DCA_DATA[symbol][ConfigKeys.DCA_SAFETY_ORDERS_ACTIVE_MAX]
         number_of_open_safety_orders = self.mdb.get_number_of_open_safety_orders(s_symbol_pair)
         iterations                   = max_active_safety_orders - number_of_open_safety_orders
     

@@ -23,6 +23,10 @@ from util.globals                                            import G
 from util.config                                             import g_config
 
 
+x_list   = ['XETC', 'XETH', 'XLTC', 'XMLN', 'XREP', 'XXBT', 'XXDG', 'XXLM', 'XXMR', 'XXRP', 'XZEC']
+reg_list = ['ETC', 'ETH', 'LTC', 'MLN', 'REP', 'XBT', 'XDG', 'XLM', 'XMR', 'XRP', 'ZEC']
+
+
 class KrakenDCABot(KrakenBotBase):
     def __init__(self) -> None:
         super().__init__(g_config.API_KEY, g_config.API_SECRET)
@@ -39,7 +43,6 @@ class KrakenDCABot(KrakenBotBase):
     
     def get_buy_dict(self) -> dict:
         """Returns dictionary with [symbol: symbol_pair] relationship"""
-        x_list   = ['XETC', 'XETH', 'XLTC', 'XMLN', 'XREP', 'XXBT', 'XXDG', 'XXLM', 'XXMR', 'XXRP', 'XZEC']
         buy_dict = { }
 
         for symbol in g_config.DCA_DATA:
@@ -52,9 +55,9 @@ class KrakenDCABot(KrakenBotBase):
 
             G.log.print_and_log(f"Main thread: checking {symbol_pair}", G.print_lock)
 
-            if self.tv.is_buy(symbol_pair, g_config.DCA_DATA[symbol]['dca_time_intervals']):
-                if symbol in x_list:
-                    buy_dict[symbol] = symbol + "/" + StableCoins.ZUSD
+            if self.tv.is_buy(symbol_pair, g_config.DCA_DATA[symbol][ConfigKeys.DCA_TIME_INTERVALS]):
+                if symbol in G.x_dict.keys():
+                    buy_dict[symbol] = 'X' + symbol + "/" + StableCoins.ZUSD
                 else:
                     buy_dict[symbol] = symbol + "/" + StableCoins.USD
         return buy_dict
@@ -87,7 +90,7 @@ class KrakenDCABot(KrakenBotBase):
         # wait for socket handlers to finish initializing
         time.sleep(1)
 
-        # self.nuke()
+        self.nuke()
 
         while True:
             start_time     = time.time()
@@ -98,8 +101,10 @@ class KrakenDCABot(KrakenBotBase):
             G.log.print_and_log(f"Main thread: buy list {PrettyPrinter(indent=1).pformat([symbol_pair for (_, symbol_pair) in buy_dict.items()])}", G.print_lock)
             G.log.print_and_log(f"Main thread: Current trades {current_trades}", G.print_lock)
 
+            buy_dict = {"REP":"XREP/ZUSD"}
+
             for symbol, symbol_pair in buy_dict.items():
-                if not self.mdb.in_safety_orders(symbol_pair):
+                if not self.mdb.in_safety_orders(symbol_pair): # we don't use XREP in db, only REP
                     if self.is_ok(base_order.buy(symbol, symbol_pair)):
                         base_order.sell(symbol_pair)
                         safety_orders.buy(symbol, symbol_pair)

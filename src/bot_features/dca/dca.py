@@ -4,10 +4,11 @@ This bot uses DCA in order lower the average buy price for a purchased coin."""
 import pandas as pd
 
 from bot_features.database.mongo_database import MongoDatabase
+
 from bot_features.low_level.kraken_enums  import *
-from util.config                          import Config
-from util.globals import G
-from util.config import g_config
+
+from util.globals                         import G
+from util.config                          import g_config
 
 class DCA():
     def __init__(self, symbol: str, symbol_pair: str, base_order_size: float, safety_order_size: float, entry_price: float):
@@ -31,7 +32,6 @@ class DCA():
         self.safety_order_size:                 float         = safety_order_size
         self.safety_orders:                     dict          = { }
         self.mdb:                               MongoDatabase = MongoDatabase()
-        g_config:                            Config        = Config()
         return
 
     def start(self) -> None:
