@@ -28,10 +28,9 @@ class MongoDatabase():
                     if base_order['has_placed_sell_order'] == False:
                         base_order['has_placed_sell_order'] = True
                         base_order['sell_order_txid'] = sell_order_txid
-                        new_values = {"$set": {symbol_pair: value}}
-                        query = {'_id': symbol_pair}
-                        self.c_safety_orders.find_one_and_update(
-                            query, new_values)
+                        new_values                    = {"$set": {symbol_pair: value}}
+                        query                         = {'_id': symbol_pair}
+                        self.c_safety_orders.find_one_and_update(query, new_values)
         return
 
     def get_base_order_sell_txid(self, s_symbol_pair: str) -> str:
@@ -128,10 +127,10 @@ class MongoDatabase():
                 if isinstance(value, dict):
                     for safety_order in value['safety_orders']:
                         for so_data in safety_order.values():
-                            if so_data['order_txid'] == order_txid:
+                            if so_data['buy_order_txid'] == order_txid:
                                 so_data['has_filled'] = True
                                 new_values = {"$set": {s_symbol_pair: value}}
-                                query = {'_id': s_symbol_pair}
+                                query      = {'_id': s_symbol_pair}
                                 self.c_safety_orders.find_one_and_update(query, new_values)
         return
 
@@ -145,11 +144,9 @@ class MongoDatabase():
                             if so_num == safety_order_num:
                                 if so_data['buy_order_txid'] == buy_order_txid:
                                     so_data['has_placed_order'] = True
-                                    new_values = {
-                                        "$set": {s_symbol_pair: value}}
-                                    query = {'_id': s_symbol_pair}
-                                    self.c_safety_orders.find_one_and_update(
-                                        query, new_values)
+                                    new_values = {"$set": {s_symbol_pair: value}}
+                                    query      = {'_id': s_symbol_pair}
+                                    self.c_safety_orders.find_one_and_update(query, new_values)
         return
 
     def store_safety_order_buy_txid(self, s_symbol_pair: str, safety_order_num: int, buy_order_txid: str) -> None:
@@ -174,7 +171,6 @@ class MongoDatabase():
                             if so_num == safety_order_num:
                                 return so_data['sell_order_txid']
         return
-
 
     def get_safety_order_data_by_num(self, s_symbol_pair: str, safety_order_num: int) -> dict:
         for document in self.c_safety_orders.find({'_id': s_symbol_pair}):
