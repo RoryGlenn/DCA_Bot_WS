@@ -71,7 +71,7 @@ class OwnTradesSocketHandler(SocketHandlerBase):
                                     else: 
                                         # A safety order was filled!
                                         
-                                        G.log.print_and_log(f"A safety order was filled: {s_symbol_pair} {order_txid}")
+                                        G.log.print_and_log(f"A safety order was filled: {s_symbol_pair} {order_txid}", G.print_lock)
                                         
                                         placed_safety_orders = self.mdb.get_placed_safety_order_data(s_symbol_pair)
                                         

@@ -104,8 +104,8 @@ class KrakenBotBase(KrakenRestAPI):
         Gets the current ask price for a symbol pair on kraken. 
         
         """
-        current_price = self.get_ticker_information(symbol_pair) # STORE THIS INFO IN A DICT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        current_price = self.parse_ticker_information(current_price)
+        symbol_pair_info = self.get_ticker_information(symbol_pair) # STORE THIS INFO IN A DICT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        current_price = self.parse_ticker_information(symbol_pair_info)
         return self.parse_ask_price(current_price)
 
     def get_bid_price(self, symbol_pair: str) -> float:
@@ -114,8 +114,8 @@ class KrakenBotBase(KrakenRestAPI):
         # if symbol_pair in self.ticker_info.keys():
         #     current_price = self.ticker_info[symbol_pair]
 
-        current_price = self.get_ticker_information(symbol_pair) # STORE THIS INFO IN A DICT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        current_price = self.parse_ticker_information(current_price)
+        symbol_pair_info = self.get_ticker_information(symbol_pair) # STORE THIS INFO IN A DICT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        current_price = self.parse_ticker_information(symbol_pair_info)
         return self.parse_bid_price(current_price)
 
     def get_alt_name(self, symbol: str) -> str | None:

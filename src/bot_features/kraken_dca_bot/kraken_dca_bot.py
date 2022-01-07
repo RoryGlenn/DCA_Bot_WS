@@ -23,8 +23,8 @@ from util.globals                                            import G
 from util.config                                             import g_config
 
 
-x_list   = ['XETC', 'XETH', 'XLTC', 'XMLN', 'XREP', 'XXBT', 'XXDG', 'XXLM', 'XXMR', 'XXRP', 'XZEC']
-reg_list = ['ETC', 'ETH', 'LTC', 'MLN', 'REP', 'XBT', 'XDG', 'XLM', 'XMR', 'XRP', 'ZEC']
+# x_list   = ['XETC', 'XETH', 'XLTC', 'XMLN', 'XREP', 'XXBT', 'XXDG', 'XXLM', 'XXMR', 'XXRP', 'XZEC']
+# reg_list = ['ETC', 'ETH', 'LTC', 'MLN', 'REP', 'XBT', 'XDG', 'XLM', 'XMR', 'XRP', 'ZEC']
 
 
 class KrakenDCABot(KrakenBotBase):
@@ -43,7 +43,7 @@ class KrakenDCABot(KrakenBotBase):
     
     def get_buy_dict(self) -> dict:
         """Returns dictionary with [symbol: symbol_pair] relationship"""
-        buy_dict = { }
+        buy_dict = {}
 
         for symbol in g_config.DCA_DATA:
             alt_name = self.get_alt_name(symbol)
@@ -90,7 +90,7 @@ class KrakenDCABot(KrakenBotBase):
         # wait for socket handlers to finish initializing
         time.sleep(1)
 
-        self.nuke()
+        # self.nuke()
 
         while True:
             start_time     = time.time()
@@ -98,13 +98,11 @@ class KrakenDCABot(KrakenBotBase):
             current_trades = self.mdb.get_current_trades()
 
             G.log.print_and_log(Color.FG_BRIGHT_BLACK + f"Main thread: checked all coins in {self.get_elapsed_time(start_time)}" + Color.ENDC, G.print_lock)
-            G.log.print_and_log(f"Main thread: buy list {PrettyPrinter(indent=1).pformat([symbol_pair for (_, symbol_pair) in buy_dict.items()])}", G.print_lock)
             G.log.print_and_log(f"Main thread: Current trades {current_trades}", G.print_lock)
-
-            buy_dict = {"REP":"XREP/ZUSD"}
+            G.log.print_and_log(f"Main thread: Buy list {PrettyPrinter(indent=1).pformat([symbol_pair for (_, symbol_pair) in buy_dict.items()])}", G.print_lock)            
 
             for symbol, symbol_pair in buy_dict.items():
-                if not self.mdb.in_safety_orders(symbol_pair): # we don't use XREP in db, only REP
+                if not self.mdb.in_safety_orders(symbol_pair):
                     if self.is_ok(base_order.buy(symbol, symbol_pair)):
                         base_order.sell(symbol_pair)
                         safety_orders.buy(symbol, symbol_pair)
