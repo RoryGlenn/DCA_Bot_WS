@@ -88,9 +88,14 @@ class KrakenDCABot(KrakenBotBase):
         self.start_socket_handler_threads()
 
         # wait for socket handlers to finish initializing
-        time.sleep(1)
+        time.sleep(2)
 
-        # self.nuke()
+        self.nuke()
+
+        # data = self.mdb.get_safety_order_data_by_num("LINK/USD", '1')
+        # pprint(data)
+        # print()
+
 
         while True:
             start_time     = time.time()

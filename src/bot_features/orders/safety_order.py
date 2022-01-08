@@ -62,6 +62,9 @@ class SafetyOrder(KrakenBotBase):
         txid_to_place   = self.mdb.get_safety_order_sell_txid(s_symbol_pair, so_num)
         price, quantity = self.mdb.get_price_and_quantity(s_symbol_pair, txid_to_place)
         
+        G.log.print_and_log(f"{s_symbol_pair} new sell limit order to place", G.print_lock)
+        G.log.print_and_log(f"{s_symbol_pair}, price: {price}, quantity: {quantity}, txid: {txid_to_place}", G.print_lock)
+        
         # place the new sell safety order
         order_result = self.limit_order(Trade.SELL, quantity, s_symbol_pair, price)
 
@@ -74,6 +77,12 @@ class SafetyOrder(KrakenBotBase):
     def cancel_sell(self, s_symbol_pair: str, so_num: int) -> None:
         # cancel the sell limit safety order whose so_num is: filled_so_nums[-1] - 1
         txid_to_cancel = self.mdb.get_safety_order_sell_txid(s_symbol_pair, so_num)
-        self.cancel_order(txid_to_cancel)
+        
+        G.log.print_and_log(f"{s_symbol_pair} txid to cancel: {txid_to_cancel}", G.print_lock)
+        
+        order_result = self.cancel_order(txid_to_cancel)
+
+        G.log.print_and_log(f"{s_symbol_pair} cancel order result: {order_result}", G.print_lock)
+        
         self.mdb.cancel_sell_order(s_symbol_pair, txid_to_cancel)
         return

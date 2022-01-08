@@ -236,25 +236,27 @@ class DCA():
 
         # safety orders
         for i in range(g_config.DCA_DATA[self.symbol][ConfigKeys.DCA_SAFETY_ORDERS_MAX]):
+            safety_order_number = str(i + 1)
+            
             safety_order_list.append(
-            {str(i+1):
-                {
-                    'deviation_percentage':       self.deviation_percentage_levels[i],
-                    'quantity':                   self.quantities[i],
-                    'total_quantity':             self.total_quantities[i],
-                    'price':                      self.price_levels[i],
-                    'average_price':              self.average_price_levels[i],
-                    'required_price':             self.required_price_levels[i],
-                    'required_change_percentage': self.required_change_percentage_levels[i],
-                    'profit':                     self.profit_levels[i],
-                    'cost':                       self.cost_levels[i],
-                    'total_cost':                 self.total_cost_levels[i],
-                    'has_placed_order':           False,
-                    'has_filled':                 False,
-                    'has_cancelled_sell_order':   False,
-                    'buy_order_txid':             '',
-                    'sell_order_txid':            ''
-                }
+                { safety_order_number:
+                    {
+                        'deviation_percentage':       self.deviation_percentage_levels[i],
+                        'quantity':                   self.quantities[i],
+                        'total_quantity':             self.total_quantities[i],
+                        'price':                      self.price_levels[i],
+                        'average_price':              self.average_price_levels[i],
+                        'required_price':             self.required_price_levels[i],
+                        'required_change_percentage': self.required_change_percentage_levels[i],
+                        'profit':                     self.profit_levels[i],
+                        'cost':                       self.cost_levels[i],
+                        'total_cost':                 self.total_cost_levels[i],
+                        'has_placed_order':           False,
+                        'has_filled':                 False,
+                        'has_cancelled_sell_order':   False,
+                        'buy_order_txid':             '',
+                        'sell_order_txid':            ''
+                    }
             })
         
         data['base_order']    = base_order
