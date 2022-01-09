@@ -85,11 +85,11 @@ class BaseOrder(KrakenBotBase):
     def sell(self, symbol_pair_s: str):
         """place a limit order for the base order."""
 
-        symbol_pair = symbol_pair_s.split("/")
-        symbol_pair = symbol_pair[0] + symbol_pair[1]
+        symbol_pair       = symbol_pair_s.split("/")
+        symbol_pair       = symbol_pair[0] + symbol_pair[1]
 
-        max_price_prec  = self.get_max_price_precision(symbol_pair)
-        max_volume_prec = self.get_max_volume_precision(symbol_pair)
+        max_price_prec    = self.get_max_price_precision(symbol_pair)
+        max_volume_prec   = self.get_max_volume_precision(symbol_pair)
 
         base_target_price = round(self.dca.base_target_price, max_price_prec)
         base_order_size   = self.round_decimals_down(self.dca.base_order_size, max_volume_prec)
@@ -105,17 +105,34 @@ class BaseOrder(KrakenBotBase):
         G.log.print_and_log(f"Could not place sell order for {symbol_pair}: {sell_order_result}")
         return{'status': 'could not place sell order'}
 
-    def cancel_sell(self, s_symbol_pair: str, so_num: int) -> None:
+    def cancel_sell(self, s_symbol_pair: str) -> None:
         """If a safety order has filled while the base sell order has not filled, cancel the base sell order"""
         base_order_txid = self.mdb.get_base_order_sell_txid(s_symbol_pair)
         cancel_result   = self.cancel_order(base_order_txid)
+
+        G.log.print_and_log(f"{s_symbol_pair} cancel order result: {cancel_result}", G.print_lock)
+        return
         
         # get the limit price and the quantity to sell
-        so_data  = self.mdb.get_safety_order_data_by_num(s_symbol_pair, so_num)
-        price    = float(so_data['price'])
-        quantity = float(so_data['quantity'])
+        so_data        = self.mdb.get_safety_order_data_by_num(s_symbol_pair, '1')
+        price          = float(so_data['price'])
+        quantity       = float(so_data['quantity'])
+        total_quantity = float(so_data['total_quantity'])
 
-        order_result = self.limit_order(Trade.SELL, quantity, s_symbol_pair, price)
+        G.log.print_and_log(f"so_data: {so_data}", G.print_lock)
+
+        G.log.print_and_log(f"{s_symbol_pair} price:{price}, quantity:{quantity}, total_quantity:{total_quantity}", G.print_lock)
+
+        symbol_pair = s_symbol_pair.split("/")
+        symbol_pair = symbol_pair[0] + symbol_pair[1]
+
+        max_price_prec  = self.get_max_price_precision(symbol_pair)
+        max_volume_prec = self.get_max_volume_precision(symbol_pair)
+
+        price          = round(price, max_price_prec)
+        total_quantity = self.round_decimals_down(total_quantity, max_volume_prec)
+
+        order_result = self.limit_order(Trade.SELL, total_quantity, s_symbol_pair, price)
 
         if self.has_result(order_result):
             G.log.print_and_log(f"{s_symbol_pair} sell order placed {order_result[Dicts.RESULT]}", G.print_lock)

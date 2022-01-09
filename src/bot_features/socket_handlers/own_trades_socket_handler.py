@@ -81,15 +81,15 @@ class OwnTradesSocketHandler(SocketHandlerBase):
                                                 filled_so_nums = self.mdb.get_filled_safety_order_numbers(s_symbol_pair)
 
                                                 # code below figures out which safety order was filled.
+                                                safety_order = SafetyOrder(g_config.API_KEY, g_config.API_KEY)
 
-                                                if int(filled_so_nums[-1]) == 1:
+                                                if filled_so_nums[-1] == '1':
                                                     # the first safety order has filled so cancel the base sell order
                                                     base_order = BaseOrder(g_config.API_KEY, g_config.API_SECRET)
-                                                    so_num_str = str( int(filled_so_nums[-1]) + 1 )
-                                                    base_order.cancel_sell(s_symbol_pair, so_num_str)
+                                                    base_order.cancel_sell(s_symbol_pair)
+                                                    safety_order.sell(s_symbol_pair, '-1')
                                                 else:
                                                     # a safety order higher than 1 was filled.
-                                                    safety_order      = SafetyOrder(g_config.API_KEY, g_config.API_KEY)
                                                     so_cancel_num_str = str( int(filled_so_nums[-2]) + 1 )
                                                     safety_order.cancel_sell(s_symbol_pair, so_cancel_num_str)
                                                     safety_order.sell(s_symbol_pair, filled_so_nums[-1])

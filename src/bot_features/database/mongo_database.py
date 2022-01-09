@@ -172,7 +172,7 @@ class MongoDatabase():
                                 return so_data['sell_order_txid']
         return
 
-    def get_safety_order_data_by_num(self, s_symbol_pair: str, safety_order_num: int) -> dict:
+    def get_safety_order_data_by_num(self, s_symbol_pair: str, safety_order_num: str) -> dict:
         for document in self.c_safety_orders.find({'_id': s_symbol_pair}):
             for value in document.values():
                 if isinstance(value, dict):
@@ -238,8 +238,3 @@ class MongoDatabase():
 
         symbol_pairs.sort()
         return symbol_pairs
-
-
-# medical 
-# reject code 65
-# 800 977 2273

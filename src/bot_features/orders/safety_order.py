@@ -58,15 +58,24 @@ class SafetyOrder(KrakenBotBase):
                 G.log.print_and_log(f"{s_symbol_pair} Could not place safety order {safety_order_num} {order_result}", G.print_lock)
         return
 
-    def sell(self, s_symbol_pair: str, so_num: int) -> None:
-        txid_to_place   = self.mdb.get_safety_order_sell_txid(s_symbol_pair, so_num)
-        price, quantity = self.mdb.get_price_and_quantity(s_symbol_pair, txid_to_place)
+    def sell(self, s_symbol_pair: str, so_num: str) -> None:
+        so_data        = self.mdb.get_safety_order_data_by_num(s_symbol_pair, so_num)
+        price          = float(so_data['price'])
+        total_quantity = float(so_data['total_quantity'])
+
+        symbol_pair = s_symbol_pair.split("/")
+        symbol_pair = symbol_pair[0] + symbol_pair[1]
+
+        max_price_prec  = self.get_max_price_precision(symbol_pair)
+        max_volume_prec = self.get_max_volume_precision(symbol_pair)
+
+        price          = round(price, max_price_prec)
+        total_quantity = self.round_decimals_down(total_quantity, max_volume_prec)
         
-        G.log.print_and_log(f"{s_symbol_pair} new sell limit order to place", G.print_lock)
-        G.log.print_and_log(f"{s_symbol_pair}, price: {price}, quantity: {quantity}, txid: {txid_to_place}", G.print_lock)
+        G.log.print_and_log(f"{s_symbol_pair}, price: {price}, total_quantity: {total_quantity}", G.print_lock)
         
         # place the new sell safety order
-        order_result = self.limit_order(Trade.SELL, quantity, s_symbol_pair, price)
+        order_result = self.limit_order(Trade.SELL, total_quantity, s_symbol_pair, price)
 
         if self.has_result(order_result):
             G.log.print_and_log(f"{s_symbol_pair} safety order sell {so_num} placed {order_result[Dicts.RESULT][Dicts.DESCR][Dicts.ORDER]}", G.print_lock)
