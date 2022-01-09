@@ -97,7 +97,9 @@ class KrakenDCABot(KrakenBotBase):
 
     def nuke(self) -> None:
         self.mdb.c_safety_orders.drop()
-        self.cancel_all_orders()
+        
+        # cancel all buy orders in database!
+        
         return
 
     def start_trade_loop(self) -> None:

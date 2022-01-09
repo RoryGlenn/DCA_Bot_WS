@@ -59,8 +59,9 @@ class SafetyOrder(KrakenBotBase):
         return
 
     def sell(self, s_symbol_pair: str, so_num: str) -> None:
-        so_data        = self.mdb.get_safety_order_data_by_num(s_symbol_pair, so_num) 
-        print(so_data)
+        so_data = self.mdb.get_safety_order_data_by_num(s_symbol_pair, so_num) 
+
+        pprint(so_data, sort_dicts=False)
 
         symbol_pair = s_symbol_pair.split("/")
         symbol_pair = symbol_pair[0] + symbol_pair[1]

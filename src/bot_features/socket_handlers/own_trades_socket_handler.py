@@ -11,6 +11,7 @@ from bot_features.orders.safety_order                 import SafetyOrder
 
 from bot_features.low_level.kraken_rest_api           import KrakenRestAPI
 from bot_features.database.mongo_database             import MongoDatabase
+from util.colors import Color
 from util.globals                                     import G
 from util.config                                      import g_config
 
@@ -40,18 +41,18 @@ class OwnTradesSocketHandler(SocketHandlerBase):
             if placed_safety_orders[i]['sell_order_txid'] == '':
                 # the previous one completed
                 if i == 0:
-                    # base sell 
+                    # base sell
                     break
                 else:
                     # safety order
                     profit = placed_safety_orders[i-1]['profit']
+        
                     
 
         pprint(placed_safety_orders, sort_dicts=False)
 
         # profit = exit_cost - entry_cost - maker_fee - taker_fee
-        G.log.print_and_log(f"{s_symbol_pair} trade complete!", G.print_lock)
-        G.log.print_and_log(f"{s_symbol_pair} profit: ${profit}", G.print_lock)
+        G.log.print_and_log(Color.BG_GREEN + f"{s_symbol_pair} trade complete, profit: ${profit}" + Color.ENDC, G.print_lock)
         return
 
     def ws_message(self, ws: WebSocketApp, message: str) -> None:
