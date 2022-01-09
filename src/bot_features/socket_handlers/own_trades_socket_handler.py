@@ -1,4 +1,5 @@
 import json
+from os import kill
 
 from pprint                                           import pprint
 from websocket._app                                   import WebSocketApp
@@ -15,7 +16,7 @@ from util.config                                      import g_config
 
 
 class OwnTradesSocketHandler(SocketHandlerBase):
-    def __init__(self, api_token) -> None:
+    def __init__(self, api_token: str) -> None:
         self.api_token = api_token
         self.trades    = {}
         self.rest_api  = KrakenRestAPI(g_config.API_KEY, g_config.API_SECRET)
@@ -33,19 +34,24 @@ class OwnTradesSocketHandler(SocketHandlerBase):
         # remove all data associated with s_symbol_pair from db
         self.mdb.c_safety_orders.delete_one({"_id": s_symbol_pair})
 
-        # to calculate profit, figure out if we sold the base order or a safety order
-        # if its a safety order, which one did you sell?
-        # grab that number from the mdb
+        profit = 0
 
-        # https://www.kraken.com/en-us/features/fee-schedule/#kraken-pro
-        # CALCULATE PROFIT BY: (EXIT_COST - ENTRY_COST - FEE)
-        # entry_cost = 2.2774
-        # exit_cost  = 2.2892
-        # maker_fee  = 0.0016
-        # taker_fee  = 0.0026
+        for i in range(len(placed_safety_orders)):
+            if placed_safety_orders[i]['sell_order_txid'] == '':
+                # the previous one completed
+                if i == 0:
+                    # base sell 
+                    break
+                else:
+                    # safety order
+                    profit = placed_safety_orders[i-1]['profit']
+                    
+
+        pprint(placed_safety_orders, sort_dicts=False)
 
         # profit = exit_cost - entry_cost - maker_fee - taker_fee
         G.log.print_and_log(f"{s_symbol_pair} trade complete!", G.print_lock)
+        G.log.print_and_log(f"{s_symbol_pair} profit: ${profit}", G.print_lock)
         return
 
     def ws_message(self, ws: WebSocketApp, message: str) -> None:
@@ -87,7 +93,7 @@ class OwnTradesSocketHandler(SocketHandlerBase):
                                                     # the first safety order has filled so cancel the base sell order
                                                     base_order = BaseOrder(g_config.API_KEY, g_config.API_SECRET)
                                                     base_order.cancel_sell(s_symbol_pair)
-                                                    safety_order.sell(s_symbol_pair, '-1')
+                                                    safety_order.sell(s_symbol_pair, '1')
                                                 else:
                                                     # a safety order higher than 1 was filled.
                                                     so_cancel_num_str = str( int(filled_so_nums[-2]) + 1 )

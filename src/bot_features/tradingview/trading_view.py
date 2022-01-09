@@ -1,10 +1,9 @@
 """tradingview.py - pulls data from tradingview.com to see which coins we should buy."""
 
-from pprint         import pprint
-from tradingview_ta import TA_Handler
-
+from pprint                              import pprint
+from tradingview_ta                      import TA_Handler
 from bot_features.low_level.kraken_enums import *
-from util.globals              import G
+from util.globals                        import G
 
 
 class TradingView:

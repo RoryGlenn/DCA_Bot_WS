@@ -1,14 +1,14 @@
 import time
 
-from pprint import pprint
+from pprint                                 import pprint
 
 from bot_features.database.mongo_database   import MongoDatabase
 
 from bot_features.low_level.kraken_bot_base import KrakenBotBase
 from bot_features.low_level.kraken_enums    import *
 
-from util.config  import g_config
-from util.globals import G
+from util.config                            import g_config
+from util.globals                           import G
 
 
 x_list:   list = ['XETC', 'XETH', 'XLTC', 'XMLN', 'XREP', 'XXBT', 'XXDG', 'XXLM', 'XXMR', 'XXRP', 'XZEC']
@@ -16,7 +16,7 @@ reg_list: list = ['ETC', 'ETH', 'LTC', 'MLN', 'REP', 'XBT', 'XDG', 'XLM', 'XMR',
 
 
 class SafetyOrder(KrakenBotBase):
-    def __init__(self, api_key, api_secret) -> None:
+    def __init__(self, api_key: str, api_secret: str) -> None:
         super().__init__(api_key, api_secret)
         self.mdb:    MongoDatabase = MongoDatabase()
         return
@@ -59,9 +59,8 @@ class SafetyOrder(KrakenBotBase):
         return
 
     def sell(self, s_symbol_pair: str, so_num: str) -> None:
-        so_data        = self.mdb.get_safety_order_data_by_num(s_symbol_pair, so_num)
-        price          = float(so_data['price'])
-        total_quantity = float(so_data['total_quantity'])
+        so_data        = self.mdb.get_safety_order_data_by_num(s_symbol_pair, so_num) 
+        print(so_data)
 
         symbol_pair = s_symbol_pair.split("/")
         symbol_pair = symbol_pair[0] + symbol_pair[1]
@@ -69,8 +68,8 @@ class SafetyOrder(KrakenBotBase):
         max_price_prec  = self.get_max_price_precision(symbol_pair)
         max_volume_prec = self.get_max_volume_precision(symbol_pair)
 
-        price          = round(price, max_price_prec)
-        total_quantity = self.round_decimals_down(total_quantity, max_volume_prec)
+        price          = round(float(so_data['price']), max_price_prec)
+        total_quantity = self.round_decimals_down(float(so_data['total_quantity']), max_volume_prec)
         
         G.log.print_and_log(f"{s_symbol_pair}, price: {price}, total_quantity: {total_quantity}", G.print_lock)
         

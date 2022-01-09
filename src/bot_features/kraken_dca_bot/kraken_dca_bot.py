@@ -111,6 +111,9 @@ class KrakenDCABot(KrakenBotBase):
         # wait for socket handlers to finish initializing
         time.sleep(2)
 
+        self.mdb.c_safety_orders.drop()
+        # self.cancel_all_buy_orders()
+
         # [07/01/2022 22:14:47] XZEC/ZUSD Base order filled buy 0.03500000 ZECUSD @ market
         # [07/01/2022 22:14:50] XZEC/ZUSD Base order placed sell 0.03500000 ZECUSD @ limit 146.73
         # [07/01/2022 22:14:51] XZEC/ZUSD Could not place safety order 1 {'error': ['EQuery:Unknown asset pair']}

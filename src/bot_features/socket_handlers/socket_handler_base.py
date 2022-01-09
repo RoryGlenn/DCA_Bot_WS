@@ -1,5 +1,5 @@
-from websocket._app import WebSocketApp
-from bot_features.low_level.kraken_enums              import WEBSOCKET_PRIVATE_URL
+from websocket._app                      import WebSocketApp
+from bot_features.low_level.kraken_enums import WEBSOCKET_PRIVATE_URL
 
 
 class SocketHandlerBase:

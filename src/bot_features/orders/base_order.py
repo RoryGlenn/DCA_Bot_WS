@@ -5,11 +5,9 @@ from pprint                                 import pprint
 from bot_features.database.mongo_database   import MongoDatabase
 from bot_features.low_level.kraken_bot_base import KrakenBotBase
 from bot_features.low_level.kraken_enums    import *
-from bot_features.dca.dca                       import DCA
+from bot_features.dca.dca                   import DCA
 from util.config                            import g_config
 from util.globals                           import G
-
-
 
 
 class BaseOrder(KrakenBotBase):
@@ -109,33 +107,5 @@ class BaseOrder(KrakenBotBase):
         """If a safety order has filled while the base sell order has not filled, cancel the base sell order"""
         base_order_txid = self.mdb.get_base_order_sell_txid(s_symbol_pair)
         cancel_result   = self.cancel_order(base_order_txid)
-
         G.log.print_and_log(f"{s_symbol_pair} cancel order result: {cancel_result}", G.print_lock)
-        return
-        
-        # get the limit price and the quantity to sell
-        so_data        = self.mdb.get_safety_order_data_by_num(s_symbol_pair, '1')
-        price          = float(so_data['price'])
-        quantity       = float(so_data['quantity'])
-        total_quantity = float(so_data['total_quantity'])
-
-        G.log.print_and_log(f"so_data: {so_data}", G.print_lock)
-
-        G.log.print_and_log(f"{s_symbol_pair} price:{price}, quantity:{quantity}, total_quantity:{total_quantity}", G.print_lock)
-
-        symbol_pair = s_symbol_pair.split("/")
-        symbol_pair = symbol_pair[0] + symbol_pair[1]
-
-        max_price_prec  = self.get_max_price_precision(symbol_pair)
-        max_volume_prec = self.get_max_volume_precision(symbol_pair)
-
-        price          = round(price, max_price_prec)
-        total_quantity = self.round_decimals_down(total_quantity, max_volume_prec)
-
-        order_result = self.limit_order(Trade.SELL, total_quantity, s_symbol_pair, price)
-
-        if self.has_result(order_result):
-            G.log.print_and_log(f"{s_symbol_pair} sell order placed {order_result[Dicts.RESULT]}", G.print_lock)
-        else:
-            G.log.print_and_log(f"{s_symbol_pair} could not place sell order {order_result}", G.print_lock)        
         return
