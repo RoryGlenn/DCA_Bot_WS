@@ -21,6 +21,7 @@ from bot_features.tradingview.trading_view                   import TradingView
 from util.colors                                             import Color
 from util.globals                                            import G
 from util.config                                             import g_config
+
 # would we make more money buying coins that are a normal buy or a strong sell? With a strong sell, we could get more money with DCA instead of just a buy
 
 # x_list   = ['XETC', 'XETH', 'XLTC', 'XMLN', 'XREP', 'XXBT', 'XXDG', 'XXLM', 'XXMR', 'XXRP', 'XZEC']
@@ -30,9 +31,9 @@ from util.config                                             import g_config
 class KrakenDCABot(KrakenBotBase):
     def __init__(self) -> None:
         super().__init__(g_config.API_KEY, g_config.API_SECRET)
-        self.rest_api:      KrakenRestAPI = KrakenRestAPI(g_config.API_KEY, g_config.API_SECRET)
-        self.tv:            TradingView   = TradingView()
-        self.mdb:           MongoDatabase = MongoDatabase()
+        self.rest_api: KrakenRestAPI = KrakenRestAPI(g_config.API_KEY, g_config.API_SECRET)
+        self.tv:       TradingView   = TradingView()
+        self.mdb:      MongoDatabase = MongoDatabase()
         return
 
     def is_ok(self, order_result: dict):
@@ -97,9 +98,7 @@ class KrakenDCABot(KrakenBotBase):
 
     def nuke(self) -> None:
         self.mdb.c_safety_orders.drop()
-        
         # cancel all buy orders in database!
-        
         return
 
     def start_trade_loop(self) -> None:
@@ -113,8 +112,7 @@ class KrakenDCABot(KrakenBotBase):
         # wait for socket handlers to finish initializing
         time.sleep(2)
 
-        self.mdb.c_safety_orders.drop()
-        # self.cancel_all_buy_orders()
+        # self.mdb.c_safety_orders.drop()
 
         # [07/01/2022 22:14:47] XZEC/ZUSD Base order filled buy 0.03500000 ZECUSD @ market
         # [07/01/2022 22:14:50] XZEC/ZUSD Base order placed sell 0.03500000 ZECUSD @ limit 146.73
@@ -126,6 +124,9 @@ class KrakenDCABot(KrakenBotBase):
         # [07/01/2022 22:14:57] XZEC/ZUSD Could not place safety order 6 {'error': ['EQuery:Unknown asset pair']}
         # [07/01/2022 22:14:58] XZEC/ZUSD Could not place safety order 7 {'error': ['EQuery:Unknown asset pair']}
 
+        # [10/01/2022 11:05:01] LINK/USD sell order did not go through! {'error': ['EAPI:Invalid key']}
+        
+
         while True:
             start_time     = time.time()
             buy_dict       = self.get_buy_dict()
@@ -133,7 +134,7 @@ class KrakenDCABot(KrakenBotBase):
 
             G.log.print_and_log(Color.FG_BRIGHT_BLACK + f"Main thread: checked all coins in {self.get_elapsed_time(start_time)}" + Color.ENDC, G.print_lock)
             G.log.print_and_log(f"Main thread: Current trades {current_trades}", G.print_lock)
-            G.log.print_and_log(f"Main thread: Buy list {PrettyPrinter(indent=1).pformat([symbol_pair for (_, symbol_pair) in buy_dict.items()])}", G.print_lock)            
+            G.log.print_and_log(f"Main thread: Buy list {PrettyPrinter(indent=1).pformat([symbol_pair for (_, symbol_pair) in buy_dict.items()])}", G.print_lock)
 
             for symbol, symbol_pair in buy_dict.items():
                 if not self.mdb.in_safety_orders(symbol_pair):

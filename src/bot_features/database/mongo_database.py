@@ -42,6 +42,22 @@ class MongoDatabase():
         raise Exception("Can't find base order txid!")
         # raise BaseOrderPrice()
 
+    def get_base_order_profit(self, s_symbol_pair: str) -> float:
+        for document in self.c_safety_orders.find({'_id': s_symbol_pair}):
+            for value in document.values():
+                if isinstance(value, dict):
+                    return float(value['base_order']['profit'])
+        return -1.0 # this should never happen
+
+    def base_order_cancel_sell(self, s_symbol_pair: str) -> None:
+        for document in self.c_safety_orders.find({'_id': s_symbol_pair}):
+            for value in document.values():
+                if isinstance(value, dict):
+                    value['base_order']['has_cancelled_sell_order'] = True
+                    new_values = {"$set": {s_symbol_pair: value}}
+                    query      = {'_id': s_symbol_pair}
+                    self.c_safety_orders.find_one_and_update(query, new_values)
+        return
 
 ####################
 # SAFETY ORDERS

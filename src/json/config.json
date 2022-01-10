@@ -1,8 +1,8 @@
 {
   "config": {
 
-    "kraken_api_key":    "F8EO+DaWBwFVAPd8HwolBBz8EIQgQYRx35l1KeCVl8u+044nUUFZgsNh",
-    "kraken_secret_key": "gqnoKy0HFy/CxhChWrulMy4XEbmeOaSrZ7hn1D4VyorkwtaM2QVHpL1vwflf3Uj+NGYpl3EGbvd4y+nxTG7Ntg==",
+    "kraken_api_key":    "MbHs7lJg+vFsakgxGSIud2Kyepsdm68g/TUH0ZLxQfpKHOy5OcL8/SEs",
+    "kraken_secret_key": "XF/jjbgjMCFzuPjDG9phsWae6ODGTbI/WM3Bnya6fFwnU8A4ty+jJlOcfO4C8PoWM2mAwlXJP5OJVpYJ2xCsGA==",
 
     "buy_set": {
       "AAVE": {

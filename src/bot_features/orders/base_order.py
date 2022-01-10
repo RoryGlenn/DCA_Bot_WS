@@ -3,9 +3,12 @@ import time
 from pprint                                 import pprint
 
 from bot_features.database.mongo_database   import MongoDatabase
+
 from bot_features.low_level.kraken_bot_base import KrakenBotBase
 from bot_features.low_level.kraken_enums    import *
+
 from bot_features.dca.dca                   import DCA
+
 from util.config                            import g_config
 from util.globals                           import G
 
@@ -31,6 +34,11 @@ class BaseOrder(KrakenBotBase):
         if g_config.DCA_DATA[symbol][ConfigKeys.DCA_ALL_OR_NOTHING]:
             self.dca = DCA(symbol, symbol_pair, base_order_size, safety_order_size, market_price)
             self.dca.start()
+
+            if self.dca.total_cost_levels[-1] > G.available_usd:
+                G.log.print_and_log(f"{symbol_pair} total cost: {self.dca.total_cost_levels[-1]} > Available usd: {G.available_usd}", G.print_lock)
+            else:
+                G.log.print_and_log(f"{symbol_pair} total cost: {self.dca.total_cost_levels[-1]} <= Available usd: {G.available_usd}", G.print_lock)
             return True if self.dca.total_cost_levels[-1] > G.available_usd else False
 
     def buy(self, symbol: str, symbol_pair: str):
@@ -62,7 +70,7 @@ class BaseOrder(KrakenBotBase):
             G.log.print_and_log(f"All or Nothing: Not enough USD to start {symbol_pair} trade", G.print_lock)
             return {'status': 'DCA_ALL_OR_NOTHING'}
 
-        order_result = self.market_order(Trade.BUY, base_order_size, pair[0]+pair[1])
+        order_result = self.market_order(pair[0]+pair[1], Trade.BUY, base_order_size)
         
         # sleep so kraken exchange can create the data
         time.sleep(1)
@@ -100,12 +108,17 @@ class BaseOrder(KrakenBotBase):
             self.mdb.base_order_place_sell(symbol_pair_s, sell_order_txid)
             G.log.print_and_log(f"{symbol_pair_s} Base order placed {sell_order_result[Dicts.RESULT][Dicts.DESCR][Dicts.ORDER]}", G.print_lock)
             return {'status': 'ok'}
+
         G.log.print_and_log(f"Could not place sell order for {symbol_pair}: {sell_order_result}")
-        return{'status': 'could not place sell order'}
+        return {'status': 'could not place sell order'}
 
     def cancel_sell(self, s_symbol_pair: str) -> None:
         """If a safety order has filled while the base sell order has not filled, cancel the base sell order"""
         base_order_txid = self.mdb.get_base_order_sell_txid(s_symbol_pair)
         cancel_result   = self.cancel_order(base_order_txid)
+
+        # cancel base sell order in db
+        self.mdb.base_order_cancel_sell(s_symbol_pair)
+
         G.log.print_and_log(f"{s_symbol_pair} cancel order result: {cancel_result}", G.print_lock)
         return

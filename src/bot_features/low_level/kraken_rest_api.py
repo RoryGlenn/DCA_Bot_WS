@@ -49,6 +49,7 @@ class KrakenRestAPI():
             
         url           = self.uri + urlpath
         self.response = self.session.post(url, data=data, headers=headers, timeout=timeout)
+
         if self.response.status_code not in (200, 201, 202):
             self.response.raise_for_status()
         return self.response.json(**self._json_options)
@@ -142,10 +143,10 @@ class KrakenRestAPI():
     def add_order(self, ordertype: str, type: str, volume: str, pair: str, price: str) -> dict:
         return self.__query_private(method=Method.ADD_ORDER, data={Data.ORDER_TYPE: ordertype, Data.TYPE: type, Data.VOLUME: volume, Data.SYMBOL_PAIR: pair, Data.PRICE: price})
 
-    def market_order(self, type: str, volume: str, pair: str, validate=False) -> dict:
+    def market_order(self, pair: str, type: str, volume: str, validate=False) -> dict:
         return self.__query_private(method=Method.ADD_ORDER, data={Data.ORDER_TYPE: Data.MARKET, Data.TYPE: type, Data.VOLUME: volume, Data.SYMBOL_PAIR: pair, Data.PRICE: Data.MARKET_PRICE, "validate": validate})
 
-    def limit_order(self, type: str, volume: str, pair: str, price: str) -> dict:
+    def limit_order(self, pair: str, type: str, price: float, volume: float) -> dict:
         return self.__query_private(method=Method.ADD_ORDER, data={Data.ORDER_TYPE: Data.LIMIT, Data.TYPE: type, Data.VOLUME: volume, Data.SYMBOL_PAIR: pair, Data.PRICE: price})
 
     def limit_order_conditional_close(self, type: str, volume: str, pair: str, price: str, cc_price: str, cc_volume: str) -> dict:
@@ -246,92 +247,92 @@ class KrakenRestAPI():
         return self.__query_public(method=Method.RECENT_TRADES, data={Data.SYMBOL_PAIR: pair})
     
 
-###################################################################################################
-### ROUNDING ###
-###################################################################################################
+# ###################################################################################################
+# ### ROUNDING ###
+# ###################################################################################################
 
-    def round_decimals_down(self, number: float, decimals: int = 2) -> int:
-        """Returns a value rounded down to a specific number of decimal places."""
-        if not isinstance(decimals, int):
-            raise TypeError("decimal places must be an integer")
-        elif decimals < 0:
-            raise ValueError("decimal places has to be 0 or more")
-        elif decimals == 0:
-            return math.floor(number)
-        factor = 10 ** decimals
-        return math.floor(number * factor) / factor
+#     def round_decimals_down(self, number: float, decimals: int = 2) -> int | float:
+#         """Returns a value rounded down to a specific number of decimal places."""
+#         if not isinstance(decimals, int):
+#             raise TypeError("decimal places must be an integer")
+#         elif decimals < 0:
+#             raise ValueError("decimal places has to be 0 or more")
+#         elif decimals == 0:
+#             return math.floor(number)
+#         factor = 10 ** decimals
+#         return math.floor(number * factor) / factor
 
 
-###################################################################################################
-### PARSE DATA ###
-###################################################################################################
+# ###################################################################################################
+# ### PARSE DATA ###
+# ###################################################################################################
 
-    def parse_ticker_information(self, response: dict) -> dict:
-        result = dict()
-        if Dicts.RESULT in response.keys():
-            response = response[Dicts.RESULT]
-            for key in response.keys():
-                result = response[key]
-                break
-        return result
+#     def parse_ticker_information(self, response: dict) -> dict:
+#         result = dict()
+#         if Dicts.RESULT in response.keys():
+#             response = response[Dicts.RESULT]
+#             for key in response.keys():
+#                 result = response[key]
+#                 break
+#         return result
 
-    def parse_ask_price(self, response: dict) -> float:
-        result = str()
-        if Dicts.ASK_PRICE in response.keys():
-            result = response[Dicts.ASK_PRICE][0]
-        return float(result)
+#     def parse_ask_price(self, response: dict) -> float:
+#         result = str()
+#         if Dicts.ASK_PRICE in response.keys():
+#             result = response[Dicts.ASK_PRICE][0]
+#         return float(result)
 
-    def parse_bid_price(self, response: dict) -> float:
-        result = str()
-        if Dicts.BID_PRICE in response.keys():
-            result = response[Dicts.BID_PRICE][0]
+#     def parse_bid_price(self, response: dict) -> float:
+#         result = str()
+#         if Dicts.BID_PRICE in response.keys():
+#             result = response[Dicts.BID_PRICE][0]
         
-        # if result is empty, assets could be staked. If so, symbol will have a ".S" at the end of it.        
-        if len(result) <= 0:
-            return 0
-        return float(result)
+#         # if result is empty, assets could be staked. If so, symbol will have a ".S" at the end of it.        
+#         if len(result) <= 0:
+#             return 0
+#         return float(result)
 
-    def parse_account_balance(self, response: dict) -> dict:
-        result = dict()
-        if Trade.RESULT in response.keys():
-            for key in sorted(response[Trade.RESULT].keys()):
-                if float(response[Trade.RESULT][key]) > 0:
-                    result[key] = float(response[Trade.RESULT][key])
-        return result
+#     def parse_account_balance(self, response: dict) -> dict:
+#         result = dict()
+#         if Trade.RESULT in response.keys():
+#             for key in sorted(response[Trade.RESULT].keys()):
+#                 if float(response[Trade.RESULT][key]) > 0:
+#                     result[key] = float(response[Trade.RESULT][key])
+#         return result
 
-    def get_parsed_account_balance(self):
-        account_balance = self.get_account_balance()
-        return self.parse_account_balance(account_balance)
+#     def get_parsed_account_balance(self):
+#         account_balance = self.get_account_balance()
+#         return self.parse_account_balance(account_balance)
 
-    def get_coin_balance(self, symbol: str) -> float:
-        try:
-            temp = self.get_account_balance()
-            account_balance = self.parse_account_balance(temp)
-            if symbol in account_balance.keys():
-                return account_balance[symbol]
-        except Exception as e:
-            # G.log.print_and_log(e=e, error_type=type(e).__name__, filename=__file__, tb_lineno=e.__traceback__.tb_lineno)
-            print(e)
-        return 0.0
+#     def get_coin_balance(self, symbol: str) -> float:
+#         try:
+#             temp = self.get_account_balance()
+#             account_balance = self.parse_account_balance(temp)
+#             if symbol in account_balance.keys():
+#                 return account_balance[symbol]
+#         except Exception as e:
+#             # G.log.print_and_log(e=e, error_type=type(e).__name__, filename=__file__, tb_lineno=e.__traceback__.tb_lineno)
+#             print(e)
+#         return 0.0
 
-    def get_available_usd_balance(self) -> float:
-        """Get available usd balance by subtracting open buy orders from total usd in wallet."""
-        open_orders = self.get_open_orders()
-        buy_total   = 0
+#     def get_available_usd_balance(self) -> float:
+#         """Get available usd balance by subtracting open buy orders from total usd in wallet."""
+#         open_orders = self.get_open_orders()
+#         buy_total   = 0
 
-        if Dicts.RESULT in open_orders.keys():
-            for txid in open_orders[Dicts.RESULT][Dicts.OPEN]:
-                for key in open_orders[Dicts.RESULT][Dicts.OPEN][txid].keys():
-                    if key == Dicts.DESCR:
-                        if open_orders[Dicts.RESULT][Dicts.OPEN][txid][Dicts.DESCR][Data.TYPE] == Data.BUY:
-                            price     = float(open_orders[Dicts.RESULT][Dicts.OPEN][txid][Dicts.DESCR][Data.PRICE])
-                            qty       = float(open_orders[Dicts.RESULT][Dicts.OPEN][txid][Dicts.DESCR][Dicts.ORDER].split(" ")[1])
-                            buy_total += price * qty
-                            break
-        return round(buy_total, 3)
+#         if Dicts.RESULT in open_orders.keys():
+#             for txid in open_orders[Dicts.RESULT][Dicts.OPEN]:
+#                 for key in open_orders[Dicts.RESULT][Dicts.OPEN][txid].keys():
+#                     if key == Dicts.DESCR:
+#                         if open_orders[Dicts.RESULT][Dicts.OPEN][txid][Dicts.DESCR][Data.TYPE] == Data.BUY:
+#                             price     = float(open_orders[Dicts.RESULT][Dicts.OPEN][txid][Dicts.DESCR][Data.PRICE])
+#                             qty       = float(open_orders[Dicts.RESULT][Dicts.OPEN][txid][Dicts.DESCR][Dicts.ORDER].split(" ")[1])
+#                             buy_total += price * qty
+#                             break
+#         return round(buy_total, 3)
 
-###################################################################################################
-### TIME ###
-###################################################################################################
-    def get_current_time(self) -> datetime:
-        return datetime.datetime.now().strftime("%H:%M:%S")
+# ###################################################################################################
+# ### TIME ###
+# ###################################################################################################
+#     def get_current_time(self) -> datetime:
+#         return datetime.datetime.now().strftime("%H:%M:%S")

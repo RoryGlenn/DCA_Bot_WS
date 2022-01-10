@@ -1,17 +1,20 @@
 import json
-from os import kill
+import time
 
 from pprint                                           import pprint
 from websocket._app                                   import WebSocketApp
 
 from bot_features.socket_handlers.socket_handler_base import SocketHandlerBase
-from bot_features.low_level.kraken_enums              import *
+
 from bot_features.orders.base_order                   import BaseOrder
 from bot_features.orders.safety_order                 import SafetyOrder
 
+from bot_features.low_level.kraken_enums              import *
 from bot_features.low_level.kraken_rest_api           import KrakenRestAPI
+
 from bot_features.database.mongo_database             import MongoDatabase
-from util.colors import Color
+
+from util.colors                                      import Color
 from util.globals                                     import G
 from util.config                                      import g_config
 
@@ -35,6 +38,8 @@ class OwnTradesSocketHandler(SocketHandlerBase):
         # remove all data associated with s_symbol_pair from db
         self.mdb.c_safety_orders.delete_one({"_id": s_symbol_pair})
 
+        pprint(placed_safety_orders, sort_dicts=False)
+
         profit = 0
 
         for i in range(len(placed_safety_orders)):
@@ -42,17 +47,14 @@ class OwnTradesSocketHandler(SocketHandlerBase):
                 # the previous one completed
                 if i == 0:
                     # base sell
-                    break
+                    profit = self.mdb.get_base_order_profit(s_symbol_pair)
                 else:
                     # safety order
                     profit = placed_safety_orders[i-1]['profit']
-        
-                    
-
-        pprint(placed_safety_orders, sort_dicts=False)
+                break
 
         # profit = exit_cost - entry_cost - maker_fee - taker_fee
-        G.log.print_and_log(Color.BG_GREEN + f"{s_symbol_pair} trade complete, profit: ${profit}" + Color.ENDC, G.print_lock)
+        G.log.print_and_log(Color.BG_GREEN + f"{s_symbol_pair} trade complete{Color.ENDC}, profit: ${profit}", G.print_lock)
         return
 
     def ws_message(self, ws: WebSocketApp, message: str) -> None:
@@ -100,6 +102,8 @@ class OwnTradesSocketHandler(SocketHandlerBase):
                                                     so_cancel_num_str = str( int(filled_so_nums[-2]) + 1 )
                                                     safety_order.cancel_sell(s_symbol_pair, so_cancel_num_str)
                                                     safety_order.sell(s_symbol_pair, filled_so_nums[-1])
+
+                                                time.sleep(1)
                                 elif trade_info['type'] == 'sell':
                                     self.__finish_trade(s_symbol_pair)
         else:
@@ -108,8 +112,8 @@ class OwnTradesSocketHandler(SocketHandlerBase):
                     return
                 if message['event'] == 'subscriptionStatus':
                     return
-            if "heartbeat" not in message.values():
-                G.log.pprint_and_log(f"ownTrades: ", message, G.print_lock)
+                if "heartbeat" not in message.values():
+                    G.log.pprint_and_log(f"ownTrades: ", message, G.print_lock)
         return
         
     def ws_open(self, ws: WebSocketApp) -> None:

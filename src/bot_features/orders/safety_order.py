@@ -75,7 +75,7 @@ class SafetyOrder(KrakenBotBase):
         G.log.print_and_log(f"{s_symbol_pair}, price: {price}, total_quantity: {total_quantity}", G.print_lock)
         
         # place the new sell safety order
-        order_result = self.limit_order(Trade.SELL, total_quantity, s_symbol_pair, price)
+        order_result = self.limit_order(s_symbol_pair, Trade.SELL, price, total_quantity)
 
         if self.has_result(order_result):
             G.log.print_and_log(f"{s_symbol_pair} safety order sell {so_num} placed {order_result[Dicts.RESULT][Dicts.DESCR][Dicts.ORDER]}", G.print_lock)

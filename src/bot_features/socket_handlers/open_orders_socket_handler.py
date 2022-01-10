@@ -9,8 +9,8 @@ from util.globals                                     import G
 
 class OpenOrdersSocketHandler(SocketHandlerBase):
     def __init__(self, api_token: str) -> None:
-        self.api_token:         str  = api_token
-        self.open_orders:       dict = { }
+        self.api_token:   str  = api_token
+        self.open_orders: dict = { }
         return
 
     def ws_message(self, ws: WebSocketApp, message: str) -> None:
