@@ -27,6 +27,7 @@ class TradingView:
                 error_type=type(e).__name__,
                 filename=__file__,
                 tb_lineno=e.__traceback__.tb_lineno,
+                lock=G.print_lock
             )
         return []
 

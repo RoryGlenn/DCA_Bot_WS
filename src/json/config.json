@@ -59,7 +59,7 @@
         "dca_safety_orders_active_max":     7,
         "dca_safety_order_volume_scale":    2.5,
         "dca_safety_order_step_scale":      1.56,
-        "dca_safety_order_price_deviation": 1.3,
+        "dca_safety_order_price_deviation": 0.2,
         "dca_base_order_size":              0.15,
         "dca_safety_order_size":            0.15,
         "dca_all_or_nothing":               true,

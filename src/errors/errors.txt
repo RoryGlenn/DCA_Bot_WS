@@ -1,0 +1,23 @@
+1. problem with placing orders with symbol pairs in x_list.
+    [07/01/2022 22:14:47] XZEC/ZUSD Base order filled buy 0.03500000 ZECUSD @ market
+    [07/01/2022 22:14:50] XZEC/ZUSD Base order placed sell 0.03500000 ZECUSD @ limit 146.73
+    [07/01/2022 22:14:51] XZEC/ZUSD Could not place safety order 1 {'error': ['EQuery:Unknown asset pair']}
+    [07/01/2022 22:14:52] XZEC/ZUSD Could not place safety order 2 {'error': ['EQuery:Unknown asset pair']}
+    [07/01/2022 22:14:53] XZEC/ZUSD Could not place safety order 3 {'error': ['EQuery:Unknown asset pair']}
+    [07/01/2022 22:14:54] XZEC/ZUSD Could not place safety order 4 {'error': ['EQuery:Unknown asset pair']}
+    [07/01/2022 22:14:55] XZEC/ZUSD Could not place safety order 5 {'error': ['EQuery:Unknown asset pair']}
+    [07/01/2022 22:14:57] XZEC/ZUSD Could not place safety order 6 {'error': ['EQuery:Unknown asset pair']}
+    [07/01/2022 22:14:58] XZEC/ZUSD Could not place safety order 7 {'error': ['EQuery:Unknown asset pair']}
+
+2. Invalid Key. Still don't know why this is happening.
+    [10/01/2022 11:05:01] LINK/USD sell order did not go through! {'error': ['EAPI:Invalid key']}
+
+3. G.available_usd is not updating.
+    [11/01/2022 11:22:30] ATOM/USD total cost: 2197.52123134 <= Available usd: 2319.6526725
+    [11/01/2022 11:22:31] Error: order did not go through! {'error': ['EOrder:Insufficient funds']}
+    [11/01/2022 11:22:32] XETH/ZUSD total cost: 792.83398988 <= Available usd: 2319.6526725
+    [11/01/2022 11:22:33] Error: order did not go through! {'error': ['EOrder:Insufficient funds']}
+    [11/01/2022 11:22:33] XXBT/ZUSD total cost: 1050.14179111 <= Available usd: 2319.6526725
+    [11/01/2022 11:22:34] Error: order did not go through! {'error': ['EOrder:Insufficient funds']}
+    [11/01/2022 11:22:35] XXLM/ZUSD total cost: 635.84208042 <= Available usd: 2319.6526725
+    [11/01/2022 11:22:36] Error: order did not go through! {'error': ['EOrder:Insufficient funds']}
