@@ -29,32 +29,30 @@ class OwnTradesSocketHandler(SocketHandlerBase):
 
     def __finish_trade(self, s_symbol_pair: str) -> None:
         # if its a sell, cancel all orders associated with the symbol and wipe the db
-        placed_safety_orders = self.mdb.get_placed_safety_order_data(s_symbol_pair)
-        
-        # cancel all orders associated with the symbol
-        for safety_order in placed_safety_orders:
-            self.rest_api.cancel_order(safety_order['buy_order_txid'])
+        if self.mdb.in_safety_orders(s_symbol_pair):
+            profit = 0
+            placed_safety_orders = self.mdb.get_placed_safety_order_data(s_symbol_pair)
+            
+            for i in range(len(placed_safety_orders)):
+                if placed_safety_orders[i]['sell_order_txid'] == '':
+                    # the previous one completed
+                    if i == 0:
+                        # base sell
+                        profit = self.mdb.get_base_order_profit(s_symbol_pair)
+                    else:
+                        # safety order
+                        profit = placed_safety_orders[i-1]['profit']
+                    break
 
-        # remove all data associated with s_symbol_pair from db
-        self.mdb.c_safety_orders.delete_one({"_id": s_symbol_pair})
+            # cancel all orders associated with the symbol
+            for safety_order in placed_safety_orders:
+                self.rest_api.cancel_order(safety_order['buy_order_txid'])
 
-        pprint(placed_safety_orders, sort_dicts=False)
+            # remove all data associated with s_symbol_pair from db
+            self.mdb.c_safety_orders.delete_one({"_id": s_symbol_pair})
 
-        profit = 0
-
-        for i in range(len(placed_safety_orders)):
-            if placed_safety_orders[i]['sell_order_txid'] == '':
-                # the previous one completed
-                if i == 0:
-                    # base sell
-                    profit = self.mdb.get_base_order_profit(s_symbol_pair)
-                else:
-                    # safety order
-                    profit = placed_safety_orders[i-1]['profit']
-                break
-
-        # profit = exit_cost - entry_cost - maker_fee - taker_fee
-        G.log.print_and_log(Color.BG_GREEN + f"{s_symbol_pair} trade complete{Color.ENDC}, profit: ${profit}", G.print_lock)
+            # profit = exit_cost - entry_cost - maker_fee - taker_fee
+            G.log.print_and_log(Color.BG_GREEN + f"{s_symbol_pair} trade complete{Color.ENDC}, profit: ${profit}", G.print_lock)
         return
 
     def ws_message(self, ws: WebSocketApp, message: str) -> None:
@@ -95,7 +93,7 @@ class OwnTradesSocketHandler(SocketHandlerBase):
                                                 if filled_so_nums[-1] == '1':
                                                     # the first safety order has filled so cancel the base sell order
                                                     base_order = BaseOrder(g_config.API_KEY, g_config.API_SECRET)
-                                                    base_order.cancel_sell(s_symbol_pair)
+                                                    base_order.cancel_sell(s_symbol_pair) # print out g_config.API_KEY, g_config.API_SECRET values
                                                     safety_order.sell(s_symbol_pair, '1')
                                                 else:
                                                     # a safety order higher than 1 was filled.

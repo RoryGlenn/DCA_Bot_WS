@@ -97,8 +97,15 @@ class KrakenDCABot(KrakenBotBase):
         return
 
     def nuke(self) -> None:
+        G.log.print_and_log("WIPING DATABASE AND OPEN BUY ORDERS!!! You have 10 seconds to cancel...", G.print_lock)
+        time.sleep(10)
+
         self.mdb.c_safety_orders.drop()
+
         # cancel all buy orders in database!
+        for txid, order_info in self.get_open_orders()['result']['open'].items():
+            if order_info['descr']['type'] == 'buy':
+                self.cancel_order(txid)
         return
 
     def start_trade_loop(self) -> None:
@@ -112,7 +119,6 @@ class KrakenDCABot(KrakenBotBase):
         # wait for socket handlers to finish initializing
         time.sleep(2)
 
-        # self.mdb.c_safety_orders.drop()
 
         # [07/01/2022 22:14:47] XZEC/ZUSD Base order filled buy 0.03500000 ZECUSD @ market
         # [07/01/2022 22:14:50] XZEC/ZUSD Base order placed sell 0.03500000 ZECUSD @ limit 146.73
@@ -125,9 +131,10 @@ class KrakenDCABot(KrakenBotBase):
         # [07/01/2022 22:14:58] XZEC/ZUSD Could not place safety order 7 {'error': ['EQuery:Unknown asset pair']}
 
         # [10/01/2022 11:05:01] LINK/USD sell order did not go through! {'error': ['EAPI:Invalid key']}
-        
 
-        while True:
+        self.nuke()
+
+        while True: 
             start_time     = time.time()
             buy_dict       = self.get_buy_dict()
             current_trades = self.mdb.get_current_trades()
@@ -135,6 +142,8 @@ class KrakenDCABot(KrakenBotBase):
             G.log.print_and_log(Color.FG_BRIGHT_BLACK + f"Main thread: checked all coins in {self.get_elapsed_time(start_time)}" + Color.ENDC, G.print_lock)
             G.log.print_and_log(f"Main thread: Current trades {current_trades}", G.print_lock)
             G.log.print_and_log(f"Main thread: Buy list {PrettyPrinter(indent=1).pformat([symbol_pair for (_, symbol_pair) in buy_dict.items()])}", G.print_lock)
+
+            buy_dict = {"DASH":"DASH/USD"}
 
             for symbol, symbol_pair in buy_dict.items():
                 if not self.mdb.in_safety_orders(symbol_pair):

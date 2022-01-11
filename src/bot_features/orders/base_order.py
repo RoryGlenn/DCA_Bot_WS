@@ -88,10 +88,9 @@ class BaseOrder(KrakenBotBase):
             return {'status': f"order did not go through! {order_result}"}
         return {'status': 'ok', 'order_result': order_result}
 
-    def sell(self, symbol_pair_s: str):
+    def sell(self, s_symbol_pair: str):
         """place a limit order for the base order."""
-
-        symbol_pair       = symbol_pair_s.split("/")
+        symbol_pair       = s_symbol_pair.split("/")
         symbol_pair       = symbol_pair[0] + symbol_pair[1]
 
         max_price_prec    = self.get_max_price_precision(symbol_pair)
@@ -101,15 +100,15 @@ class BaseOrder(KrakenBotBase):
         base_order_size   = self.round_decimals_down(self.dca.base_order_size, max_volume_prec)
 
         # place the sell order!
-        sell_order_result = self.limit_order(Trade.SELL, base_order_size, symbol_pair, base_target_price)
+        sell_order_result = self.limit_order(s_symbol_pair, Trade.SELL, base_target_price, base_order_size)
 
         if self.has_result(sell_order_result):
             sell_order_txid = sell_order_result[Dicts.RESULT][Data.TXID][0]
-            self.mdb.base_order_place_sell(symbol_pair_s, sell_order_txid)
-            G.log.print_and_log(f"{symbol_pair_s} Base order placed {sell_order_result[Dicts.RESULT][Dicts.DESCR][Dicts.ORDER]}", G.print_lock)
+            self.mdb.base_order_place_sell(s_symbol_pair, sell_order_txid)
+            G.log.print_and_log(f"{s_symbol_pair} Base order placed {sell_order_result[Dicts.RESULT][Dicts.DESCR][Dicts.ORDER]}", G.print_lock)
             return {'status': 'ok'}
 
-        G.log.print_and_log(f"Could not place sell order for {symbol_pair}: {sell_order_result}")
+        G.log.print_and_log(f"Could not place sell order for {s_symbol_pair}: {sell_order_result}", G.print_lock)
         return {'status': 'could not place sell order'}
 
     def cancel_sell(self, s_symbol_pair: str) -> None:

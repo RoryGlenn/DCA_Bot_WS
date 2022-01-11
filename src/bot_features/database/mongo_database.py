@@ -66,8 +66,8 @@ class MongoDatabase():
     def get_safety_order_table(self) -> dict():
         return self.c_safety_orders.find()
 
-    def in_safety_orders(self, symbol_pair: str) -> bool:
-        return bool(self.c_safety_orders.count_documents({"_id": symbol_pair}) != 0)
+    def in_safety_orders(self, s_symbol_pair: str) -> bool:
+        return bool(self.c_safety_orders.count_documents({"_id": s_symbol_pair}) != 0)
 
     def is_safety_order(self, s_symbol_pair: str, order_txid: str) -> bool:
         for document in self.c_safety_orders.find({'_id': s_symbol_pair}):

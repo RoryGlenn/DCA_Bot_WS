@@ -41,7 +41,7 @@ class SafetyOrder(KrakenBotBase):
             price           = round(safety_order['price'], max_price_prec)
 
             ### buy ###
-            order_result = self.limit_order(Trade.BUY, quantity_to_buy, s_symbol_pair, price)
+            order_result = self.limit_order(s_symbol_pair, Trade.BUY, price, quantity_to_buy)
             time.sleep(1)
             ###########
 
