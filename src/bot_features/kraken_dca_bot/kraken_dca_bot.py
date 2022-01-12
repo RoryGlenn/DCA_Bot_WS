@@ -54,7 +54,7 @@ class KrakenDCABot(KrakenBotBase):
 
             if self.tv.is_buy(symbol_pair, g_config.DCA_DATA[symbol][ConfigKeys.DCA_TIME_INTERVALS]):
                 if symbol in G.x_dict.keys():
-                    buy_dict[symbol] = 'X' + symbol + "/" + StableCoins.ZUSD
+                    buy_dict[G.x_dict[symbol]] = G.x_dict[symbol] + "/" + StableCoins.ZUSD
                 else:
                     buy_dict[symbol] = symbol + "/" + StableCoins.USD
         return buy_dict
@@ -106,6 +106,13 @@ class KrakenDCABot(KrakenBotBase):
             # buy_dict = {'ATOM':'ATOM/USD', 'KAVA':'KAVA/USD', 'PAXG':'PAXG/USD', 'WAVES':'WAVES/USD'}
 
             for symbol, symbol_pair in buy_dict.items():
+                # temporary until we fix the x_list problem
+                if symbol in G.x_list or symbol_pair in G.x_dict:
+                    continue
+
+                if symbol == 'XXDG' or symbol == 'XDG':
+                    continue
+
                 if not self.mdb.in_safety_orders(symbol_pair):
                     if self.is_ok(base_order.buy(symbol, symbol_pair)):
                         base_order.sell(symbol_pair)
