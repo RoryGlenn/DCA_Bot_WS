@@ -16,7 +16,7 @@ from util.globals                           import G
 class BaseOrder(KrakenBotBase):
     def __init__(self, api_key: str, api_secret: str) -> None:
         super().__init__(api_key, api_secret)
-        self.mdb: MongoDatabase = MongoDatabase()
+        self.mdb = MongoDatabase()
         return
 
     def get_entry_price(self, order_result: dict) -> str:
@@ -122,8 +122,8 @@ class BaseOrder(KrakenBotBase):
         base_order_txid = self.mdb.get_base_order_sell_txid(s_symbol_pair)
         cancel_result   = self.cancel_order(base_order_txid)
 
+        G.log.print_and_log(f"{s_symbol_pair} base order cancel sell result: {cancel_result}", G.print_lock)
+
         # cancel base sell order in db
         self.mdb.base_order_cancel_sell(s_symbol_pair)
-
-        G.log.print_and_log(f"{s_symbol_pair} cancel order result: {cancel_result}", G.print_lock)
         return

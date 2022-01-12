@@ -14,7 +14,7 @@ from util.globals                           import G
 class SafetyOrder(KrakenBotBase):
     def __init__(self, api_key: str, api_secret: str) -> None:
         super().__init__(api_key, api_secret)
-        self.mdb:    MongoDatabase = MongoDatabase()
+        self.mdb = MongoDatabase()
         return
 
     def buy(self, symbol: str, s_symbol_pair: str):
@@ -57,8 +57,6 @@ class SafetyOrder(KrakenBotBase):
     def sell(self, s_symbol_pair: str, so_num: str) -> None:
         so_data = self.mdb.get_safety_order_data_by_num(s_symbol_pair, so_num) 
 
-        # pprint(so_data, sort_dicts=False)
-
         symbol_pair = s_symbol_pair.split("/")
         symbol_pair = symbol_pair[0] + symbol_pair[1]
 
@@ -83,11 +81,11 @@ class SafetyOrder(KrakenBotBase):
         # cancel the sell limit safety order whose so_num is: filled_so_nums[-1] - 1
         txid_to_cancel = self.mdb.get_safety_order_sell_txid(s_symbol_pair, so_num)
         
-        G.log.print_and_log(f"{s_symbol_pair} txid to cancel: {txid_to_cancel}", G.print_lock)
+        G.log.print_and_log(f"{s_symbol_pair} safety order txid to cancel: {txid_to_cancel}", G.print_lock)
         
         order_result = self.cancel_order(txid_to_cancel)
 
-        G.log.print_and_log(f"{s_symbol_pair} cancel order result: {order_result}", G.print_lock)
+        G.log.print_and_log(f"{s_symbol_pair} safety order cancel order result: {order_result}", G.print_lock)
         
         self.mdb.cancel_sell_order(s_symbol_pair, txid_to_cancel)
         return

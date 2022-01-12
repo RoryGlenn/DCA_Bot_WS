@@ -43,42 +43,31 @@ class OpenOrdersSocketHandler(SocketHandlerBase):
             """We have a new order"""
             for open_orders in message[0]:
                 for txid, order_info in open_orders.items():
-                    # if Status.STATUS not in order_info.keys():
-                    #     # 1. A safety order was filled: BAT/USD O7HY74-TVFT5-43NC5C
-                    #     # 2. Safety order x placed -> I DONT THINK THIS IS TRUE!!!!!!!!!!!!!
-
-                    #     if 'cost' in order_info.keys():
-                    #         self.__update_available_usd(cost, "Status not in order_info.keys()")
-                    #     else:
-                    #         G.log.print_and_log(f"{order_info}", G.print_lock)
-                    #     return
                     if Status.STATUS in order_info.keys():
                         if order_info[Status.STATUS] == Status.PENDING:
                             self.open_orders[txid] = order_info
-
-                            # subtract the value from G.availableusd
+                            
                             if order_info['descr']['type'] == 'buy':
                                 price    = float(order_info['descr']['price'])
                                 quantity = float(order_info['vol'])
                                 cost     = price * quantity
-
                                 self.__update_available_usd(-cost, "status pending")
                         elif order_info[Status.STATUS] == Status.CANCELED:
                             # if txid in self.open_orders.keys():
-                            price     = float(self.open_orders[txid]['descr']['price'])
-                            vol       = float(self.open_orders[txid]['vol'])
-                            usd_value = price * vol
-
-                            self.__update_available_usd(usd_value, "Cancelled order")
+                            price = float(self.open_orders[txid]['descr']['price'])
+                            vol   = float(self.open_orders[txid]['vol'])
+                            cost  = price * vol
+                            self.__update_available_usd(cost, "Cancelled order")
                         elif order_info[Status.STATUS] == Status.OPEN:
-                            G.log.print_and_log(f"openOrders: status open -> Available USD: {G.available_usd}", G.print_lock)
-                            G.log.print_and_log(f"openOrders: status open -> order info: {order_info}", G.print_lock)
+                            # G.log.print_and_log(f"openOrders: status open -> Available USD: {G.available_usd}", G.print_lock)
+                            G.log.print_and_log(f"openOrders: status open -> message: {message}", G.print_lock)
                         elif order_info[Status.STATUS] == Status.CLOSED:
                             # a buy limit order was filled
                             G.log.print_and_log(f"openOrders: status closed -> {order_info}", G.print_lock)
                     else:
-                        # should never happen?
-                        G.log.print_and_log(f"openOrders: unknown case was triggered -> {message}", G.print_lock)
+                        # an order was filled
+                        #  [[{'OAHGRQ-3CBY3-FCRPDC': {'vol_exec': '0.30000000', 'cost': '5.38200', 'fee': '0.00861', 'avg_price': '17.94000', 'userref': 0}}], 'openOrders', {'sequence': 2}]
+                        G.log.print_and_log(f"openOrders: an order was filled -> {message}", G.print_lock)
         return
 
     def ws_open(self, ws: WebSocketApp) -> None:
@@ -94,14 +83,4 @@ class OpenOrdersSocketHandler(SocketHandlerBase):
     def ws_error(self, ws: WebSocketApp, error_message: str) -> None:
         G.log.print_and_log("openOrders Error: " + str(error_message), G.print_lock)
         return
-
-    # def ws_thread(self, *args) -> None:
-    #     while True:
-    #         ws = WebSocketApp(
-    #             url=WEBSOCKET_PRIVATE_URL,
-    #             on_open=self.ws_open,
-    #             on_close=self.ws_close,
-    #             on_message=self.ws_message,
-    #             on_error=self.ws_error)
-    #         ws.run_forever()
-    #     return
+        

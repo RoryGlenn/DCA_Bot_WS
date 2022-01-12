@@ -26,9 +26,9 @@ from util.config                                             import g_config
 class KrakenDCABot(KrakenBotBase):
     def __init__(self) -> None:
         super().__init__(g_config.API_KEY, g_config.API_SECRET)
-        self.rest_api = KrakenRestAPI(g_config.API_KEY, g_config.API_SECRET)
-        self.tv       = TradingView()
-        self.mdb      = MongoDatabase()
+        self.rest_api     = KrakenRestAPI(g_config.API_KEY, g_config.API_SECRET)
+        self.trading_view = TradingView()
+        self.mdb          = MongoDatabase()
         return
 
     def is_ok(self, order_result: dict):
@@ -54,7 +54,7 @@ class KrakenDCABot(KrakenBotBase):
             if symbol in G.x_list or symbol in G.reg_list: # temp fix until we solve the x_list issue
                 continue
 
-            if self.tv.is_buy(symbol_pair, g_config.DCA_DATA[symbol][ConfigKeys.DCA_TIME_INTERVALS]):
+            if self.trading_view.is_buy(symbol_pair, g_config.DCA_DATA[symbol][ConfigKeys.DCA_TIME_INTERVALS]):
                 if symbol in G.x_dict.keys():
                     buy_dict[G.x_dict[symbol]] = G.x_dict[symbol] + "/" + StableCoins.ZUSD
                 else:
@@ -78,10 +78,10 @@ class KrakenDCABot(KrakenBotBase):
 
     def market_sell_all_assets(self):
         """Maket sells all assets except for staked assets in spot wallet."""
-
         for symbol, quantity_to_sell in self.get_account_balance()['result'].items():
             quantity_to_sell = float(quantity_to_sell)
-            symbol_pair = ""
+            symbol_pair      = ""
+            pair             = ""
 
             if quantity_to_sell == 0:
                 continue
@@ -94,8 +94,10 @@ class KrakenDCABot(KrakenBotBase):
             
             if symbol in G.x_list:
                 symbol_pair = symbol + '/' + StableCoins.ZUSD
+                pair        = symbol + StableCoins.ZUSD
             else:
                 symbol_pair = symbol + '/' + StableCoins.USD
+                pair        = symbol + StableCoins.USD
 
             pair      = symbol_pair.split("/")
             order_min = self.get_order_min(pair[0]+pair[1])

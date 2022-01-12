@@ -1,5 +1,4 @@
 import json
-import time
 
 from pprint                                           import pprint
 from websocket._app                                   import WebSocketApp
@@ -101,7 +100,11 @@ class OwnTradesSocketHandler(SocketHandlerBase):
                                                     else:
                                                         # a safety order higher than 1 was filled.
                                                         so_cancel_num_str = str( int(filled_so_nums[-2]) + 1 )
+                                                        G.log.print_and_log(f"so_cancel_num_str: {so_cancel_num_str}", G.print_lock)
+
                                                         self.safety_order.cancel_sell(s_symbol_pair, so_cancel_num_str)
+                                                        G.log.print_and_log(f"s_symbol_pair: {s_symbol_pair}, filled_so_nums[-1]: {filled_so_nums[-1]}", G.print_lock)
+
                                                         self.safety_order.sell(s_symbol_pair, filled_so_nums[-1])
                                 elif trade_info['type'] == 'sell':
                                     self.__finish_trade(s_symbol_pair)
@@ -128,14 +131,3 @@ class OwnTradesSocketHandler(SocketHandlerBase):
     def ws_error(self, ws: WebSocketApp, error_message: str) -> None:
         G.log.print_and_log(f"ownTrades: Error {str(error_message)}", G.print_lock)
         return
-
-    # def ws_thread(self, *args) -> None:
-    #     while True:
-    #         ws = WebSocketApp(
-    #             url=WEBSOCKET_PRIVATE_URL,
-    #             on_open=self.ws_open,
-    #             on_close=self.ws_close,
-    #             on_message=self.ws_message,
-    #             on_error=self.ws_error)
-    #         ws.run_forever()
-    #     return
