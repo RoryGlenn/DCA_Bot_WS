@@ -129,13 +129,13 @@ class OwnTradesSocketHandler(SocketHandlerBase):
         G.log.print_and_log(f"ownTrades: Error {str(error_message)}", G.print_lock)
         return
 
-    def ws_thread(self, *args) -> None:
-        while True:
-            ws = WebSocketApp(
-                url=WEBSOCKET_PRIVATE_URL,
-                on_open=self.ws_open,
-                on_close=self.ws_close,
-                on_message=self.ws_message,
-                on_error=self.ws_error)
-            ws.run_forever()
-        return
+    # def ws_thread(self, *args) -> None:
+    #     while True:
+    #         ws = WebSocketApp(
+    #             url=WEBSOCKET_PRIVATE_URL,
+    #             on_open=self.ws_open,
+    #             on_close=self.ws_close,
+    #             on_message=self.ws_message,
+    #             on_error=self.ws_error)
+    #         ws.run_forever()
+    #     return
