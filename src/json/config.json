@@ -173,7 +173,7 @@
         "dca_all_or_nothing":               true,
         "dca_time_intervals":               ["1m", "5m", "15m", "1h", "2h", "4h"]
       },
-      "ETC": {
+      "XETC": {
         "dca_target_profit_percent":        1.0,
         "dca_safety_orders_max":            7,
         "dca_safety_orders_active_max":     7,
@@ -185,7 +185,7 @@
         "dca_all_or_nothing":               true,
         "dca_time_intervals":               ["1m", "5m", "15m", "1h", "2h", "4h"]
       },
-      "ETH": {
+      "XETH": {
         "dca_target_profit_percent":        1.0,
         "dca_safety_orders_max":            7,
         "dca_safety_orders_active_max":     7,
@@ -317,7 +317,7 @@
         "dca_all_or_nothing":               true,
         "dca_time_intervals":               ["1m", "5m", "15m", "1h", "2h", "4h"]
       },
-      "LTC": {
+      "XLTC": {
         "dca_target_profit_percent":        1.0,
         "dca_safety_orders_max":            7,
         "dca_safety_orders_active_max":     7,
@@ -353,7 +353,7 @@
         "dca_all_or_nothing":               true,
         "dca_time_intervals":               ["1m", "5m", "15m", "1h", "2h", "4h"]
       },
-      "MLN": {
+      "XMLN": {
         "dca_target_profit_percent":        1.0,
         "dca_safety_orders_max":            7,
         "dca_safety_orders_active_max":     7,
@@ -437,7 +437,7 @@
         "dca_all_or_nothing":               true,
         "dca_time_intervals":               ["1m", "5m", "15m", "1h", "2h", "4h"]
       },
-      "REP": {
+      "XREP": {
         "dca_target_profit_percent":        1.0,
         "dca_safety_orders_max":            7,
         "dca_safety_orders_active_max":     7,
@@ -557,7 +557,7 @@
         "dca_all_or_nothing":               true,
         "dca_time_intervals":               ["1m", "5m", "15m", "1h", "2h", "4h"]
       },
-      "XBT": {
+      "XXBT": {
         "dca_target_profit_percent":        1.0,
         "dca_safety_orders_max":            7,
         "dca_safety_orders_active_max":     7,
@@ -569,7 +569,7 @@
         "dca_all_or_nothing":               true,
         "dca_time_intervals":               ["1m", "5m", "15m", "1h", "2h", "4h"]
       },
-      "XDG": {
+      "XXDG": {
         "dca_target_profit_percent":        1.0,
         "dca_safety_orders_max":            7,
         "dca_safety_orders_active_max":     7,
@@ -581,7 +581,7 @@
         "dca_all_or_nothing":               true,
         "dca_time_intervals":               ["1m", "5m", "15m", "1h", "2h", "4h"]
       },
-      "XLM": {
+      "XXLM": {
         "dca_target_profit_percent":        1.0,
         "dca_safety_orders_max":            7,
         "dca_safety_orders_active_max":     7,
@@ -593,7 +593,7 @@
         "dca_all_or_nothing":               true,
         "dca_time_intervals":               ["1m", "5m", "15m", "1h", "2h", "4h"]
       },
-      "XMR": {
+      "XXMR": {
         "dca_target_profit_percent":        1.0,
         "dca_safety_orders_max":            7,
         "dca_safety_orders_active_max":     7,
@@ -617,7 +617,7 @@
         "dca_all_or_nothing":               true,
         "dca_time_intervals":               ["1m", "5m", "15m", "1h", "2h", "4h"]
       },
-      "ZEC": {
+      "XZEC": {
         "dca_target_profit_percent":        1.0,
         "dca_safety_orders_max":            7,
         "dca_safety_orders_active_max":     7,

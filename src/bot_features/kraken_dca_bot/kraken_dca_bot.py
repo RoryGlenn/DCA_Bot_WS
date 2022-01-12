@@ -23,13 +23,12 @@ from util.globals                                            import G
 from util.config                                             import g_config
 
 
-
 class KrakenDCABot(KrakenBotBase):
     def __init__(self) -> None:
         super().__init__(g_config.API_KEY, g_config.API_SECRET)
-        self.rest_api: KrakenRestAPI = KrakenRestAPI(g_config.API_KEY, g_config.API_SECRET)
-        self.tv:       TradingView   = TradingView()
-        self.mdb:      MongoDatabase = MongoDatabase()
+        self.rest_api = KrakenRestAPI(g_config.API_KEY, g_config.API_SECRET)
+        self.tv       = TradingView()
+        self.mdb      = MongoDatabase()
         return
 
     def is_ok(self, order_result: dict):
@@ -51,6 +50,9 @@ class KrakenDCABot(KrakenBotBase):
             symbol_pair = alt_name + StableCoins.USD
 
             G.log.print_and_log(f"Main thread: checking {symbol_pair}", G.print_lock)
+
+            if symbol in G.x_list or symbol in G.reg_list: # temp fix until we solve the x_list issue
+                continue
 
             if self.tv.is_buy(symbol_pair, g_config.DCA_DATA[symbol][ConfigKeys.DCA_TIME_INTERVALS]):
                 if symbol in G.x_dict.keys():

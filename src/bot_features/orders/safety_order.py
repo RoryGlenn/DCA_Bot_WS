@@ -11,10 +11,6 @@ from util.config                            import g_config
 from util.globals                           import G
 
 
-x_list:   list = ['XETC', 'XETH', 'XLTC', 'XMLN', 'XREP', 'XXBT', 'XXDG', 'XXLM', 'XXMR', 'XXRP', 'XZEC']
-reg_list: list = ['ETC', 'ETH', 'LTC', 'MLN', 'REP', 'XBT', 'XDG', 'XLM', 'XMR', 'XRP', 'ZEC']
-
-
 class SafetyOrder(KrakenBotBase):
     def __init__(self, api_key: str, api_secret: str) -> None:
         super().__init__(api_key, api_secret)
@@ -61,7 +57,7 @@ class SafetyOrder(KrakenBotBase):
     def sell(self, s_symbol_pair: str, so_num: str) -> None:
         so_data = self.mdb.get_safety_order_data_by_num(s_symbol_pair, so_num) 
 
-        pprint(so_data, sort_dicts=False)
+        # pprint(so_data, sort_dicts=False)
 
         symbol_pair = s_symbol_pair.split("/")
         symbol_pair = symbol_pair[0] + symbol_pair[1]
@@ -78,7 +74,7 @@ class SafetyOrder(KrakenBotBase):
         order_result = self.limit_order(s_symbol_pair, Trade.SELL, price, total_quantity)
 
         if self.has_result(order_result):
-            G.log.print_and_log(f"{s_symbol_pair} safety order sell {so_num} placed {order_result[Dicts.RESULT][Dicts.DESCR][Dicts.ORDER]}", G.print_lock)
+            G.log.print_and_log(f"{s_symbol_pair} safety order {so_num} placed {order_result[Dicts.RESULT][Dicts.DESCR][Dicts.ORDER]}", G.print_lock)
         else:
             G.log.print_and_log(f"{s_symbol_pair} sell order did not go through! {order_result}", G.print_lock)        
         return

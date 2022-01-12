@@ -90,19 +90,19 @@ class OwnTradesSocketHandler(SocketHandlerBase):
                                                 filled_so_nums = self.mdb.get_filled_safety_order_numbers(s_symbol_pair)
 
                                                 # code below figures out which safety order was filled.
-
-                                                if filled_so_nums[-1] == '1':
-                                                    # the first safety order has filled so cancel the base sell order
-                                                    print(self.base_order.key, self.base_order.secret)
-                                                    self.base_order.cancel_sell(s_symbol_pair) # print out g_config.API_KEY, g_config.API_SECRET values
-                                                    
-                                                    print(self.safety_order.key, self.safety_order.secret)
-                                                    self.safety_order.sell(s_symbol_pair, '1')
-                                                else:
-                                                    # a safety order higher than 1 was filled.
-                                                    so_cancel_num_str = str( int(filled_so_nums[-2]) + 1 )
-                                                    self.safety_order.cancel_sell(s_symbol_pair, so_cancel_num_str)
-                                                    self.safety_order.sell(s_symbol_pair, filled_so_nums[-1])
+                                                if len(filled_so_nums) > 0:
+                                                    if filled_so_nums[-1] == '1':
+                                                        # the first safety order has filled so cancel the base sell order
+                                                        print(self.base_order.key, self.base_order.secret)
+                                                        self.base_order.cancel_sell(s_symbol_pair) # print out g_config.API_KEY, g_config.API_SECRET values
+                                                        
+                                                        print(self.safety_order.key, self.safety_order.secret)
+                                                        self.safety_order.sell(s_symbol_pair, '1')
+                                                    else:
+                                                        # a safety order higher than 1 was filled.
+                                                        so_cancel_num_str = str( int(filled_so_nums[-2]) + 1 )
+                                                        self.safety_order.cancel_sell(s_symbol_pair, so_cancel_num_str)
+                                                        self.safety_order.sell(s_symbol_pair, filled_so_nums[-1])
 
                                                 time.sleep(1)
                                 elif trade_info['type'] == 'sell':
