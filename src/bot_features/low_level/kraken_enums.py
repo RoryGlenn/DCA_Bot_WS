@@ -25,6 +25,7 @@ class Status:
     OPEN     = "open"
     PENDING  = "pending"
     CANCELED = "canceled"
+    CLOSED   = 'closed'
 
 class WS_API:
     API_DOMAIN_PUBLIC  = "wss://ws.kraken.com/"

@@ -35,11 +35,17 @@ class BaseOrder(KrakenBotBase):
             self.dca = DCA(symbol, symbol_pair, base_order_size, safety_order_size, market_price)
             self.dca.start()
 
-            if self.dca.total_cost_levels[-1] > G.available_usd:
-                G.log.print_and_log(f"{symbol_pair} total cost: {self.dca.total_cost_levels[-1]} > Available usd: {G.available_usd}", G.print_lock)
+            G.usd_lock.acquire()
+            available_usd = G.available_usd
+            b_result      = bool(self.dca.total_cost_levels[-1] > G.available_usd)
+            G.usd_lock.release()
+
+            if b_result:
+                G.log.print_and_log(f"{symbol_pair} total cost: {self.dca.total_cost_levels[-1]} > Available usd: {available_usd}", G.print_lock)
             else:
-                G.log.print_and_log(f"{symbol_pair} total cost: {self.dca.total_cost_levels[-1]} <= Available usd: {G.available_usd}", G.print_lock)
-            return True if self.dca.total_cost_levels[-1] > G.available_usd else False
+                G.log.print_and_log(f"{symbol_pair} total cost: {self.dca.total_cost_levels[-1]} <= Available usd: {available_usd}", G.print_lock)
+            return b_result
+
 
     def buy(self, symbol: str, symbol_pair: str):
         """Place buy order for symbol_pair."""

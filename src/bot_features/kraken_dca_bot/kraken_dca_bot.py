@@ -76,6 +76,27 @@ class KrakenDCABot(KrakenBotBase):
         time.sleep(2)
         return
 
+    def market_sell_all_assets(self):
+        """Maket sells all assets except for staked assets in spot wallet."""
+
+        for symbol, quantity in self.get_account_balance()['result'].items():
+            symbol_pair = ""
+
+            if float(quantity) <= 0:
+                continue
+
+            if symbol in StableCoins.STABLE_COINS_LIST:
+                continue
+            
+            if symbol in G.x_list:
+                symbol_pair = symbol + StableCoins.ZUSD
+            else:
+                symbol_pair = symbol + StableCoins.USD
+
+            order_result = self.market_order(symbol_pair, Trade.SELL, float(quantity))
+            pprint(order_result, sort_dicts=False)
+        return
+
     def nuke(self) -> None:
         G.log.print_and_log("WIPING DATABASE AND OPEN BUY ORDERS!!! You have 10 seconds to cancel...", G.print_lock)
         time.sleep(10)
@@ -84,8 +105,10 @@ class KrakenDCABot(KrakenBotBase):
 
         # cancel all buy orders in database!
         for txid, order_info in self.get_open_orders()['result']['open'].items():
-            if order_info['descr']['type'] == 'buy':
-                self.cancel_order(txid)
+            # if order_info['descr']['type'] == 'buy':
+            self.cancel_order(txid)
+        
+        self.market_sell_all_assets()
         return
 
     def start_trade_loop(self) -> None:
@@ -97,21 +120,20 @@ class KrakenDCABot(KrakenBotBase):
         self.start_socket_handler_threads()
 
         while True: 
-            start_time     = time.time()
-            buy_dict       = self.get_buy_dict()
+            # start_time     = time.time()
+            # buy_dict       = self.get_buy_dict()
             current_trades = self.mdb.get_current_trades()
 
-            G.log.print_and_log(Color.FG_BRIGHT_BLACK + f"Main thread: checked all coins in {self.get_elapsed_time(start_time)}" + Color.ENDC, G.print_lock)
-            G.log.print_and_log(f"Main thread: Current trades {current_trades}", G.print_lock)
-            G.log.print_and_log(f"Main thread: Buy list {PrettyPrinter(indent=1).pformat([symbol_pair for (_, symbol_pair) in buy_dict.items()])}", G.print_lock)
+            # G.log.print_and_log(Color.FG_BRIGHT_BLACK + f"Main thread: checked all coins in {self.get_elapsed_time(start_time)}" + Color.ENDC, G.print_lock)
+            # G.log.print_and_log(f"Main thread: Current trades {len(current_trades)} total: {current_trades}", G.print_lock)
+            # G.log.print_and_log(f"Main thread: Buy list {len(buy_dict)} total: {PrettyPrinter(indent=1).pformat([symbol_pair for (_, symbol_pair) in buy_dict.items()])}", G.print_lock)
 
-            # buy_dict = {'ATOM':'ATOM/USD', 'KAVA':'KAVA/USD', 'PAXG':'PAXG/USD', 'WAVES':'WAVES/USD'}
+            # for symbol, symbol_pair in buy_dict.items():
+            #     if not self.mdb.in_safety_orders(symbol_pair):
+            #         if self.is_ok(base_order.buy(symbol, symbol_pair)):
+            #             base_order.sell(symbol_pair)
+            #             safety_orders.buy(symbol, symbol_pair)
 
-            for symbol, symbol_pair in buy_dict.items():
-                if not self.mdb.in_safety_orders(symbol_pair):
-                    if self.is_ok(base_order.buy(symbol, symbol_pair)):
-                        base_order.sell(symbol_pair)
-                        safety_orders.buy(symbol, symbol_pair)
             
             self.wait(message=Color.FG_BRIGHT_BLACK + f"Main thread: waiting until {self.get_buy_time()} to buy\n" + Color.ENDC, timeout=60)
         return

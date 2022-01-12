@@ -1,5 +1,4 @@
 import json
-import pymongo
 
 from pprint                                           import pprint
 from websocket._app                                   import WebSocketApp
@@ -11,10 +10,8 @@ from util.globals                                     import G
 
 
 class BalancesSocketHandler(SocketHandlerBase):
-    def __init__(self, api_token) -> None:
+    def __init__(self, api_token: str) -> None:
         self.api_token = api_token
-        self.db = pymongo.MongoClient()[DB.DATABASE_NAME]
-        self.collection = self.db[DB.COLLECTION_B]
         return
 
     def ws_message(self, ws: WebSocketApp, message: str) -> None:
@@ -22,17 +19,14 @@ class BalancesSocketHandler(SocketHandlerBase):
         
         if isinstance(message, dict):
             if "balances" in message.keys():
-                for symbol, quantity in message["balances"].items():
-                    if quantity > 0:
-                        if symbol == "USD":
-                            G.usd_lock.acquire()
-                            G.available_usd = quantity
-                            G.usd_lock.release()
+                G.usd_lock.acquire()
+                G.available_usd += float(message['balances']['USD'])
+                G.log.print_and_log(f"balances: Available USD: {G.available_usd}", G.print_lock)
+                G.usd_lock.release()
         return
             
     def ws_open(self, ws: WebSocketApp) -> None:
         G.log.print_and_log("balances: opened socket", G.print_lock)
-
         api_data = '{"event":"subscribe", "subscription":{"name":"%(feed)s", "token":"%(token)s"}}' % {"feed": "balances", "token": self.api_token}
         ws.send(api_data)
         return
