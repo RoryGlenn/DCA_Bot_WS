@@ -106,13 +106,6 @@ class KrakenDCABot(KrakenBotBase):
             # buy_dict = {'ATOM':'ATOM/USD', 'KAVA':'KAVA/USD', 'PAXG':'PAXG/USD', 'WAVES':'WAVES/USD'}
 
             for symbol, symbol_pair in buy_dict.items():
-                # temporary until we fix the x_list problem
-                if symbol in G.x_list or symbol_pair in G.x_dict:
-                    continue
-
-                if symbol == 'XXDG' or symbol == 'XDG':
-                    continue
-
                 if not self.mdb.in_safety_orders(symbol_pair):
                     if self.is_ok(base_order.buy(symbol, symbol_pair)):
                         base_order.sell(symbol_pair)
