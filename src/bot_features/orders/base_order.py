@@ -35,10 +35,8 @@ class BaseOrder(KrakenBotBase):
             self.dca = DCA(symbol, symbol_pair, base_order_size, safety_order_size, market_price)
             self.dca.start()
 
-            G.usd_lock.acquire()
-            available_usd = G.available_usd
-            b_result      = bool(self.dca.total_cost_levels[-1] > G.available_usd)
-            G.usd_lock.release()
+            available_usd = self.get_available_usd_balance()
+            b_result      = bool(self.dca.total_cost_levels[-1] > available_usd)
 
             if b_result:
                 G.log.print_and_log(f"{symbol_pair} total cost: {self.dca.total_cost_levels[-1]} > Available usd: {available_usd}", G.print_lock)
@@ -51,8 +49,8 @@ class BaseOrder(KrakenBotBase):
         """Place buy order for symbol_pair."""
         pair         = symbol_pair.split("/")
         order_min    = self.get_order_min('X' + pair[0] + StableCoins.ZUSD) if pair[0] in G.reg_list else self.get_order_min(pair[0] + pair[1])
-        
         market_price = self.get_bid_price(symbol_pair)
+
         if market_price == 0:
             # if market_price is 0, we gave it a bad symbol_pair, so try again without the slash.
             market_price = self.get_bid_price(pair[0]+pair[1])

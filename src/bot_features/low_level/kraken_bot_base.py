@@ -235,16 +235,21 @@ class KrakenBotBase(KrakenRestAPI):
 
     def get_available_usd_balance(self) -> float:
         """Get available usd balance by subtracting open buy orders from total usd in wallet."""
-        open_orders = self.get_open_orders()
-        buy_total   = 0
+        open_orders     = self.get_open_orders()
+        time.sleep(1)
+        account_balance = self.get_account_balance()
+        time.sleep(1)
+        buy_total       = 0.0
 
-        if Dicts.RESULT in open_orders.keys():
-            for txid in open_orders[Dicts.RESULT][Dicts.OPEN]:
-                for key in open_orders[Dicts.RESULT][Dicts.OPEN][txid].keys():
-                    if key == Dicts.DESCR:
-                        if open_orders[Dicts.RESULT][Dicts.OPEN][txid][Dicts.DESCR][Data.TYPE] == Data.BUY:
-                            price     = float(open_orders[Dicts.RESULT][Dicts.OPEN][txid][Dicts.DESCR][Data.PRICE])
-                            qty       = float(open_orders[Dicts.RESULT][Dicts.OPEN][txid][Dicts.DESCR][Dicts.ORDER].split(" ")[1])
-                            buy_total += price * qty
-                            break
-        return round(buy_total, 3)
+        if self.has_result(account_balance):
+            buy_total = float(account_balance[Dicts.RESULT][StableCoins.ZUSD])
+
+        if self.has_result(open_orders):
+            open_orders = open_orders[Dicts.RESULT][Dicts.OPEN]
+
+            for dictionary in open_orders.values():
+                    if dictionary[Dicts.DESCR][Data.TYPE] == Data.BUY:
+                        price     = float(dictionary[Dicts.DESCR][Data.PRICE])
+                        qty       = float(dictionary[Dicts.DESCR][Dicts.ORDER].split(" ")[1])
+                        buy_total -= price * qty
+        return buy_total

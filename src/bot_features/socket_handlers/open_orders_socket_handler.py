@@ -63,6 +63,7 @@ class OpenOrdersSocketHandler(SocketHandlerBase):
                             G.log.print_and_log(f"openOrders: status open -> message: {message}", G.print_lock)
                         elif order_info[Status.STATUS] == Status.CLOSED:
                             # a buy limit order was filled
+                            # [13/01/2022 07:49:30] openOrders: status closed -> {'lastupdated': '1642073160.668600', 'status': 'closed', 'vol_exec': '78.12499999', 'cost': '61.3906250', 'fee': '0.0982250', 'avg_price': '0.7858000', 'userref': 0, 'cancel_reason': 'Insignificant volume remaining'}
                             G.log.print_and_log(f"openOrders: status closed -> {order_info}", G.print_lock)
                     else:
                         # an order was filled

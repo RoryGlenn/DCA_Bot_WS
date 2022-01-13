@@ -116,16 +116,7 @@ class KrakenDCABot(KrakenBotBase):
 
     def nuke(self) -> None:
         G.log.print_and_log("WIPING DATABASE AND OPEN BUY ORDERS!!! You have 10 seconds to cancel...", G.print_lock)
-        time.sleep(4)
-        time.sleep(1)
-        6
-        7
-        8
-        9
-
-        print(os.path.getsize(file_name)/1024+'KB / '+size+' KB downloaded!', end='\r')
-
-
+        time.sleep(10)
 
         self.mdb.c_safety_orders.drop()
 
@@ -163,3 +154,4 @@ class KrakenDCABot(KrakenBotBase):
             
             self.wait(message=Color.FG_BRIGHT_BLACK + f"Main thread: waiting until {self.get_buy_time()} to buy\n" + Color.ENDC, timeout=60)
         return
+        
