@@ -73,6 +73,10 @@ class SafetyOrder(KrakenBotBase):
 
         if self.has_result(order_result):
             G.log.print_and_log(f"{s_symbol_pair} safety order {so_num} placed {order_result[Dicts.RESULT][Dicts.DESCR][Dicts.ORDER]}", G.print_lock)
+            
+            # store sell order txid here!!!
+            sell_order_txid = order_result[Dicts.RESULT][Data.TXID][0]
+            self.mdb.store_safety_order_sell_txid(s_symbol_pair, so_num, sell_order_txid)
         else:
             G.log.print_and_log(f"{s_symbol_pair} sell order did not go through! {order_result}", G.print_lock)        
         return

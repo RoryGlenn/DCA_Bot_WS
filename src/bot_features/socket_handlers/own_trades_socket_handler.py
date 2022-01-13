@@ -69,7 +69,7 @@ class OwnTradesSocketHandler(SocketHandlerBase):
                         message = message[0]
                         
                         for dictionary in message:
-                            for trade_txid, trade_info in dictionary.items():
+                            for trade_info in dictionary.values():
                                 order_txid              = trade_info['ordertxid']
                                 self.trades[order_txid] = trade_info
                                 s_symbol_pair           = trade_info['pair']
@@ -94,7 +94,7 @@ class OwnTradesSocketHandler(SocketHandlerBase):
                                                 # code below figures out which safety order was filled.
                                                 if len(filled_so_nums) > 0:
                                                     if filled_so_nums[-1] == '1':
-                                                        # the first safety order has filled so cancel the base sell order
+                                                        # the first safety order has filled. Cancel the base sell order.
                                                         self.base_order.cancel_sell(s_symbol_pair)
                                                         self.safety_order.sell(s_symbol_pair, '1')
                                                     else:

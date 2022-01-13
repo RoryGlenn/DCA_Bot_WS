@@ -99,8 +99,9 @@ class KrakenDCABot(KrakenBotBase):
                 symbol_pair = symbol + '/' + StableCoins.USD
                 pair        = symbol + StableCoins.USD
 
-            pair      = symbol_pair.split("/")
-            order_min = self.get_order_min(pair[0]+pair[1])
+            pair      = str(symbol_pair).split("/")
+            pair = pair[0] + pair[1]
+            order_min = self.get_order_min(pair)
 
             if quantity_to_sell < order_min:
                 G.log.print_and_log(f"{symbol} {quantity_to_sell} is too low to sell", G.print_lock)
@@ -115,7 +116,7 @@ class KrakenDCABot(KrakenBotBase):
 
     def nuke(self) -> None:
         G.log.print_and_log("WIPING DATABASE AND OPEN BUY ORDERS!!! You have 10 seconds to cancel...", G.print_lock)
-        time.sleep(10)
+        # time.sleep(10)
 
         self.mdb.c_safety_orders.drop()
 
@@ -123,6 +124,7 @@ class KrakenDCABot(KrakenBotBase):
         for txid, order_info in self.get_open_orders()['result']['open'].items():
             # if order_info['descr']['type'] == 'buy':
             self.cancel_order(txid)
+
         self.market_sell_all_assets()
         G.log.print_and_log("Wipe Complete!", G.print_lock)
         return
@@ -134,6 +136,8 @@ class KrakenDCABot(KrakenBotBase):
 
         self.init_socket_handlers(ws_token)
         self.start_socket_handler_threads()
+
+        self.nuke()
 
         while True: 
             start_time     = time.time()

@@ -2,6 +2,7 @@ from pymongo.mongo_client                import MongoClient
 from pymongo.collection                  import Collection
 from pprint                              import pprint
 from bot_features.low_level.kraken_enums import *
+from util.globals import G
 
 
 class MongoDatabase():
@@ -177,6 +178,24 @@ class MongoDatabase():
                                 query = {'_id': s_symbol_pair}
                                 self.c_safety_orders.find_one_and_update(query, new_values)
         return
+
+    def store_safety_order_sell_txid(self, s_symbol_pair: str, safety_order_num: int, sell_order_txid: str) -> None:
+        for document in self.c_safety_orders.find({'_id': s_symbol_pair}):
+            for value in document.values():
+                if isinstance(value, dict):
+                    for safety_order in value['safety_orders']:
+                        for so_num, so_data in safety_order.items():
+                            if so_num == safety_order_num:
+                                G.log.print_and_log(f"sell order txid: {sell_order_txid}", G.print_lock)
+                                
+                                so_data['sell_order_txid'] = sell_order_txid
+                                new_values                 = {"$set": {s_symbol_pair: value}}
+                                query                      = {'_id': s_symbol_pair}
+                                self.c_safety_orders.find_one_and_update(query, new_values)
+                                return
+        return
+
+
 
     def get_safety_order_sell_txid(self, s_symbol_pair: str, safety_order_num: int) -> str:
         for document in self.c_safety_orders.find({'_id': s_symbol_pair}):
