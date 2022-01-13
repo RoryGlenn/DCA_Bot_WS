@@ -78,7 +78,7 @@ class KrakenDCABot(KrakenBotBase):
 
     def market_sell_all_assets(self):
         """Maket sells all assets except for staked assets in spot wallet."""
-        for symbol, quantity_to_sell in self.get_account_balance()['result'].items():
+        for symbol, quantity_to_sell in self.get_account_balance()[Dicts.RESULT].items():
             quantity_to_sell = float(quantity_to_sell)
             symbol_pair      = ""
             pair             = ""

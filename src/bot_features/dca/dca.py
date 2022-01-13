@@ -12,8 +12,6 @@ from util.config                          import g_config
 
 class DCA():
     def __init__(self, symbol: str, symbol_pair: str, base_order_size: float, safety_order_size: float, entry_price: float):
-        super().__init__()
-
         self.deviation_percentage_levels:       list          = [ ]
         self.price_levels:                      list          = [ ]
         self.quantities:                        list          = [ ]
@@ -58,7 +56,6 @@ class DCA():
 
 
     def __set_base_target_price(self) -> None:
-        # self.base_target_price = self.entry_price + ( self.entry_price * (g_config.DCA_DATA[self.symbol][ConfigKeys.DCA_TARGET_PROFIT_PERCENT]/100) )
         self.base_target_price = self.entry_price + ( self.entry_price * (g_config.DCA_DATA[self.symbol][ConfigKeys.DCA_TARGET_PROFIT_PERCENT]/100) )
         return
 
@@ -66,18 +63,30 @@ class DCA():
         """
         Safety order step scale:
 
-        The scale will multiply step in percents between safety orders.
-        Let's assume there is a bot with safety order price deviation 1% and the scale is 2. Safety order prices would be:
+        The safety order step scale will multiply each step in by a certain percent.
+        
+        Example:
+            Let's assume there is a coin that is originally bought at a price of $100.0 and the current bot is set to
+            purchase the same coin with a safety order price deviation of 1% from the original price with a safety order step scale of 2.
+            
+            This is how we calculate the safety order prices:
+                Step 0: It's the first order, we use the base order deviation to place it: 0% + -1% = -1%, 
+                where base_order_price_deviation = 0% and safety_order_price_deviation is 1%.
+                (The base order deviation is 0% because in order to start a trade, there must be no deviation)
 
-        It's the first order, we use deviation to place it: 0 + -1% = -1%.
+                Last safety order step is multiplied by the scale and then added to the last order percentage. 
+                The last step was 1%, the new step will be 1% * 2 = 2%. The order will be placed: -1% + -2% = -3%.
 
-        Last safety order step multiplied by the scale and then added to the last order percentage. The last step was 1%, the new step will be 1% * 2 = 2%. The order will be placed: -1% + -2% = -3%.
-
-        Step 1: ...           Order 1: 0%  + 1%  = 1% (initial price deviation)
-        Step 2: 1% * 2 = 2%.  Order 2: 1%  + 2%  = 3%.
-        Step 3: 2% * 2 = 4%.  Order 3: 3%  + 4%  = 7%.
-        Step 4: 4% * 2 = 8%.  Order 4: 7%  + 8%  = 15%.
-        Step 5: 8% * 2 = 16%. Order 5: 15% + 16% = 31%.
+                Step 0: ...           Order 1: 0%  + 1%  = 1%   (1st and only base_order_price_deviation)
+                Step 1: 1% * 2 = 2%.  Order 2: 1%  + 2%  = 3%.  (1st safety_order_price_deviation)
+                Step 2: 2% * 2 = 4%.  Order 3: 3%  + 4%  = 7%.  (2nd safety_order_price_deviation)
+                Step 3: 4% * 2 = 8%.  Order 4: 7%  + 8%  = 15%. (3rd safety_order_price_deviation)
+                Step 4: 8% * 2 = 16%. Order 5: 15% + 16% = 31%. (4th safety_order_price_deviation)
+                .
+                .
+                .
+                Step n: n% * 2 = (2*n)%. Order n: ((2 * n) - 1)% + (2*n)% = (2n-1)% + (2n)%. (nth safety_order_price_deviation)
+                    (side node: Please double check correctness of the line above as I'm not 100% sure it is accurate)
 
         For more info: https://help.3commas.io/en/articles/3108940-main-settings
         """
@@ -116,7 +125,6 @@ class DCA():
 
     def __set_quantity_levels(self) -> None:
         """Sets the quantity to buy for each safety order number."""
-        # prev = self.safety_order_size
         prev = self.safety_order_size
         
         # first safety order

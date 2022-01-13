@@ -10,7 +10,7 @@ from util.globals                                     import G
 class OpenOrdersSocketHandler(SocketHandlerBase):
     def __init__(self, api_token: str) -> None:
         self.api_token   = api_token
-        self.open_orders = { }
+        self.open_orders = {}
         return
 
     def ws_message(self, ws: WebSocketApp, message: str) -> None:
@@ -19,9 +19,8 @@ class OpenOrdersSocketHandler(SocketHandlerBase):
         if isinstance(message, dict):
             if "heartbeat" in message.values():
                 return
-
         if "openOrders" in message and message[-1]['sequence'] == 1:
-            """add up total cost of all the current open orders on startup only!"""
+            """Loads the current open orders"""
             for open_orders in message[0]:
                 for txid, order_info in open_orders.items():
                     self.open_orders[txid] = order_info
@@ -29,6 +28,7 @@ class OpenOrdersSocketHandler(SocketHandlerBase):
             """We have a new order"""
             for open_orders in message[0]:
                 for txid, order_info in open_orders.items():
+
                     if Status.STATUS in order_info.keys():
                         if order_info[Status.STATUS] == Status.PENDING:
                             # order is pending
