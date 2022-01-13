@@ -13,13 +13,6 @@ class OpenOrdersSocketHandler(SocketHandlerBase):
         self.open_orders = { }
         return
 
-    def __update_available_usd(self, cost: float, msg: str) -> None:
-        G.usd_lock.acquire()
-        G.available_usd += cost
-        G.log.print_and_log(f"openOrders: {msg} -> Available USD: {G.available_usd}", G.print_lock)
-        G.usd_lock.release()
-        return
-
     def ws_message(self, ws: WebSocketApp, message: str) -> None:
         message = json.loads(message)
         
@@ -32,43 +25,29 @@ class OpenOrdersSocketHandler(SocketHandlerBase):
             for open_orders in message[0]:
                 for txid, order_info in open_orders.items():
                     self.open_orders[txid] = order_info
-
-                    if order_info['descr']['type'] == 'buy':
-                        price    = float(order_info['descr']['price'])
-                        quantity = float(order_info['vol'])
-                        cost     = price * quantity
-
-                        self.__update_available_usd(-cost, "Add up total cost of current open orders")
         elif "openOrders" in message and message[-1]['sequence'] >= 2:
             """We have a new order"""
             for open_orders in message[0]:
                 for txid, order_info in open_orders.items():
                     if Status.STATUS in order_info.keys():
                         if order_info[Status.STATUS] == Status.PENDING:
+                            # order is pending
                             self.open_orders[txid] = order_info
-                            
-                            if order_info['descr']['type'] == 'buy':
-                                price    = float(order_info['descr']['price'])
-                                quantity = float(order_info['vol'])
-                                cost     = price * quantity
-                                self.__update_available_usd(-cost, "status pending")
                         elif order_info[Status.STATUS] == Status.CANCELED:
-                            # if txid in self.open_orders.keys():
-                            price = float(self.open_orders[txid]['descr']['price'])
-                            vol   = float(self.open_orders[txid]['vol'])
-                            cost  = price * vol
-                            self.__update_available_usd(cost, "Cancelled order")
+                            # order was cancelled
+                            pass
                         elif order_info[Status.STATUS] == Status.OPEN:
-                            # G.log.print_and_log(f"openOrders: status open -> Available USD: {G.available_usd}", G.print_lock)
-                            G.log.print_and_log(f"openOrders: status open -> message: {message}", G.print_lock)
+                            # order is open
+                            pass
                         elif order_info[Status.STATUS] == Status.CLOSED:
-                            # a buy limit order was filled
-                            # [13/01/2022 07:49:30] openOrders: status closed -> {'lastupdated': '1642073160.668600', 'status': 'closed', 'vol_exec': '78.12499999', 'cost': '61.3906250', 'fee': '0.0982250', 'avg_price': '0.7858000', 'userref': 0, 'cancel_reason': 'Insignificant volume remaining'}
-                            G.log.print_and_log(f"openOrders: status closed -> {order_info}", G.print_lock)
+                            # 1. a buy limit order was filled,
+                            # 2. the order status is closed
+                                # example -> [13/01/2022 07:49:30] openOrders: status closed -> {'lastupdated': '1642073160.668600', 'status': 'closed', 'vol_exec': '78.12499999', 'cost': '61.3906250', 'fee': '0.0982250', 'avg_price': '0.7858000', 'userref': 0, 'cancel_reason': 'Insignificant volume remaining'}
+                            pass
                     else:
                         # an order was filled
-                        #  [[{'OAHGRQ-3CBY3-FCRPDC': {'vol_exec': '0.30000000', 'cost': '5.38200', 'fee': '0.00861', 'avg_price': '17.94000', 'userref': 0}}], 'openOrders', {'sequence': 2}]
-                        G.log.print_and_log(f"openOrders: an order was filled -> {message}", G.print_lock)
+                            # example -> [[{'OAHGRQ-3CBY3-FCRPDC': {'vol_exec': '0.30000000', 'cost': '5.38200', 'fee': '0.00861', 'avg_price': '17.94000', 'userref': 0}}], 'openOrders', {'sequence': 2}]
+                        pass
         return
 
     def ws_open(self, ws: WebSocketApp) -> None:

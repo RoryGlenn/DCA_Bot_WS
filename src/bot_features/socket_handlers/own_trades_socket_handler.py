@@ -56,7 +56,7 @@ class OwnTradesSocketHandler(SocketHandlerBase):
             # profit = exit_cost - entry_cost - maker_fee - taker_fee
             G.log.print_and_log(Color.BG_GREEN + f"{s_symbol_pair} trade complete{Color.ENDC}, profit: ${profit}", G.print_lock)
 
-            # add back to available usd?????????????????????????????????????
+            # create bot statistic table in mongo database and add profit to it!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         return
 
     def ws_message(self, ws: WebSocketApp, message: str) -> None:
@@ -82,7 +82,7 @@ class OwnTradesSocketHandler(SocketHandlerBase):
                                     else: 
                                         # A safety order was filled!
                                         
-                                        G.log.print_and_log(f"A safety order was filled: {s_symbol_pair} {order_txid}", G.print_lock)
+                                        G.log.print_and_log(f"ownTrades: a safety order was filled: {s_symbol_pair} {order_txid}", G.print_lock)
                                         
                                         placed_safety_orders = self.mdb.get_placed_safety_order_data(s_symbol_pair)
                                         
@@ -100,10 +100,7 @@ class OwnTradesSocketHandler(SocketHandlerBase):
                                                     else:
                                                         # a safety order higher than 1 was filled.
                                                         so_cancel_num_str = str(filled_so_nums[-2])
-                                                        G.log.print_and_log(f"so_cancel_num_str: {so_cancel_num_str}", G.print_lock)
                                                         self.safety_order.cancel_sell(s_symbol_pair, so_cancel_num_str)
-
-                                                        G.log.print_and_log(f"s_symbol_pair: {s_symbol_pair}, filled_so_nums[-1]: {filled_so_nums[-1]}", G.print_lock)
                                                         self.safety_order.sell(s_symbol_pair, filled_so_nums[-1])
                                 elif trade_info['type'] == 'sell':
                                     self.__finish_trade(s_symbol_pair)
@@ -128,5 +125,5 @@ class OwnTradesSocketHandler(SocketHandlerBase):
         return
 
     def ws_error(self, ws: WebSocketApp, error_message: str) -> None:
-        G.log.print_and_log(f"ownTrades: Error {str(error_message)}", G.print_lock)
+        G.log.print_and_log(f"ownTrades Error: {str(error_message)}", G.print_lock)
         return

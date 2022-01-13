@@ -18,12 +18,7 @@ class BalancesSocketHandler(SocketHandlerBase):
         message = json.loads(message)
 
         if isinstance(message, dict):
-            if "balances" in message.keys():
-                G.usd_lock.acquire()
-                G.available_usd += float(message['balances']['USD'])
-                G.log.print_and_log(f"balances: Available USD: {G.available_usd}", G.print_lock)
-                G.usd_lock.release()
-            elif 'heartbeat' not in message.values():
+            if 'heartbeat' not in message.values():
                 # [13/01/2022 07:49:29] balances: {'ledgers': [{'amount': '-1.875000', 'asset': 'ADA', 'balance': '0.000000', 'fee': '0.000000', 'ledgerID': 'LM6OYU-B6HMJ-CGXOVG', 'refid': 'T552QN-XPJAA-S7NKCI', 'time': '1642084372.150882', 'type': 'trade'}], 'channel': 'balances', 'sequence': 14}
                 # [13/01/2022 07:49:29] balances: {'ledgers': [{'amount': '2.46', 'asset': 'USD', 'balance': '2903.16', 'fee': '0.00', 'ledgerID': 'LIQ6GX-TYFXH-7FW4YQ', 'refid': 'T552QN-XPJAA-S7NKCI', 'time': '1642084372.151158', 'type': 'trade'}], 'channel': 'balances', 'sequence': 15}
                 # [13/01/2022 07:49:29] balances: {'ledgers': [{'amount': '-17.76', 'asset': 'USD', 'balance': '2885.37', 'fee': '0.03', 'ledgerID': 'LLFBJ2-WBC7Y-MD7JY3', 'refid': 'TNXBEE-5S3AM-ZX2KBA', 'time': '1642087098.966361', 'type': 'trade'}], 'channel': 'balances', 'sequence': 16}
@@ -46,5 +41,5 @@ class BalancesSocketHandler(SocketHandlerBase):
         return
 
     def ws_error(self, ws: WebSocketApp, error_message: str) -> None:
-        G.log.print_and_log("balances: Error " + str(error_message), G.print_lock)
+        G.log.print_and_log("balances Error: " + str(error_message), G.print_lock)
         return
