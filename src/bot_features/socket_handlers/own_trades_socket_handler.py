@@ -99,12 +99,11 @@ class OwnTradesSocketHandler(SocketHandlerBase):
                                                         self.safety_order.sell(s_symbol_pair, '1')
                                                     else:
                                                         # a safety order higher than 1 was filled.
-                                                        so_cancel_num_str = str( int(filled_so_nums[-2]) + 1 )
+                                                        so_cancel_num_str = str(filled_so_nums[-2])
                                                         G.log.print_and_log(f"so_cancel_num_str: {so_cancel_num_str}", G.print_lock)
-
                                                         self.safety_order.cancel_sell(s_symbol_pair, so_cancel_num_str)
-                                                        G.log.print_and_log(f"s_symbol_pair: {s_symbol_pair}, filled_so_nums[-1]: {filled_so_nums[-1]}", G.print_lock)
 
+                                                        G.log.print_and_log(f"s_symbol_pair: {s_symbol_pair}, filled_so_nums[-1]: {filled_so_nums[-1]}", G.print_lock)
                                                         self.safety_order.sell(s_symbol_pair, filled_so_nums[-1])
                                 elif trade_info['type'] == 'sell':
                                     self.__finish_trade(s_symbol_pair)

@@ -116,12 +116,14 @@ class KrakenDCABot(KrakenBotBase):
 
     def nuke(self) -> None:
         G.log.print_and_log("WIPING DATABASE AND OPEN BUY ORDERS!!! You have 10 seconds to cancel...", G.print_lock)
-        # time.sleep(10)
+        time.sleep(10)
 
         self.mdb.c_safety_orders.drop()
 
+        # pprint(self.get_open_orders(), sort_dicts=False)
+
         # cancel all orders in database!
-        for txid, order_info in self.get_open_orders()['result']['open'].items():
+        for txid in self.get_open_orders()['result']['open'].values():
             # if order_info['descr']['type'] == 'buy':
             self.cancel_order(txid)
 
@@ -139,7 +141,7 @@ class KrakenDCABot(KrakenBotBase):
 
         self.nuke()
 
-        while True: 
+        while True:
             start_time     = time.time()
             buy_dict       = self.get_buy_dict()
             current_trades = self.mdb.get_current_trades()
