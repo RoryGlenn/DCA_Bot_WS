@@ -16,13 +16,16 @@ class BalancesSocketHandler(SocketHandlerBase):
 
     def ws_message(self, ws: WebSocketApp, message: str) -> None:
         message = json.loads(message)
-        
+
         if isinstance(message, dict):
             if "balances" in message.keys():
                 G.usd_lock.acquire()
                 G.available_usd += float(message['balances']['USD'])
                 G.log.print_and_log(f"balances: Available USD: {G.available_usd}", G.print_lock)
                 G.usd_lock.release()
+            elif 'heartbeat' not in message.values():
+                # {'ledgers': [{'amount': '-7.90342', 'asset': 'KNC', 'balance': '1.09658', 'fee': '0.00000', 'ledgerID': 'LQEZL7-XH4PX-BPTR7M', 'refid': 'TPAEMZ-CSE4V-TUICQC', 'time': '1642050961.399224', 'type': 'trade'}], 'channel': 'balances', 'sequence': 4}
+                G.log.print_and_log(f"balances: {message}", G.print_lock)
         return
             
     def ws_open(self, ws: WebSocketApp) -> None:
@@ -38,14 +41,3 @@ class BalancesSocketHandler(SocketHandlerBase):
     def ws_error(self, ws: WebSocketApp, error_message: str) -> None:
         G.log.print_and_log("balances: Error " + str(error_message), G.print_lock)
         return
-
-    # def ws_thread(self, *args) -> None:
-    #     while True:
-    #         ws = WebSocketApp(
-    #             url=WEBSOCKET_PRIVATE_URL,
-    #             on_open=self.ws_open,
-    #             on_close=self.ws_close,
-    #             on_message=self.ws_message,
-    #             on_error=self.ws_error)
-    #         ws.run_forever()
-    #     return

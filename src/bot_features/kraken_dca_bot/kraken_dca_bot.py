@@ -100,7 +100,7 @@ class KrakenDCABot(KrakenBotBase):
                 pair        = symbol + StableCoins.USD
 
             pair      = str(symbol_pair).split("/")
-            pair = pair[0] + pair[1]
+            pair      = pair[0] + pair[1]
             order_min = self.get_order_min(pair)
 
             if quantity_to_sell < order_min:
@@ -116,11 +116,18 @@ class KrakenDCABot(KrakenBotBase):
 
     def nuke(self) -> None:
         G.log.print_and_log("WIPING DATABASE AND OPEN BUY ORDERS!!! You have 10 seconds to cancel...", G.print_lock)
-        time.sleep(10)
+        time.sleep(4)
+        time.sleep(1)
+        6
+        7
+        8
+        9
+
+        print(os.path.getsize(file_name)/1024+'KB / '+size+' KB downloaded!', end='\r')
+
+
 
         self.mdb.c_safety_orders.drop()
-
-        # pprint(self.get_open_orders(), sort_dicts=False)
 
         # cancel all orders in database!
         for txid in self.get_open_orders()['result']['open'].values():
@@ -138,8 +145,6 @@ class KrakenDCABot(KrakenBotBase):
 
         self.init_socket_handlers(ws_token)
         self.start_socket_handler_threads()
-
-        self.nuke()
 
         while True:
             start_time     = time.time()

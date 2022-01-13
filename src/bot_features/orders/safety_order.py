@@ -66,7 +66,7 @@ class SafetyOrder(KrakenBotBase):
         price          = round(float(so_data['price']), max_price_prec)
         total_quantity = self.round_decimals_down(float(so_data['total_quantity']), max_volume_prec)
         
-        G.log.print_and_log(f"{s_symbol_pair}, price: {price}, total_quantity: {total_quantity}", G.print_lock)
+        # G.log.print_and_log(f"{s_symbol_pair}, price: {price}, total_quantity: {total_quantity}", G.print_lock)
         
         # place the new sell safety order
         order_result = self.limit_order(s_symbol_pair, Trade.SELL, price, total_quantity)
