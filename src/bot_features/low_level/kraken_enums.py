@@ -5,7 +5,11 @@ DECIMAL_MAX     = 8
 URL_ASSET_PAIRS = 'https://api.kraken.com/0/public/AssetPairs'
 CONFIG_JSON     = 'src/json/config.json'
 
+WEBSOCKET_PUBLIC_URL  = "wss://ws.kraken.com/"
 WEBSOCKET_PRIVATE_URL = "wss://ws-auth.kraken.com/"
+
+WEBSOCKET_BETA_PUBLIC_URL  = "wss:/beta-ws.kraken.com/"
+WEBSOCKET_BETA_PRIVATE_URL = "wss://beta-ws-auth.kraken.com/"
 
 class DB:
     DATABASE_NAME = "DCA_Bot_WS"
