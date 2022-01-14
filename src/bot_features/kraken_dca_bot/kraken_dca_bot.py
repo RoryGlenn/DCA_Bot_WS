@@ -1,3 +1,4 @@
+import sys
 import time
 
 from pprint                                                  import pprint, PrettyPrinter
@@ -37,6 +38,17 @@ class KrakenDCABot(KrakenBotBase):
                 return order_result['status'] == 'ok'
         return False
     
+    def __get_websocket_token(self):
+        ws_token = self.get_web_sockets_token()
+        # make sure we got the websocket token from the server
+        if self.has_result(ws_token):
+            ws_token = ws_token[Dicts.RESULT]['token']
+        else:
+            G.log.print_and_log(f"Could not get ws_token from server.", G.print_lock)
+            sys.exit()       
+        return ws_token
+
+
     def get_buy_dict(self) -> dict:
         """Returns dictionary with [symbol: symbol_pair] relationship"""
         buy_dict = {}
@@ -132,7 +144,7 @@ class KrakenDCABot(KrakenBotBase):
     def start_trade_loop(self) -> None:
         base_order    = BaseOrder(g_config.API_KEY, g_config.API_SECRET)
         safety_orders = SafetyOrder(g_config.API_KEY, g_config.API_SECRET)
-        ws_token      = self.get_web_sockets_token()[Dicts.RESULT]["token"]
+        ws_token      = self.__get_websocket_token()
 
         self.init_socket_handlers(ws_token)
         self.start_socket_handler_threads()
