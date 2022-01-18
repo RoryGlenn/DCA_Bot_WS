@@ -1,135 +1,59 @@
-import base64
-import hashlib
-import hmac
-import time
-import urllib.parse
-import requests
+from bot_features.low_level.base_request import BaseRequest
 
 from bot_features.low_level.kraken_enums import *
 
 
-class KrakenRestAPI():
+class KrakenRestAPI(BaseRequest):
     def __init__(self, api_key: str, api_secret: str) -> None:
         """ Create an object with authentication information. """
-        self.key           = api_key
-        self.secret        = api_secret
-        self.uri           = 'https://api.kraken.com'
-        self.apiversion    = '0'
-        self.session       = requests.Session()
-        self.response      = None
-        self._json_options = {}
+        super().__init__(api_key, api_secret)
         return
-
-    def json_options(self, **kwargs):
-        """ Set keyword arguments to be passed to JSON deserialization. """
-        self._json_options = kwargs
-        return self
-
-    def close(self) -> None:
-        """ Close this session."""
-        self.session.close()
-        return
-
-    def load_key(self, key: str, secret: str) -> None:
-        """ Load kraken key and kraken secret. """
-        self.key    = key
-        self.secret = secret
-        return
-
-    def __query(self, urlpath: str, data: dict, headers: dict = None, timeout: int = None):
-        """ Low-level query handling. """
-        if data is None:
-            data = {}
-        if headers is None:
-            headers = {}
-            
-        url           = self.uri + urlpath
-        self.response = self.session.post(url, data=data, headers=headers, timeout=timeout)
-
-        if self.response.status_code not in (200, 201, 202):
-            self.response.raise_for_status()
-        return self.response.json(**self._json_options)
-
-    def __query_public(self, method: str, data: dict = None, timeout: int = None):
-        """ Performs an API query that does not require a valid key/secret pair. """
-        if data is None:
-            data = {}
-        urlpath = '/' + self.apiversion + '/public/' + method
-        return self.__query(urlpath, data, timeout = timeout)
-
-    def __query_private(self, method: str, data=None, timeout=None):
-        """ Performs an API query that requires a valid key/secret pair. """
-        if data is None:
-            data = {}
-
-        if not self.key or not self.secret:
-            raise Exception('Either key or secret is not set! (Use `load_key()`.')
-
-        data['nonce'] = self.__nonce()
-        urlpath       = '/' + self.apiversion + '/private/' + method
-        headers       = { 'API-Key': self.key, 'API-Sign': self.__sign(data, urlpath) }
-        return self.__query(urlpath, data, headers, timeout = timeout)
-
-    def __nonce(self) -> int:
-        """ An always-increasing unsigned integer (up to 64 bits wide) """
-        return int(1000*time.time())
-
-    def __sign(self, data: dict, urlpath: str) -> str:
-        """ Sign request data according to Kraken's scheme. """
-        postdata  = urllib.parse.urlencode(data)
-        # Unicode-objects must be encoded before hashing
-        encoded   = (str(data['nonce']) + postdata).encode()
-        message   = urlpath.encode() + hashlib.sha256(encoded).digest()
-        signature = hmac.new(base64.b64decode(self.secret), message, hashlib.sha512)
-        sigdigest = base64.b64encode(signature.digest())
-        return sigdigest.decode()
-
 
 ######################################################################
 ### USER DATA
 ######################################################################
 
     def get_account_balance(self) -> dict:
-        return self.__query_private(method=Method.BALANCE)
+        return self.query_private(method=Method.BALANCE)
 
     def get_trade_balance(self) -> dict:
-        return self.__query_private(method=Method.TRADE_BALANCE)
+        return self.query_private(method=Method.TRADE_BALANCE)
 
     def get_open_orders(self, trades: bool = True) -> dict:
-        return self.__query_private(method=Method.OPEN_ORDERS, data={Data.TRADES: trades})
+        return self.query_private(method=Method.OPEN_ORDERS, data={Data.TRADES: trades})
 
     def get_closed_orders(self, userref: int = None) -> dict:
-        return self.__query_private(method=Method.CLOSED_ORDERS, data={Data.USER_REF: userref})
+        return self.query_private(method=Method.CLOSED_ORDERS, data={Data.USER_REF: userref})
 
     def query_orders_info(self, txid: str, trades: bool = True) -> dict:
-        return self.__query_private(method=Method.QUERY_ORDERS, data={Data.TXID: txid, Data.TRADES: trades})
+        return self.query_private(method=Method.QUERY_ORDERS, data={Data.TXID: txid, Data.TRADES: trades})
 
     def get_trades_history(self, trades: bool = True) -> dict:
-        return self.__query_private(method=Method.TRADE_HISTORY, data={Data.TRADES: trades})
+        return self.query_private(method=Method.TRADE_HISTORY, data={Data.TRADES: trades})
 
     def query_trades_info(self, txid: str, trades: bool = True) -> dict:
-        return self.__query_private(method=Method.QUERY_TRADES, data={Data.TXID: txid, Data.TRADES: trades})
+        return self.query_private(method=Method.QUERY_TRADES, data={Data.TXID: txid, Data.TRADES: trades})
 
     def get_open_positions(self, docalcs: bool = True) -> dict:
-        return self.__query_private(method=Method.OPEN_POSITIONS, data={Data.DOCALCS: docalcs})
+        return self.query_private(method=Method.OPEN_POSITIONS, data={Data.DOCALCS: docalcs})
 
     def get_ledger_info(self, asset: str, start: int) -> dict:
-        return self.__query_private(method=Method.LEDGERS, data={Data.ASSET: asset, Data.START: start})
+        return self.query_private(method=Method.LEDGERS, data={Data.ASSET: asset, Data.START: start})
 
     def get_trade_volume(self, pair: str, fee_info: str = True) -> dict:
-        return self.__query_private(method=Method.TRADE_VOLUME, data={Data.FEE_INFO: fee_info, Data.SYMBOL_PAIR: pair})
+        return self.query_private(method=Method.TRADE_VOLUME, data={Data.FEE_INFO: fee_info, Data.SYMBOL_PAIR: pair})
 
     def request_export_report(self, file_name: str = ExportReport.DEFAULT_NAME, format: str = ExportReport.DEFAULT_FORMAT, report: str = ExportReport.REPORT) -> dict:
-        return self.__query_private(method=Method.ADD_EXPORT, data={Data.DESCRIPTION: file_name, Data.FORMAT: format, Data.REPORT: report})
+        return self.query_private(method=Method.ADD_EXPORT, data={Data.DESCRIPTION: file_name, Data.FORMAT: format, Data.REPORT: report})
 
     def get_export_report_status(self, report: str = ExportReport.REPORT) -> dict:
-        return self.__query_private(method=Method.EXPORT_STATUS, data={Data.REPORT: report})
+        return self.query_private(method=Method.EXPORT_STATUS, data={Data.REPORT: report})
 
     def retrieve_data_export(self, id: str) -> dict:
-        return self.__query_private(method=Method.RETRIEVE_EXPORT, data={Data.ID: id})
+        return self.query_private(method=Method.RETRIEVE_EXPORT, data={Data.ID: id})
 
     def delete_export_report(self, id: str, type: str = ExportReport.DELETE) -> dict:
-        return self.__query_private(method=Method.REMOVE_EXPORT, data={Data.ID: id, Data.TYPE: type})
+        return self.query_private(method=Method.REMOVE_EXPORT, data={Data.ID: id, Data.TYPE: type})
 
 
 ######################################################################
@@ -137,26 +61,16 @@ class KrakenRestAPI():
 ######################################################################
 
     def add_order(self, ordertype: str, type: str, volume: str, pair: str, price: str) -> dict:
-        return self.__query_private(method=Method.ADD_ORDER, data={Data.ORDER_TYPE: ordertype, Data.TYPE: type, Data.VOLUME: volume, Data.SYMBOL_PAIR: pair, Data.PRICE: price})
-
-    def market_order(self, pair: str, type: str, volume: str, validate=False) -> dict:
-        return self.__query_private(method=Method.ADD_ORDER, data={Data.ORDER_TYPE: Data.MARKET, Data.TYPE: type, Data.VOLUME: volume, Data.SYMBOL_PAIR: pair, Data.PRICE: Data.MARKET_PRICE, "validate": validate})
-
-    def limit_order(self, pair: str, type: str, price: float, volume: float) -> dict:
-        return self.__query_private(method=Method.ADD_ORDER, data={Data.ORDER_TYPE: Data.LIMIT, Data.TYPE: type, Data.VOLUME: volume, Data.SYMBOL_PAIR: pair, Data.PRICE: price})
-
-    def limit_order_conditional_close(self, type: str, volume: str, pair: str, price: str, cc_price: str, cc_volume: str) -> dict:
-        return self.__query_private(method=Method.ADD_ORDER, data={Data.ORDER_TYPE: Data.LIMIT, Data.TYPE: type, Data.VOLUME: volume, Data.SYMBOL_PAIR: pair, Data.PRICE: price,
-                                                                   Data.CC_PAIR: pair, Data.CC_TYPE: type, Data.CC_ORDER_TYPE: Data.LIMIT, Data.CC_PRICE: cc_price, Data.CC_VOLUME: cc_volume})
+        return self.query_private(method=Method.ADD_ORDER, data={Data.ORDER_TYPE: ordertype, Data.TYPE: type, Data.VOLUME: volume, Data.SYMBOL_PAIR: pair, Data.PRICE: price})
 
     def cancel_order(self, txid: str) -> dict:
-        return self.__query_private(method=Method.CANCEL_ORDER, data={Data.TXID: txid})
+        return self.query_private(method=Method.CANCEL_ORDER, data={Data.TXID: txid})
     
     def cancel_all_orders(self) -> dict:
-        return self.__query_private(method=Method.CANCEL_ALL, data={})
+        return self.query_private(method=Method.CANCEL_ALL, data={})
 
     def cancel_all_orders_after_x(self, timeout: str) -> dict:
-        return self.__query_private(method=Method.CANCEL_ALL_ORDERS_AFTER, data={Data.TIMEOUT: timeout})
+        return self.query_private(method=Method.CANCEL_ALL_ORDERS_AFTER, data={Data.TIMEOUT: timeout})
 
 
 ######################################################################
@@ -164,28 +78,28 @@ class KrakenRestAPI():
 ######################################################################
 
     def get_deposit_methods(self, asset: str) -> dict:
-        return self.__query_private(method=Method.DEPOSIT_METHODS, data={Data.ASSET: asset})
+        return self.query_private(method=Method.DEPOSIT_METHODS, data={Data.ASSET: asset})
 
     def get_deposit_address(self, asset: str, method: str, new: bool) -> dict:
-        return self.__query_private(method=Method.DEPOSIT_ADDRESS, data={Data.ASSET: asset, Data.METHOD: method, Data.NEW: new})
+        return self.query_private(method=Method.DEPOSIT_ADDRESS, data={Data.ASSET: asset, Data.METHOD: method, Data.NEW: new})
         
     def get_status_of_recent_deposits(self, asset: str) -> dict:
-        return self.__query_private(method=Method.DEPOSIT_STATUS, data={Data.ASSET: asset})
+        return self.query_private(method=Method.DEPOSIT_STATUS, data={Data.ASSET: asset})
 
     def get_withdrawal_information(self, asset: str, key: str, amount: str) -> dict:
-        return self.__query_private(method=Method.WITHDRAWL_INFO, data={Data.ASSET: asset, Data.KEY: key, Data.AMOUNT: amount})
+        return self.query_private(method=Method.WITHDRAWL_INFO, data={Data.ASSET: asset, Data.KEY: key, Data.AMOUNT: amount})
 
     def withdraw_funds(self, asset: str, key: str, amount: str) -> dict:
-        return self.__query_private(method=Method.WITHDRAWL, data={Data.ASSET: asset, Data.KEY: key, Data.AMOUNT: amount})
+        return self.query_private(method=Method.WITHDRAWL, data={Data.ASSET: asset, Data.KEY: key, Data.AMOUNT: amount})
 
     def get_withdraw_status(self, asset: str) -> dict:
-        return self.__query_private(method=Method.WITHDRAWL_STATUS, data={Data.ASSET: asset})
+        return self.query_private(method=Method.WITHDRAWL_STATUS, data={Data.ASSET: asset})
 
     def request_withdrawl_cancelation(self, asset: str, refid: str) -> dict:
-        return self.__query_private(method=Method.WITHDRAWL_CANCEL, data={Data.ASSET: asset, Data.REFID: refid})
+        return self.query_private(method=Method.WITHDRAWL_CANCEL, data={Data.ASSET: asset, Data.REFID: refid})
 
     def request_wallet_transfer(self, asset: str, amount: str, from_: str, to_: str) -> dict:
-        return self.__query_private(method=Method.WALLET_TRANSFER, data={Data.ASSET: asset, Data.AMOUNT: amount, Data.FROM: from_, Data.TO: to_})
+        return self.query_private(method=Method.WALLET_TRANSFER, data={Data.ASSET: asset, Data.AMOUNT: amount, Data.FROM: from_, Data.TO: to_})
 
 
 ######################################################################
@@ -193,51 +107,51 @@ class KrakenRestAPI():
 ######################################################################
 
     def stake_asset(self, asset: str, amount: str, method: str) -> dict:
-        return self.__query_private(method=Method.STAKE, data={Data.ASSET: asset, Data.AMOUNT: amount, Data.METHOD: method})
+        return self.query_private(method=Method.STAKE, data={Data.ASSET: asset, Data.AMOUNT: amount, Data.METHOD: method})
 
     def unstake_asset(self, asset: str, amount: str, method: str) -> dict:
-        return self.__query_private(method=Method.UNSTAKE, data={Data.ASSET: asset, Data.AMOUNT: amount, Data.METHOD: method})
+        return self.query_private(method=Method.UNSTAKE, data={Data.ASSET: asset, Data.AMOUNT: amount, Data.METHOD: method})
     
     def get_stakeable_assets(self) -> dict:
-        return self.__query_private(method=Method.STAKEABLE_ASSETS, data={})
+        return self.query_private(method=Method.STAKEABLE_ASSETS, data={})
 
     def get_pending_staking_transactions(self) -> dict:
-        return self.__query_private(method=Method.PENDING, data={})
+        return self.query_private(method=Method.PENDING, data={})
 
     def get_staking_transactions(self) -> dict:
-        return self.__query_private(method=Method.TRANSACTIONS, data={})
+        return self.query_private(method=Method.TRANSACTIONS, data={})
 
 ######################################################################
 ### WEBSOCKETS AUTHENTICATION
 ######################################################################
 
     def get_web_sockets_token(self) -> dict:
-        return self.__query_private(method=Method.GET_WEBSOCKETS_TOKEN, data={})
+        return self.query_private(method=Method.GET_WEBSOCKETS_TOKEN, data={})
 
 ######################################################################
 ### MARKET DATA
 ######################################################################
 
     def get_server_time(self) -> dict:
-        return self.__query_public(method=Method.SERVER_TIME, data={})
+        return self.query_public(method=Method.SERVER_TIME, data={})
 
     def get_system_status(self) -> dict:
-        return self.__query_public(method=Method.SYSTEM_STATUS, data={})
+        return self.query_public(method=Method.SYSTEM_STATUS, data={})
 
     def get_asset_info(self) -> dict:
-        return self.__query_public(method=Method.ASSETS, data={})
+        return self.query_public(method=Method.ASSETS, data={})
 
     def get_tradable_asset_pairs(self, symbol_pairs: str) -> dict:
-        return self.__query_public(method=Method.ASSET_PAIRS, data={Data.SYMBOL_PAIR: symbol_pairs})
+        return self.query_public(method=Method.ASSET_PAIRS, data={Data.SYMBOL_PAIR: symbol_pairs})
 
     def get_ticker_information(self, pair: str) -> dict:
-        return self.__query_public(method=Method.MARKET_DATA, data={Data.SYMBOL_PAIR: pair})
+        return self.query_public(method=Method.MARKET_DATA, data={Data.SYMBOL_PAIR: pair})
 
     def get_ohlc_data(self, pair: str) -> dict:
-        return self.__query_public(method=Method.OHLC, data={Data.SYMBOL_PAIR: pair})
+        return self.query_public(method=Method.OHLC, data={Data.SYMBOL_PAIR: pair})
 
     def get_order_book(self, pair: str) -> dict:
-        return self.__query_public(method=Method.ORDER_BOOK, data={Data.SYMBOL_PAIR: pair})
+        return self.query_public(method=Method.ORDER_BOOK, data={Data.SYMBOL_PAIR: pair})
 
     def get_recent_trades(self, pair: str) -> dict:
-        return self.__query_public(method=Method.RECENT_TRADES, data={Data.SYMBOL_PAIR: pair})
+        return self.query_public(method=Method.RECENT_TRADES, data={Data.SYMBOL_PAIR: pair})

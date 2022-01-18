@@ -31,8 +31,26 @@ class KrakenBotBase(KrakenRestAPI):
 
         # for symbol in g_config.DCA_DATA:
         #     self.ticker_info[]
-
         return
+
+    def market_order(self, pair: str, type: str, volume: str, validate=False) -> dict:
+        return self.query_private(method=Method.ADD_ORDER, data={Data.ORDER_TYPE: Data.MARKET, Data.TYPE: type, Data.VOLUME: volume, Data.SYMBOL_PAIR: pair, Data.PRICE: Data.MARKET_PRICE, "validate": validate})
+
+    def limit_order(self, pair: str, type: str, price: float, volume: float) -> dict:
+        return self.query_private(method=Method.ADD_ORDER, data={Data.ORDER_TYPE: Data.LIMIT, Data.TYPE: type, Data.VOLUME: volume, Data.SYMBOL_PAIR: pair, Data.PRICE: price})
+
+    def limit_order_conditional_close(self, type: str, volume: str, pair: str, price: str, cc_price: str, cc_volume: str) -> dict:
+        return self.query_private(method=Method.ADD_ORDER, 
+                                    data={Data.ORDER_TYPE:    Data.LIMIT, 
+                                          Data.TYPE:          type,
+                                          Data.VOLUME:        volume, 
+                                          Data.SYMBOL_PAIR:   pair, 
+                                          Data.PRICE:         price,
+                                          Data.CC_PAIR:       pair, 
+                                          Data.CC_TYPE:       type, 
+                                          Data.CC_ORDER_TYPE: Data.LIMIT, 
+                                          Data.CC_PRICE:      cc_price, 
+                                          Data.CC_VOLUME:     cc_volume})
 
     def get_elapsed_time(self, start_time: float) -> str:
         end_time     = time.time()
@@ -229,17 +247,17 @@ class KrakenBotBase(KrakenRestAPI):
             if symbol in account_balance.keys():
                 return account_balance[symbol]
         except Exception as e:
-            # G.log.print_and_log(e=e, error_type=type(e).__name__, filename=__file__, tb_lineno=e.__traceback__.tb_lineno)
-            print(e)
+            G.log.print_and_log(e=e, error_type=type(e).__name__, filename=__file__, tb_lineno=e.__traceback__.tb_lineno)
         return 0.0
 
     def get_available_usd_balance(self) -> float:
         """Get available usd balance by subtracting open buy orders from total usd in wallet."""
+        buy_total       = 0.0
         open_orders     = self.get_open_orders()
         time.sleep(1)
+
         account_balance = self.get_account_balance()
         time.sleep(1)
-        buy_total       = 0.0
 
         if self.has_result(account_balance):
             buy_total = float(account_balance[Dicts.RESULT][StableCoins.ZUSD])
