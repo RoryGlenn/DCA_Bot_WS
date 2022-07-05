@@ -1,7 +1,7 @@
 {
   "config": {
-    "kraken_api_key":    "1q4RsZGITzvv2IhNoOGJtyuUqkea3fUY6c8XOTGnVtyVbv/ivC8icDq7",
-    "kraken_secret_key": "79xQAFXwfRjXqXtNncTcD6LsLugO70uL7Icg4soiOq+E1qoCkfbFZ0GSrifeKAunmdJhBcj/EEOO0A3LUDXiEw==",
+    "kraken_api_key":    "YOUR API KEY HERE",
+    "kraken_secret_key": "YOUR SECRET KEY HERE",
 
     "buy_set": {
       "AAVE": {
